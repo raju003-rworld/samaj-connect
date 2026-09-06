@@ -1,0 +1,42 @@
+{
+  "summary": "Phase-3 (Cloud Photos + Albums, Hall Booking, Samaj-specific roles, Trending hashtags, FCM devices) tested end-to-end. Backend: created /app/backend/tests/test_phase3_photos_hall.py — 40 tests, 39 passing (97.5%). Verified: album CRUD + photos + Samaj-B isolation (single-GET 404 for non-member, upload 403), member cannot create public album (resolve_visibility forbids), hall list canManage flag flips with role, member 403 on POST /halls and GET /admin/bookings, booking overlap -> 409, capacity overflow -> 400, booking create/cancel round-trip, admin approve/reject notify, samaj-specific role switching (event_manager on default -> canManage true, activate Samaj B -> canManage false, POST /halls -> 403), trending endpoint, FCM device register/delete with 400 on short token, and 0x401 across /auth/me /members /search /posts /events /conversations /live/rooms /notifications /albums /halls /hashtags/trending for BOTH member and super admin. Frontend: hard-reload of /members /search?q=a /social /events /messages /live /notifications /profile /photos /hall as member 9000000002 -> ZERO 401 responses on ALL 10 routes; each page rendered. Photos page: new-album-btn + albums-grid render. Hall page: 3 hall cards (Samaj Hall + others), 3 book-hall-{id} buttons, my-bookings container present; booking-dialog opens with booking-date and booking-submit. Social page: trending-hashtags bar renders with 7 trending-{tag} chips. 1 REAL BUG FOUND: Samaj isolation leak — while active samaj is B, GET /api/albums still returns the creator's own default-samaj samaj-visibility albums, and GET /api/albums/{id} returns 200 (not 404) for that album. Root cause in /app/backend/core.py: visible_query_docs adds `where('createdBy','==',u.id)` query which pulls creator's docs across samajs, and can_view() short-circuits to True on `doc.createdBy == u.id` regardless of active samaj. This same pattern likely leaks posts/events/etc. across active-samaj context.",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "GET /api/albums, GET /api/albums/{id}", "issue": "Samaj isolation leak: creator sees their own default-samaj album while activeSamajId=Samaj B (list contains it; single-GET returns 200 instead of expected 404). Root cause in core.py visible_query_docs (createdBy branch) and can_view (createdBy short-circuit). Affects albums and likely posts/events/photos since they share the same helpers.", "priority": "HIGH"}
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Photos /photos AlbumDialog", "issue": "In one browser automation run, clicking [data-testid=new-album-btn] did not open [data-testid=album-dialog] within 4s (screenshot ended up on /live route). Manual retry did not reproduce open either. Possibly a shadcn Dialog portal timing issue or focus stolen by bottom nav. New-album-btn itself is visible and rendered. Recommend verifying in real browser session.", "selector": "[data-testid=\"new-album-btn\"] -> [data-testid=\"album-dialog\"]", "priority": "MEDIUM"}
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_phase3_photos_hall.py",
+    "/app/test_reports/pytest/phase3_results.xml"
+  ],
+  "action_items": [
+    "Fix samaj isolation in core.visible_query_docs and can_view: exclude createdBy-owned docs whose samajId != user.activeSamajId when visibility='samaj' (creators should only see their own doc within its samaj context). Apply to albums, posts, events, photos.",
+    "Investigate /photos new-album-btn -> album-dialog open flow in a real browser (Dialog portal may be delayed or an overlay intercepts). Add data-testid on Dialog overlay for testing if needed."
+  ],
+  "critical_code_review_comments": [
+    "core.visible_query_docs: fanning out with createdBy and visibility-in queries and then relying on can_view is correct in spirit but createdBy leaks cross-samaj: creator can see their samaj-only docs from another samaj context. Add filter `d.samajId == u.activeSamajId or d.visibility in ('all_samaj','public') or u.id in d.allowedUserIds` in can_view for creator branch.",
+    "routes_photos._album_visible/_load_album depend entirely on can_view; fixing can_view will implicitly fix single-album 404 requirement.",
+    "routes_booking._hall uses `h.samajId != activeSamajId and not is_samaj_admin(...)` to 404 non-member — correct, matches requirement (member on Samaj B gets 404 on default hall).",
+    "routes_booking.create_booking capacity check uses `int(h.capacity or 0)`; passes required 400 test.",
+    "routes_photos.create_album stores visibility via resolve_visibility (rejects public for members with 403). Verified.",
+    "FCM /api/devices register enforces token length via validator; short token -> 400 verified."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_phase3_photos_hall.py (new)"
+  ],
+  "success_rate": {"backend": "97.5% (39/40 phase-3 tests)", "frontend": "100% route load (0x401 across 10 hard-reloads); phase-3 selectors present"},
+  "test_credentials": "member 9000000002 / OTP 123456; member 9000000003 / OTP 123456; super admin 9925514713 / OTP 123456",
+  "seed_data_creation": "Created ephemeral test data: samaj albums (TEST_samaj_album_p3, TEST_ui_p3_album2), one hall (TEST_p3_hall_role), one booking on hall t1se1JQlx7mNfydoIfyO 2027-03-15 09:00-10:00 (cancelled at end). Test cleanup deletes created halls/albums. One TEST_ui_p3_album2 album may remain from browser flow — safe to delete via /photos UI.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Phase-3 backend + basic UI covered. The only functional bug is samaj isolation in core.py helpers affecting cross-samaj visibility of creator's own docs. When retesting after fix, re-run test_phase3_photos_hall.py::TestAlbumsAndPhotos::test_samaj_b_isolation_get_404_and_upload_403 and add a similar check for /api/posts and /api/events. For UI album creation flow, if AlbumDialog still fails to open in automation, capture page HTML after click to see if DialogContent is rendered but hidden vs never rendered.",
+  "rca of the issue": "Samaj isolation leak: /app/backend/core.py `visible_query_docs` queries `createdBy == u.id` returning all creator-owned docs across samajs; and `can_view` returns True when `doc.createdBy == u.id` before checking samaj membership. Result: with activeSamajId=Samaj B, user still sees their default-samaj samaj-visibility album (list + single GET 200). Repro: (1) activate default, POST /albums {visibility:samaj}; (2) POST /samaj/{SAMAJ_B}/activate; (3) GET /albums -> album present; GET /albums/{id} -> 200. Fix: in can_view creator branch require `doc.samajId == u.activeSamajId or doc.visibility in ('all_samaj','public') or u.id in doc.allowedUserIds`. Also drop `createdBy` fan-out in visible_query_docs OR post-filter by samaj/visibility."
+}

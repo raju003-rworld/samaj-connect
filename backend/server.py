@@ -20,6 +20,8 @@ from routes_social import router as social_router
 from routes_chat import router as chat_router
 from routes_live import router as live_router
 from routes_admin import router as admin_router
+from routes_photos import router as photos_router
+from routes_booking import router as booking_router
 
 logging.basicConfig(level=logging.INFO)
 app = FastAPI(title="Samaj Connect API")
@@ -37,6 +39,7 @@ class UserOut(BaseModel):
     district: Optional[str] = ""
     bio: Optional[str] = ""
     samajIds: List[str] = []
+    samajRoles: dict = {}
     activeSamajId: Optional[str] = None
     followersCount: int = 0
     followingCount: int = 0
@@ -342,6 +345,8 @@ api.include_router(social_router)
 api.include_router(chat_router)
 api.include_router(live_router)
 api.include_router(admin_router)
+api.include_router(photos_router)
+api.include_router(booking_router)
 app.include_router(api)
 
 app.add_middleware(

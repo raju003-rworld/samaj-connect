@@ -27,7 +27,9 @@ def stats(samajId: Optional[str] = None, admin=Depends(require_moderator)):
     return {"members": cnt("persons", lambda d: d.get("isActive", True)), "users": cnt("users") if sid is None else sum(1 for u in stream(db.collection("users").where("samajIds", "array_contains", sid).limit(2000))),
             "posts": cnt("posts", lambda d: d.get("status", "active") == "active"), "events": cnt("events"),
             "comments": cnt("comments"), "live": cnt("liveSessions"), "openReports": cnt("reports", lambda d: d.get("status") == "open"),
-            "pendingPosts": cnt("posts", lambda d: not d.get("approved", True) and d.get("status") == "active")}
+            "pendingPosts": cnt("posts", lambda d: not d.get("approved", True) and d.get("status") == "active"),
+            "pendingAlbums": cnt("albums", lambda d: not d.get("approved", True) and d.get("status") == "active"),
+            "pendingBookings": cnt("bookings", lambda d: d.get("status") == "pending"), "albums": cnt("albums", lambda d: d.get("status") == "active")}
 
 
 @router.get("/members")
@@ -53,20 +55,30 @@ def users(q: Optional[str] = None, samajId: Optional[str] = None, admin=Depends(
     sid = _scope(admin, samajId)
     ql = (q or "").lower()
     items = [u for u in stream(db.collection("users").limit(2000)) if (sid is None or sid in u.get("samajIds", [])) and (not ql or ql in u.get("name", "").lower() or ql in u.get("phone", ""))]
-    return {"items": [{k: u.get(k) for k in ("id", "name", "phone", "role", "profilePhoto", "isSuspended", "activeSamajId", "samajIds", "createdAt")} for u in items[:500]]}
+    return {"items": [{k: u.get(k) for k in ("id", "name", "phone", "role", "profilePhoto", "isSuspended", "activeSamajId", "samajIds", "samajRoles", "createdAt")} for u in items[:500]]}
 
 
 @router.patch("/users/{uid}/role")
 def set_role(uid: str, body: dict, admin=Depends(require_admin)):
+    """Samaj-specific role: sets users.samajRoles[samajId]. super_admin is global and only settable by a super admin."""
     role = body.get("role")
     if role not in ROLES:
         raise HTTPException(status_code=400, detail="Invalid role")
-    if role == "super_admin" and not is_super(admin):
-        raise HTTPException(status_code=403, detail="Super admin only")
     target = get_doc("users", uid)
-    if not target or not is_samaj_admin(admin, target.get("activeSamajId")):
-        raise HTTPException(status_code=403, detail="Not allowed")
-    db.collection("users").document(uid).update({"role": role})
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    if role == "super_admin":
+        if not is_super(admin):
+            raise HTTPException(status_code=403, detail="Super admin only")
+        db.collection("users").document(uid).update({"role": "super_admin"})
+        return {"ok": True}
+    sid = body.get("samajId") or admin.get("activeSamajId") or DEFAULT_SAMAJ_ID
+    if not is_samaj_admin(admin, sid) or sid not in target.get("samajIds", []):
+        raise HTTPException(status_code=403, detail="Not allowed for this Samaj")
+    upd = {f"samajRoles.{sid}": role}
+    if target.get("role") == "super_admin" and is_super(admin) and uid != admin["id"]:
+        upd["role"] = "member"
+    db.collection("users").document(uid).update(upd)
     return {"ok": True}
 
 
@@ -172,6 +184,34 @@ def update_settings(body: dict, admin=Depends(get_current_user)):
         raise HTTPException(status_code=403, detail="Super admin only")
     db.collection("settings").document("global").set({"publicAccessEnabled": bool(body.get("publicAccessEnabled", False))}, merge=True)
     return get_doc("settings", "global")
+
+
+@router.get("/albums")
+def mod_albums(status: str = "pending", samajId: Optional[str] = None, admin=Depends(require_moderator)):
+    sid = _scope(admin, samajId)
+    def f(a):
+        if not _in_scope(a, sid): return False
+        if status == "pending": return not a.get("approved", True) and a.get("status") == "active"
+        if status == "removed": return a.get("status") == "removed"
+        return a.get("status") == "active"
+    items = [a for a in stream(db.collection("albums").limit(1000)) if f(a)]
+    items.sort(key=lambda x: x.get("createdAt", ""), reverse=True)
+    return {"items": items}
+
+
+@router.post("/albums/{aid}/moderate")
+def moderate_album(aid: str, body: dict, admin=Depends(require_moderator)):
+    a = get_doc("albums", aid)
+    if not a or not can_moderate(admin, a.get("samajId")):
+        raise HTTPException(status_code=404, detail="Not found")
+    action = body.get("action")
+    upd = {"approve": {"approved": True, "status": "active"}, "reject": {"approved": False, "status": "removed"}, "delete": {"status": "removed"}, "restore": {"status": "active"}}.get(action)
+    if not upd:
+        raise HTTPException(status_code=400, detail="Invalid action")
+    db.collection("albums").document(aid).update({**upd, "updatedAt": now_iso(), "moderatedBy": admin["id"]})
+    if action in ("approve", "reject"):
+        notify(a["createdBy"], f"album_{action}", f"તમારું આલ્બમ '{a.get('title')}' {'મંજૂર' if action == 'approve' else 'નામંજૂર'} થયું", "", {"albumId": aid}, a.get("samajId"), admin["id"])
+    return get_doc("albums", aid)
 
 
 @router.get("/live")

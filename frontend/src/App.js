@@ -21,6 +21,9 @@ import Notifications from "@/pages/Notifications";
 import UserProfile from "@/pages/UserProfile";
 import Search from "@/pages/Search";
 import PublicPost from "@/pages/PublicPost";
+import Photos from "@/pages/Photos";
+import Album from "@/pages/Album";
+import HallBooking from "@/pages/HallBooking";
 
 const Protected = ({ children }) => {
   const { user, booting } = useApp();
@@ -50,6 +53,9 @@ function AppRoutes() {
       <Route path="/users/:uid" element={<Protected><UserProfile /></Protected>} />
       <Route path="/search" element={<Protected><Search /></Protected>} />
       <Route path="/p/:pid" element={<PublicPost />} />
+      <Route path="/photos" element={<Protected><Photos /></Protected>} />
+      <Route path="/photos/:aid" element={<Protected><Album /></Protected>} />
+      <Route path="/hall" element={<Protected><HallBooking /></Protected>} />
       <Route path="/coming-soon" element={<Protected><ComingSoon /></Protected>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

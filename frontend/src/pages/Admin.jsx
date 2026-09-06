@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { useApp } from "@/context/AppContext";
 import { PostsModeration, Reports, UsersAdmin, SamajSettings } from "@/components/admin/Moderation";
+import { BookingsAdmin, AlbumsModeration } from "@/components/admin/BookingsAlbums";
 
 const StatCard = ({ icon: Icon, label, value, color, testId }) => (
   <div data-testid={testId} className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex items-center gap-3">
@@ -44,7 +45,7 @@ export default function Admin() {
     return <div className="text-center text-sm text-slate-500 py-10">Admin only. તમારો role: {user?.role}</div>;
   }
 
-  const tabs = [["members", "Members"], ["posts", t("moderation")], ["reports", `${t("reports")} (${stats.openReports ?? 0})`], ...(isAdmin ? [["users", t("users")], ["samaj", "Samaj"]] : [])];
+  const tabs = [["members", "Members"], ["posts", t("moderation")], ["albums", `${t("albums")} (${stats.pendingAlbums ?? 0})`], ["bookings", `${t("hall_booking")} (${stats.pendingBookings ?? 0})`], ["reports", `${t("reports")} (${stats.openReports ?? 0})`], ...(isAdmin ? [["users", t("users")], ["samaj", "Samaj"]] : [])];
 
   return (
     <div className="space-y-5">
@@ -65,6 +66,8 @@ export default function Admin() {
       </div>
 
       {tab === "posts" && <PostsModeration />}
+      {tab === "albums" && <AlbumsModeration />}
+      {tab === "bookings" && <BookingsAdmin />}
       {tab === "reports" && <Reports />}
       {tab === "users" && <UsersAdmin />}
       {tab === "samaj" && <SamajSettings />}

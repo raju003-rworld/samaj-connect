@@ -397,14 +397,45 @@ def search(q: str = "", user=Depends(get_current_user)):
 # ---------- Reports ----------
 @router.post("/reports")
 def report(r: ReportIn, user=Depends(get_current_user)):
-    if r.targetType not in ("post", "comment", "user", "live", "message", "story"):
+    if r.targetType not in ("post", "comment", "user", "live", "message", "story", "photo", "album"):
         raise HTTPException(status_code=400, detail="Invalid target")
-    target = get_doc({"post": "posts", "comment": "comments", "user": "users", "live": "liveSessions", "story": "stories", "message": "conversations"}[r.targetType], r.targetId) or {}
+    target = get_doc({"post": "posts", "comment": "comments", "user": "users", "live": "liveSessions", "story": "stories", "message": "conversations", "photo": "photos", "album": "albums"}[r.targetType], r.targetId) or {}
     doc = {"targetType": r.targetType, "targetId": r.targetId, "reason": r.reason, "reportedBy": user["id"], "reporterName": user.get("name"),
            "samajId": target.get("samajId") or user.get("activeSamajId"), "status": "open", "createdAt": now_iso()}
     ref = db.collection("reports").document()
     ref.set(doc)
     return {"id": ref.id, **doc}
+
+
+# ---------- Trending hashtags (last 7 days, single-field createdAt index) ----------
+@router.get("/hashtags/trending")
+def trending(limit: int = 10, user=Depends(get_current_user)):
+    from datetime import datetime, timezone, timedelta
+    since = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+    counts: dict = {}
+    for p in stream(db.collection("posts").where("createdAt", ">=", since).limit(500)):
+        if not p.get("hashtags") or not _visible_post(p, user) or not can_view(p, user):
+            continue
+        for h in set(p["hashtags"]):
+            counts[h] = counts.get(h, 0) + 1
+    top = sorted(counts.items(), key=lambda x: -x[1])[:limit]
+    return {"items": [{"tag": k, "count": v} for k, v in top]}
+
+
+# ---------- FCM device tokens ----------
+@router.post("/devices")
+def register_device(body: dict, user=Depends(get_current_user)):
+    tok = str(body.get("token", "")).strip()
+    if len(tok) < 20:
+        raise HTTPException(status_code=400, detail="Invalid token")
+    db.collection("users").document(user["id"]).update({"fcmTokens": ArrayUnion([tok])})
+    return {"ok": True}
+
+
+@router.delete("/devices")
+def unregister_device(body: dict, user=Depends(get_current_user)):
+    db.collection("users").document(user["id"]).update({"fcmTokens": ArrayRemove([str(body.get("token", ""))])})
+    return {"ok": True}
 
 
 # ---------- Notifications ----------

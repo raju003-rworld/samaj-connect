@@ -13,8 +13,9 @@ service cloud.firestore {
     }
 
     // All writes go through the backend (Admin SDK). Clients only get realtime READ access.
+    // users: only own document readable by client (phone/tokens never exposed to other users)
     match /users/{uid} {
-      allow read: if signedIn();
+      allow read: if signedIn() && request.auth.uid == uid;
       allow write: if false;
     }
     match /presence/{uid} {
@@ -56,7 +57,7 @@ service cloud.firestore {
       allow read: if signedIn();
       allow write: if false;
     }
-    // persons, comments, stories, follows, reports, groups, settings: backend only
+    // persons, comments, stories, follows, reports, groups, settings, albums, photos, halls, bookings: backend only
     match /{document=**} {
       allow read, write: if false;
     }

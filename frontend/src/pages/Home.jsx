@@ -30,12 +30,12 @@ export default function Home() {
     { to: "/events", icon: Calendar, bg: "#FEF3C7", ic: "#D97706", label: t("events"), badge: "ઈવેન્ટ્સ", testId: "tile-events" },
     { to: "/messages", icon: MessageCircle, bg: "#DBEAFE", ic: "#2563EB", label: t("messages"), badge: "ચેટ", testId: "tile-messenger" },
     { to: "/live", icon: Radio, bg: "#FFE4E6", ic: "#E11D48", label: t("live"), badge: "Live", testId: "tile-live" },
-    { to: "/coming-soon?m=hall", icon: Building2, bg: "#FEF3C7", ic: "#B45309", label: "હોલ બુકિંગ", badge: "બુક", testId: "tile-hall" },
+    { to: "/hall", icon: Building2, bg: "#FEF3C7", ic: "#B45309", label: "હોલ બુકિંગ", badge: "બુક", testId: "tile-hall" },
     { to: "/coming-soon?m=family", icon: TreeDeciduous, bg: "#DCFCE7", ic: "#16A34A", label: "ફેમિલી ટ્રી", badge: "વૃક્ષ", testId: "tile-family" },
     { to: "/coming-soon?m=maran", icon: HeartHandshake, bg: "#E0F2FE", ic: "#0284C7", label: "મરણ નોંધ", badge: "શ્રદ્ધાંજલિ", testId: "tile-maran" },
     { to: "/coming-soon?m=business", icon: Store, bg: "#FFEDD5", ic: "#EA580C", label: "બિઝનેસ", badge: "ડિરેક્ટરી", testId: "tile-business" },
-    { to: "/coming-soon?m=gallery", icon: Images, bg: "#FCE7F3", ic: "#DB2777", label: "ફોટો ગેલેરી", badge: "યાદો", testId: "tile-gallery" },
-    { to: "/coming-soon?m=cloud", icon: Cloud, bg: "#EEF2FF", ic: "#4F46E5", label: "ક્લાઉડ ફોટોઝ", badge: "સંગ્રહ", testId: "tile-cloud" },
+    { to: "/photos", icon: Images, bg: "#FCE7F3", ic: "#DB2777", label: "ફોટો ગેલેરી", badge: "યાદો", testId: "tile-gallery" },
+    { to: "/photos", icon: Cloud, bg: "#EEF2FF", ic: "#4F46E5", label: "ક્લાઉડ ફોટોઝ", badge: "સંગ્રહ", testId: "tile-cloud" },
     { to: "/profile", icon: UserCircle2, bg: "#F5F3FF", ic: "#5B21B6", label: t("profile"), badge: "મારું", testId: "tile-profile" },
   ];
 

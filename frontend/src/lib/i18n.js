@@ -123,6 +123,13 @@ export const dict = {
     mute: "મ્યૂટ",
     unmute: "અનમ્યૂટ",
     members_count: "સભ્યો",
+    cloud_photos: "ક્લાઉડ ફોટોઝ",
+    new_album: "નવું આલ્બમ",
+    albums: "આલ્બમ",
+    recent_photos: "તાજેતરના ફોટો",
+    upload: "અપલોડ",
+    hall_booking: "હોલ બુકિંગ",
+    my_bookings: "મારી બુકિંગ",
   },
   en: {
     appName: "SAMAJ CONNECT",
@@ -248,6 +255,13 @@ export const dict = {
     mute: "Mute",
     unmute: "Unmute",
     members_count: "members",
+    cloud_photos: "Cloud Photos",
+    new_album: "New Album",
+    albums: "Albums",
+    recent_photos: "Recent Photos",
+    upload: "Upload",
+    hall_booking: "Hall Booking",
+    my_bookings: "My Bookings",
   },
 };
 

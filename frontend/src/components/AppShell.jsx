@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
-import { Home, Users, Plus, Calendar, Menu as MenuIcon, Bell, Languages, LogOut, Newspaper, LayoutDashboard, X, UserCircle2, Radio, MessageCircle, Building2 } from "lucide-react";
+import { Home, Users, Plus, Calendar, Menu as MenuIcon, Bell, Languages, LogOut, Newspaper, LayoutDashboard, X, UserCircle2, Radio, MessageCircle, Building2, Images } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Toaster } from "@/components/ui/sonner";
@@ -32,6 +32,8 @@ const SideMenu = ({ open, onOpenChange }) => {
     { to: "/live", icon: Radio, label: t("live") },
     { to: "/messages", icon: MessageCircle, label: t("messages") },
     { to: "/events", icon: Calendar, label: t("events") },
+    { to: "/photos", icon: Images, label: t("cloud_photos") },
+    { to: "/hall", icon: Building2, label: t("hall_booking") },
     { to: "/profile", icon: UserCircle2, label: t("profile") },
   ];
   if (isMod) {

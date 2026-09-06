@@ -88,7 +88,7 @@ def upsert_user_from_token(decoded: dict) -> dict:
     role = "super_admin" if (total == 0 or (SEED_ADMIN_PHONE and phone == SEED_ADMIN_PHONE)) else "member"
     u = {"phone": phone, "name": decoded.get("name") or f"Member {phone[-4:]}", "role": role,
          "profilePhoto": "", "village": "", "district": "", "bio": "",
-         "samajIds": [DEFAULT_SAMAJ_ID], "activeSamajId": DEFAULT_SAMAJ_ID,
+         "samajIds": [DEFAULT_SAMAJ_ID], "activeSamajId": DEFAULT_SAMAJ_ID, "samajRoles": {DEFAULT_SAMAJ_ID: role}, "fcmTokens": [],
          "followersCount": 0, "followingCount": 0, "blocked": [], "isSuspended": False,
          "createdAt": now_iso()}
     ref.set(u)
@@ -124,16 +124,27 @@ def is_super(u: dict) -> bool:
     return u.get("role") == "super_admin"
 
 
-def is_samaj_admin(u: dict, samaj_id: Optional[str] = None) -> bool:
+def role_in(u: dict, samaj_id: Optional[str] = None) -> str:
+    """Samaj-specific role: users.samajRoles[samajId]; falls back to legacy global `role`."""
     if is_super(u):
-        return True
-    return u.get("role") in ("samaj_admin", "admin") and (samaj_id is None or samaj_id in u.get("samajIds", []))
+        return "super_admin"
+    sid = samaj_id or u.get("activeSamajId") or DEFAULT_SAMAJ_ID
+    if sid not in u.get("samajIds", []):
+        return "none"
+    r = (u.get("samajRoles") or {}).get(sid) or u.get("role") or "member"
+    return "samaj_admin" if r == "admin" else r
+
+
+def is_samaj_admin(u: dict, samaj_id: Optional[str] = None) -> bool:
+    return role_in(u, samaj_id) in ("super_admin", "samaj_admin")
 
 
 def can_moderate(u: dict, samaj_id: Optional[str] = None) -> bool:
-    if is_samaj_admin(u, samaj_id):
-        return True
-    return u.get("role") == "moderator" and (samaj_id is None or samaj_id in u.get("samajIds", []))
+    return role_in(u, samaj_id) in ("super_admin", "samaj_admin", "moderator")
+
+
+def is_event_manager(u: dict, samaj_id: Optional[str] = None) -> bool:
+    return role_in(u, samaj_id) in ("super_admin", "samaj_admin", "event_manager")
 
 
 def require_admin(user=Depends(get_current_user)):
@@ -162,8 +173,11 @@ def can_view(doc: dict, u: Optional[dict]) -> bool:
     v = doc.get("visibility", "samaj")
     if u is None:
         return v == "public" and public_access_enabled()
-    if doc.get("createdBy") == u["id"] or is_super(u):
+    if is_super(u):
         return True
+    if doc.get("createdBy") == u["id"]:
+        # own content: samaj-only content is scoped to the active Samaj context
+        return v != "samaj" or doc.get("samajId", DEFAULT_SAMAJ_ID) == u.get("activeSamajId")
     if v == "private":
         return u["id"] in doc.get("allowedUserIds", []) or can_moderate(u, doc.get("samajId"))
     if v == "samaj":
@@ -191,12 +205,50 @@ def visible_query_docs(col: str, u: dict, extra_filter=None) -> list:
     return out
 
 
+PUSH_TYPES = {"like", "comment", "reply", "share", "follow", "message", "group_added", "live_started", "live_scheduled", "new_event",
+              "announcement", "post_approve", "post_reject", "post_hide", "post_delete", "booking_approved", "booking_rejected",
+              "booking_request", "album_approve", "album_reject", "report_resolved", "report_dismissed"}
+
+
+def send_push(user_id: str, title: str, body: str, data: Optional[dict] = None):
+    """FCM push to all registered device tokens of a user (silently skipped if none). Uses existing Firebase project."""
+    u = get_doc("users", user_id) or {}
+    tokens = [t for t in (u.get("fcmTokens") or []) if t]
+    if not tokens:
+        return
+    try:
+        from firebase_admin import messaging
+        msg = messaging.MulticastMessage(tokens=tokens, notification=messaging.Notification(title=title[:100], body=(body or "")[:200]),
+                                         data={k: str(v) for k, v in (data or {}).items()},
+                                         webpush=messaging.WebpushConfig(fcm_options=messaging.WebpushFCMOptions(link=_deep_link(data))))
+        res = messaging.send_each_for_multicast(msg)
+        dead = [tokens[i] for i, r in enumerate(res.responses) if not r.success and getattr(r.exception, "code", "") in ("NOT_FOUND", "UNREGISTERED", "INVALID_ARGUMENT")]
+        if dead:
+            from google.cloud.firestore_v1 import ArrayRemove
+            db.collection("users").document(user_id).update({"fcmTokens": ArrayRemove(dead)})
+    except Exception as e:  # push is best-effort; in-app notification already stored
+        logging.warning("push failed uid=%s err=%s", user_id, str(e)[:120])
+
+
+def _deep_link(data: Optional[dict]) -> str:
+    d = data or {}
+    if d.get("conversationId"): return f"/messages/{d['conversationId']}"
+    if d.get("liveId"): return f"/live/{d['liveId']}"
+    if d.get("postId"): return f"/social?post={d['postId']}"
+    if d.get("bookingId"): return "/hall"
+    if d.get("albumId"): return f"/photos/{d['albumId']}"
+    if d.get("eventId"): return f"/events?event={d['eventId']}"
+    return "/notifications"
+
+
 def notify(user_id: str, ntype: str, title: str, body: str = "", data: Optional[dict] = None, samaj_id: Optional[str] = None, actor_id: Optional[str] = None):
     if not user_id or user_id == actor_id:
         return
     db.collection("notifications").add({"userId": user_id, "type": ntype, "title": title, "body": body,
                                         "data": data or {}, "samajId": samaj_id, "read": False,
                                         "actorId": actor_id, "createdAt": now_iso()})
+    if ntype in PUSH_TYPES:
+        send_push(user_id, title, body, data)
 
 
 def notify_samaj(samaj_id: Optional[str], ntype: str, title: str, body: str = "", data: Optional[dict] = None, actor_id: Optional[str] = None, all_samaj: bool = False):

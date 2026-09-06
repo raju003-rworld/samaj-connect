@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth, fbSignOut, listenNotifications } from "@/lib/firebase";
+import { auth, fbSignOut, listenNotifications, setupPush } from "@/lib/firebase";
+import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { t as translate } from "@/lib/i18n";
 
@@ -35,6 +36,10 @@ export const AppProvider = ({ children }) => {
     api.get("/samaj").then(({ data }) => setSamajList(data.items)).catch(() => {});
     api.post("/presence", { online: true }).catch(() => {});
     const unsub = listenNotifications(user.id, (items) => setUnread(items.filter((n) => !n.read).length));
+    setupPush((token) => api.post("/devices", { token }), (payload) => {
+      const n = payload?.notification || {};
+      if (n.title) toast(n.title, { description: n.body });
+    });
     const bye = () => api.post("/presence", { online: false }).catch(() => {});
     window.addEventListener("beforeunload", bye);
     return () => { unsub(); window.removeEventListener("beforeunload", bye); };

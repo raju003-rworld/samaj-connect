@@ -73,7 +73,7 @@ export function UsersAdmin() {
   const [q, setQ] = useState("");
   const load = () => api.get("/admin/users", { params: q ? { q } : {} }).then(({ data }) => setItems(data.items));
   useEffect(() => { load(); }, []);
-  const setRole = async (u, role) => { try { await api.patch(`/admin/users/${u.id}/role`, { role }); load(); } catch (e) { toast.error(e?.response?.data?.detail || "Error"); } };
+  const setRole = async (u, role) => { try { await api.patch(`/admin/users/${u.id}/role`, { role, samajId: user.activeSamajId }); load(); } catch (e) { toast.error(e?.response?.data?.detail || "Error"); } };
   const suspend = async (u) => { try { await api.patch(`/admin/users/${u.id}/suspend`); load(); } catch (e) { toast.error(e?.response?.data?.detail || "Error"); } };
   return (
     <div className="bg-white rounded-3xl border border-slate-100 p-3 space-y-2">
@@ -82,7 +82,7 @@ export function UsersAdmin() {
         <div key={u.id} data-testid={`admin-user-${u.id}`} className="flex items-center gap-3 py-2 border-b border-slate-100 last:border-none">
           <div className="w-9 h-9 rounded-full bg-purple-100 text-purple-800 grid place-items-center font-bold overflow-hidden shrink-0">{u.profilePhoto ? <img src={u.profilePhoto} alt="" className="w-full h-full object-cover" /> : (u.name?.[0] || "?").toUpperCase()}</div>
           <div className="flex-1 min-w-0"><div className="text-sm font-medium text-slate-800 truncate">{u.name} {u.isSuspended && <span className="text-[10px] text-rose-600 font-bold">SUSPENDED</span>}</div><div className="text-[11px] text-slate-500">{u.phone}</div></div>
-          <select data-testid={`admin-role-${u.id}`} value={u.role} disabled={u.id === user.id} onChange={(e) => setRole(u, e.target.value)} className="text-xs border border-slate-200 rounded-full px-2 py-1 bg-slate-50">{ROLES.map((r) => <option key={r} value={r} disabled={r === "super_admin" && user.role !== "super_admin"}>{r}</option>)}</select>
+          <select data-testid={`admin-role-${u.id}`} value={(u.role === "super_admin" ? "super_admin" : (u.samajRoles || {})[user.activeSamajId] || u.role)} disabled={u.id === user.id} onChange={(e) => setRole(u, e.target.value)} className="text-xs border border-slate-200 rounded-full px-2 py-1 bg-slate-50" title="Role in active Samaj">{ROLES.map((r) => <option key={r} value={r} disabled={r === "super_admin" && user.role !== "super_admin"}>{r}</option>)}</select>
           {u.id !== user.id && <button data-testid={`admin-suspend-${u.id}`} onClick={() => suspend(u)} className={`p-1.5 rounded-full ${u.isSuspended ? "text-emerald-600 bg-emerald-50" : "text-rose-600 bg-rose-50"}`}>{u.isSuspended ? <ShieldCheck className="w-4 h-4" /> : <Ban className="w-4 h-4" />}</button>}
         </div>
       ))}

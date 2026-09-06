@@ -79,3 +79,22 @@ export const listenLiveChat = (lid, cb) =>
     (snap) => cb(snap.docs.map(withId).filter((m) => !m.hidden)), (e) => console.warn(e.message));
 export const listenPresence = (uid, cb) =>
   onSnapshot(doc(fdb, "presence", uid), (s) => cb(s.exists() ? s.data() : null), () => {});
+
+// ---- FCM push (requires REACT_APP_FIREBASE_VAPID_KEY; silently skipped otherwise) ----
+export const setupPush = async (registerToken, onForeground) => {
+  const vapidKey = process.env.REACT_APP_FIREBASE_VAPID_KEY;
+  if (!vapidKey || typeof window === "undefined" || !("serviceWorker" in navigator) || !("Notification" in window)) return null;
+  try {
+    const { getMessaging, getToken, onMessage, isSupported } = await import("firebase/messaging");
+    if (!(await isSupported())) return null;
+    if (Notification.permission === "default") await Notification.requestPermission();
+    if (Notification.permission !== "granted") return null;
+    const qs = new URLSearchParams(cfg).toString();
+    const reg = await navigator.serviceWorker.register(`/firebase-messaging-sw.js?${qs}`);
+    const messaging = getMessaging(fbApp);
+    const token = await getToken(messaging, { vapidKey, serviceWorkerRegistration: reg });
+    if (token) await registerToken(token);
+    onMessage(messaging, (payload) => onForeground?.(payload));
+    return token;
+  } catch (e) { console.warn("push setup skipped:", e.message); return null; }
+};

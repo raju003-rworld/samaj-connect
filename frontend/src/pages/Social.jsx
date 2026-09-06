@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { Search as SearchIcon, Film, Bookmark, LayoutGrid, MapPin, Calendar, X, Loader2 } from "lucide-react";
+import { Search as SearchIcon, Film, Bookmark, LayoutGrid, MapPin, Calendar, X, Loader2, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { useApp } from "@/context/AppContext";
@@ -80,6 +80,19 @@ function Composer({ onCreated }) {
 
 const PAGE = 10;
 
+function Trending() {
+  const nav = useNavigate();
+  const [tags, setTags] = useState([]);
+  useEffect(() => { api.get("/hashtags/trending").then(({ data }) => setTags(data.items)).catch(() => {}); }, []);
+  if (!tags.length) return null;
+  return (
+    <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 items-center" data-testid="trending-hashtags">
+      <span className="text-[11px] font-bold text-slate-500 shrink-0 flex items-center gap-1"><TrendingUp className="w-3.5 h-3.5 text-purple-700" /> ટ્રેન્ડિંગ</span>
+      {tags.map((h) => <button key={h.tag} data-testid={`trending-${h.tag}`} onClick={() => nav(`/search?q=${encodeURIComponent("#" + h.tag)}`)} className="shrink-0 text-xs font-semibold bg-white border border-purple-200 text-purple-800 px-3 py-1 rounded-full hover:bg-purple-50">#{h.tag} <span className="text-slate-400">{h.count}</span></button>)}
+    </div>
+  );
+}
+
 export default function Social() {
   const { t } = useApp();
   const nav = useNavigate();
@@ -149,6 +162,7 @@ export default function Social() {
       )}
 
       <Stories />
+      <Trending />
       <Composer onCreated={onCreated} />
 
       <div className="bg-white border border-slate-100 rounded-2xl p-1 shadow-sm inline-flex">

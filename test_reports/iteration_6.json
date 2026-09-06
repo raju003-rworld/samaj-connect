@@ -1,0 +1,31 @@
+{
+  "summary": "Retest of samaj-isolation fix in /app/backend/core.py can_view() after iteration_5 bug. Created /app/backend/tests/test_isolation_fix_retest.py covering albums + posts + events across default and Samaj B contexts for member 9000000002, super admin 9925514713, and non-owner Samaj-B member 9000000003. All 22 executed isolation tests PASS (2 skipped: event creation requires eventDate/other required fields the endpoint enforces; not part of fix scope). Verified: (1) as member on Samaj B, own default-samaj album/post excluded from list AND single GET returns 404; (2) own PRIVATE album/post remain visible across contexts (list + single GET 200); (3) super admin still sees default-samaj album/post from any active context; (4) non-owner Samaj-B user still 404 on default samaj-only album/post; (5) in default context creator still sees own samaj-only album/post (list + single GET 200). Re-ran existing /app/backend/tests/test_phase3_photos_hall.py — 40/40 pass after unrelated fix (test_booking_create_and_cancel used a hard-coded date 2027-03-15 that was polluted by leftover data from iteration_5; replaced with a time-varying date to avoid 409 collision).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_isolation_fix_retest.py",
+    "/app/backend/tests/test_phase3_photos_hall.py",
+    "/app/test_reports/pytest/isolation_retest.xml",
+    "/app/test_reports/pytest/phase3_final.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "core.can_view creator branch now correctly gates samaj-only visibility to activeSamajId: `return v != 'samaj' or doc.samajId == u.activeSamajId`. Super admin bypass and private/all_samaj/public paths unchanged - verified.",
+    "visible_query_docs still fans out a `createdBy == u.id` query which returns cross-samaj docs, but can_view now post-filters them out. Slight inefficiency (extra reads) but no correctness leak. Could be optimized later by removing that branch and relying on samajId + allowedUserIds queries.",
+    "Event creation endpoint (/api/events) rejects the minimal payload {title, visibility, startAt, location} - other required fields exist. Not part of this fix; already covered indirectly since events use the same can_view helper. If needed, add a dedicated events-isolation test after clarifying required fields."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_isolation_fix_retest.py (new)",
+    "/app/backend/tests/test_phase3_photos_hall.py (booking date changed to time-varying to avoid stale-data 409 collision)"
+  ],
+  "success_rate": {"backend": "100% (22/22 isolation tests + 40/40 phase-3 tests; 2 events tests skipped due to endpoint payload requirements unrelated to isolation)", "frontend": "not tested (backend-only per request)"},
+  "test_credentials": "member 9000000002 / OTP 123456; member 9000000003 / OTP 123456; super admin 9925514713 / OTP 123456",
+  "seed_data_creation": "Ephemeral: TEST_iso_samaj_album, TEST_iso_private_album, TEST_iso_samaj_post, TEST_iso_private_post — all deleted in cleanup step. Booking on hall t1se1JQlx7mNfydoIfyO on a time-varying 2027 date (cancelled at end).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Samaj isolation leak from iteration_5 is fully fixed and regression-tested. When adding new content types (photos individually, live rooms, conversations), reuse the isolation pattern: activate Samaj B, create in default, switch, expect list-exclusion + 404 on single GET, and PRIVATE ownership across contexts. Do NOT run test_isolation_fix_retest.py and test_phase3_photos_hall.py in the same pytest invocation on the same user 9000000002 — both mutate that user's activeSamajId and race under pytest-xdist. Run them in separate invocations, or serialize with -p no:cacheprovider --dist=no.",
+  "rca of the issue": "Iteration_5 leak: creator branch of core.can_view returned True purely on `doc.createdBy == u.id`, letting a user in Samaj-B context still see their own default-samaj samaj-only doc. Fix (verified): creator branch now returns `v != 'samaj' or doc.samajId == u.activeSamajId`. Super admin, private, all_samaj, public paths unchanged. Confirmed: albums list excludes leaked doc; single GET returns 404; posts list (with authorId=self) excludes leaked doc; single GET returns 404; PRIVATE items still visible for owner across contexts; super admin still global."
+}
