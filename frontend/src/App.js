@@ -20,6 +20,7 @@ import LiveRoom from "@/pages/LiveRoom";
 import Notifications from "@/pages/Notifications";
 import UserProfile from "@/pages/UserProfile";
 import Search from "@/pages/Search";
+import PublicPost from "@/pages/PublicPost";
 
 const Protected = ({ children }) => {
   const { user, booting } = useApp();
@@ -48,6 +49,7 @@ function AppRoutes() {
       <Route path="/notifications" element={<Protected><Notifications /></Protected>} />
       <Route path="/users/:uid" element={<Protected><UserProfile /></Protected>} />
       <Route path="/search" element={<Protected><Search /></Protected>} />
+      <Route path="/p/:pid" element={<PublicPost />} />
       <Route path="/coming-soon" element={<Protected><ComingSoon /></Protected>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

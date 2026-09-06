@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Calendar, MapPin, Clock, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
@@ -21,6 +22,15 @@ export default function Events() {
   const [open, setOpen] = useState(false);
   const [f, setF] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
+
+  const [params] = useSearchParams();
+  const focusEvent = params.get("event");
+  useEffect(() => {
+    if (!focusEvent || !items.length) return;
+    const el = document.querySelector(`[data-testid="event-card-${focusEvent}"]`);
+    if (el) { el.scrollIntoView({ behavior: "smooth", block: "center" }); el.classList.add("ring-2", "ring-purple-500"); }
+    else api.get(`/events/${focusEvent}`).then(({ data }) => setItems((x) => x.some((e) => e.id === data.id) ? x : [data, ...x])).catch(() => {});
+  }, [focusEvent, items.length]);
 
   const load = async () => {
     const { data } = await api.get("/events", { params: { filter: tab } });

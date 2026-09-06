@@ -321,6 +321,18 @@ def public_feed(user=Depends(optional_user)):
     return {"posts": posts, "events": events}
 
 
+@api.get("/public/posts/{pid}")
+def public_post(pid: str):
+    """Public share target: only PUBLIC posts and only when public access is enabled."""
+    if not public_access_enabled():
+        raise HTTPException(status_code=403, detail="Public access disabled")
+    p = get_doc("posts", pid)
+    if not p or p.get("visibility") != "public" or p.get("status") != "active" or not p.get("approved", True):
+        raise HTTPException(status_code=404, detail="Post not found")
+    keys = ("id", "caption", "mediaUrls", "media", "mediaType", "authorName", "authorPhoto", "createdAt", "likesCount", "commentsCount", "sharesCount", "hashtags", "event", "location")
+    return {k: p.get(k) for k in keys}
+
+
 @api.get("/")
 def root():
     return {"app": "Samaj Connect", "status": "ok", "backend": "firebase"}

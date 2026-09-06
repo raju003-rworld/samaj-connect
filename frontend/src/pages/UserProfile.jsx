@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { MessageCircle, UserPlus, UserCheck, Ban } from "lucide-react";
+import { MessageCircle, UserPlus, UserCheck, Ban, Flag } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { useApp } from "@/context/AppContext";
@@ -22,6 +22,7 @@ export default function UserProfile() {
   const follow = async () => { const { data } = await api.post(`/users/${uid}/follow`); setU({ ...u, followedByMe: data.following, followersCount: u.followersCount + (data.following ? 1 : -1) }); };
   const chat = async () => { const { data } = await api.post("/conversations/direct", { userId: uid }); nav(`/messages/${data.id}`); };
   const block = async () => { const { data } = await api.post(`/users/${uid}/block`); setU({ ...u, blockedByMe: data.blocked }); toast.success(data.blocked ? "બ્લોક થયું" : "અનબ્લોક થયું"); };
+  const reportUser = async () => { const r = window.prompt("રિપોર્ટનું કારણ:"); if (!r) return; await api.post("/reports", { targetType: "user", targetId: uid, reason: r }); toast.success("રિપોર્ટ મોકલાયો"); };
 
   if (!u) return <div className="skeleton h-40" />;
   const mine = uid === user?.id;
@@ -42,6 +43,7 @@ export default function UserProfile() {
               </button>
               <button data-testid="message-btn" onClick={chat} className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full border border-purple-300 text-purple-800"><MessageCircle className="w-3.5 h-3.5" /> {t("messages")}</button>
               <button data-testid="block-btn" onClick={block} className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full border border-slate-200 text-slate-600"><Ban className="w-3.5 h-3.5" /> {u.blockedByMe ? t("unblock") : t("block")}</button>
+              <button data-testid="report-user-btn" onClick={reportUser} className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full border border-slate-200 text-slate-600"><Flag className="w-3.5 h-3.5" /> {t("report")}</button>
             </div>
           )}
         </div>

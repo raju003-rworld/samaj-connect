@@ -26,11 +26,29 @@ export const signInCustom = (token) => signInWithCustomToken(auth, token);
 export const fbSignOut = () => signOut(auth);
 export const getIdToken = async () => (auth.currentUser ? auth.currentUser.getIdToken() : null);
 
+// Downscale large images client-side (max 1600px, JPEG 0.85) for faster upload/loading
+const compressImage = (file) => new Promise((resolve) => {
+  if (!file.type.startsWith("image/") || file.type === "image/gif" || file.size < 400 * 1024) return resolve(file);
+  const img = new Image();
+  const url = URL.createObjectURL(file);
+  img.onload = () => {
+    const scale = Math.min(1, 1600 / Math.max(img.width, img.height));
+    if (scale === 1) { URL.revokeObjectURL(url); return resolve(file); }
+    const c = document.createElement("canvas");
+    c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+    c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+    c.toBlob((b) => { URL.revokeObjectURL(url); resolve(b ? new File([b], file.name.replace(/\.\w+$/, ".jpg"), { type: "image/jpeg" }) : file); }, "image/jpeg", 0.85);
+  };
+  img.onerror = () => resolve(file);
+  img.src = url;
+});
+
 // Upload to Storage under uploads/{uid}/{kind}/ — returns download URL
-export const uploadFile = (file, kind = "media", onProgress) =>
-  new Promise((resolve, reject) => {
-    const uid = auth.currentUser?.uid;
-    if (!uid) return reject(new Error("Not signed in"));
+export const uploadFile = async (rawFile, kind = "media", onProgress) => {
+  const uid = auth.currentUser?.uid;
+  if (!uid) throw new Error("Not signed in");
+  const file = await compressImage(rawFile);
+  return new Promise((resolve, reject) => {
     const safe = file.name.replace(/[^\w.\-]/g, "_");
     const r = ref(storage, `uploads/${uid}/${kind}/${Date.now()}_${safe}`);
     const task = uploadBytesResumable(r, file, { contentType: file.type });
@@ -39,6 +57,7 @@ export const uploadFile = (file, kind = "media", onProgress) =>
       reject,
       async () => resolve(await getDownloadURL(task.snapshot.ref)));
   });
+};
 
 // Realtime helpers (reads are guarded by Firestore rules; writes go via backend API)
 const withId = (s) => ({ id: s.id, ...s.data() });

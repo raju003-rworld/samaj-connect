@@ -133,7 +133,7 @@ class TestSamajIsolation:
             if act.status_code != 200:
                 pytest.skip(f"Member is not in Samaj B: {act.status_code} {act.text}")
 
-            feed = requests.get(f"{API}/posts?limit=100", headers=H(member_token), timeout=15)
+            feed = requests.get(f"{API}/posts?limit=50", headers=H(member_token), timeout=15)
             assert feed.status_code == 200
             captions = [p.get("caption") for p in feed.json().get("items", [])]
             assert default_caption not in captions, "Samaj-only post leaked cross-samaj"

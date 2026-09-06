@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { toast } from "sonner";
+import { Calendar } from "lucide-react";
 import { api } from "@/lib/api";
 import { useApp } from "@/context/AppContext";
 import { PostCard } from "@/components/social/PostCard";
@@ -10,7 +9,7 @@ export default function Search() {
   const { t } = useApp();
   const q0 = new URLSearchParams(window.location.search).get("q") || "";
   const [q, setQ] = useState(q0);
-  const [res, setRes] = useState({ posts: [], hashtags: [], users: [] });
+  const [res, setRes] = useState({ posts: [], hashtags: [], users: [], events: [] });
   const run = async (query) => { if (!query.trim()) return; const { data } = await api.get("/search", { params: { q: query } }); setRes(data); };
   useEffect(() => { run(q0); }, [q0]);
   return (
@@ -25,6 +24,14 @@ export default function Search() {
           {res.users.map((u) => <Link key={u.id} to={`/users/${u.id}`} data-testid={`user-result-${u.id}`} className="flex items-center gap-3 hover:bg-slate-50 rounded-xl p-2">
             <div className="w-9 h-9 rounded-full bg-purple-100 grid place-items-center font-bold text-purple-800 overflow-hidden">{u.profilePhoto ? <img src={u.profilePhoto} alt="" className="w-full h-full object-cover" /> : u.name?.[0]}</div>
             <div><div className="text-sm font-semibold">{u.name}</div><div className="text-[11px] text-slate-500">{u.followersCount} {t("followers")}</div></div>
+          </Link>)}
+        </div>
+      )}
+      {res.events?.length > 0 && (
+        <div className="bg-white rounded-2xl border border-slate-100 p-3 grid gap-2">
+          {res.events.map((e) => <Link key={e.id} to={`/events?event=${e.id}`} data-testid={`event-result-${e.id}`} className="flex items-center gap-3 hover:bg-slate-50 rounded-xl p-2">
+            <div className="w-9 h-9 rounded-xl bg-indigo-50 grid place-items-center text-indigo-700"><Calendar className="w-4 h-4" /></div>
+            <div><div className="text-sm font-semibold">{e.title}</div><div className="text-[11px] text-slate-500">{e.date}{e.location ? ` · ${e.location}` : ""}</div></div>
           </Link>)}
         </div>
       )}

@@ -63,3 +63,10 @@ P1: Hall booking, Photo gallery albums, Family tree, FCM push. P2: Death records
 ### Bug fix (June 2026): global 401 on protected modules
 - Root cause: axios interceptor read `auth.currentUser` before Firebase restored the session on page load/hard refresh → requests sent without Authorization header (backend log: `401 no-bearer-header`).
 - Fix: `frontend/src/lib/api.js` awaits `auth.authStateReady()` before attaching ID token; retries once with force-refreshed token on 401. `backend/core.py` logs 401 reason + 60s clock skew. Auth still enforced (no token → 401). Verified: test_reports/iteration_3.json.
+
+### Phase 2b — Professional Social Media (June 2026) — tested: test_reports/iteration_4.json (all pass, 0×401)
+- Posts: event attachment (`eventId` + embedded `event` snapshot → `/events?event=id` highlight), optional `location`, `media[]` {url,type}, `viewsCount` (POST /posts/{id}/view on 60% visibility, non-author), `authorRole` badge.
+- Feed: cursor pagination `GET /posts?limit=10&before=<createdAt>` → `nextCursor`; infinite scroll via IntersectionObserver; deep link `/social?post=id`.
+- Share: `POST /posts/{id}/repost` (own samaj; other samaj admins only; private never; samaj-only never public) → post `mediaType=share` with `sharedFrom`; native/copy link; public landing `/p/:pid` → `GET /public/posts/{id}` (public + publicAccessEnabled only).
+- Reports: post/comment/user; moderation + report resolution send notifications (post_approve/reject/hide/unhide/delete, report_resolved/dismissed).
+- Search returns people/posts/hashtags/events. Client-side image compression (≤1600px JPEG) in uploadFile.

@@ -217,4 +217,4 @@ def notify_samaj(samaj_id: Optional[str], ntype: str, title: str, body: str = ""
 
 
 def author_fields(u: dict) -> dict:
-    return {"createdBy": u["id"], "authorId": u["id"], "authorName": u.get("name", ""), "authorPhoto": u.get("profilePhoto", "")}
+    return {"createdBy": u["id"], "authorId": u["id"], "authorName": u.get("name", ""), "authorPhoto": u.get("profilePhoto", ""), "authorRole": u.get("role", "member")}

@@ -1,0 +1,37 @@
+{
+  "summary": "Phase-2 Social upgrade end-to-end verification (backend + frontend). Backend: added /app/backend/tests/test_phase2_social.py with 13 tests covering (a) create post with eventId+location+#hashtag (hashtags extracted, event snapshot embedded, location persisted), (b) create post with invalid eventId -> 404, (c) cursor pagination via ?before=nextCursor with limit=10, no duplicates across pages, (d) view count only increments for non-author, (e) repost 403 rules: samaj-only cross-samaj by non-admin -> 403, private post repost -> 403, own-samaj repost -> 200 with sharedFrom, (f) report comment -> 200 open, (g) /api/search returns events, (h) /api/public/posts/{pid} 403 when public disabled, 200 when enabled for public post, 404 for samaj-only post; public toggle restored to disabled, (i) admin moderate 'hide' -> author receives post_hide notification, admin resolve report -> reporter receives report_resolved notification. All 13 pass. Also re-ran prior backend_test.py (13 tests): fixed one pre-existing test-side bug (limit=100 hit new le=50 validation on /api/posts) -> now all 13 pass too. Frontend: hard-reloaded /members /events /social /profile /messages /live /notifications as member 9000000002 and /admin as super admin 9925514713 -> ZERO 401s per route for BOTH roles. Social flow verified in UI: post-composer & social-feed render; created post with #uitest + location + attached event; hashtag-link, post-event-{id} card, event-card, and location chip appear; feed-sentinel triggers infinite scroll (10 -> 20 posts loaded); share-dialog opens with share-native + share-repost buttons; like toggle works; existing post shows post-views-{id}=1 confirming views increment. Admin dashboard renders admin-tab-posts/reports/samaj and toggle-public-access.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Admin Dashboard stat cards", "issues": ["Stat cards show placeholder '—' after fresh hard-reload; values populate only after a moment. Likely lazy /admin/stats fetch; no error but UX shows dashes briefly. Minor."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_phase2_social.py",
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/phase2_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "routes_social.list_posts nextCursor logic uses `len(page)==limit and len(items) > skip+limit` — correct, and pagination verified against duplicates.",
+    "routes_social.repost correctly blocks private posts (403), cross-samaj samaj-only by non-admin (403), and blocks samaj->public/all_samaj upgrade — all three enforced.",
+    "server.public_post filters visibility=='public' AND status=='active' AND approved — correct; also gated by publicAccessEnabled flag.",
+    "view_post correctly excludes author self-view from increment.",
+    "routes_admin.moderate_post and resolve_report both fire notify() to author/reporter — verified via /api/notifications.",
+    "Search endpoint returns events keyed by title/location contains — works. Consider case-insensitive search on event.date as well if user types year (not critical).",
+    "Prior regression: /api/posts had limit le=50 validator but old test used limit=100 -> 422. Fixed test to use limit=50. If clients pass limit>50, they get 422 without a helpful message; consider clamping instead of rejecting or documenting."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_phase2_social.py (new)",
+    "/app/backend/tests/backend_test.py (limit=100 -> 50 in samaj isolation test)"
+  ],
+  "success_rate": {"backend": "100% (26/26 tests, 13 new phase-2 + 13 regression)", "frontend": "100% (all phase-2 UI selectors present and interactive, 0 x 401 on hard-reload for both roles)"},
+  "test_credentials": "member 9000000002 / OTP 123456; member 9000000003 / OTP 123456; super admin 9925514713 / OTP 123456",
+  "seed_data_creation": "Test data created via tests is cleaned up in teardown (posts, events, reports). One UI-created post 'TEST_ui_phase2 #uitest' remains from the browser flow; safe to delete via admin.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Phase-2 (event attach, location, view count, cursor infinite scroll, share dialog with repost & native, public post endpoint, comment/user report, moderation notifications, admin toggle-public-access) is fully verified backend + UI. 0 x 401 regressions on hard-reload for both member and super admin. Public access flag was flipped ON and restored to OFF within the public-post test. When authoring further tests, use limit<=50 for /api/posts. Use page.goto with wait_until='domcontentloaded' (NOT 'networkidle') because Firestore keeps WebChannel listeners open and networkidle never resolves.",
+  "rca of the issue": "N/A — no functional bugs found this iteration."
+}

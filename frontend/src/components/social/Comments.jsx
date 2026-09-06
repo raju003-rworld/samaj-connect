@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Send, Trash2, CornerDownRight } from "lucide-react";
+import { Send, Trash2, CornerDownRight, Flag } from "lucide-react";
+import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { useApp } from "@/context/AppContext";
 
 function CommentRow({ c, ctx, depth = 0 }) {
-  const { user, isMod, t, setReplyTo, del } = ctx;
+  const { user, isMod, t, setReplyTo, del, report } = ctx;
   return (
     <div className={depth ? "ml-8" : ""}>
       <div className="flex items-start gap-2" data-testid={`comment-${c.id}`}>
@@ -16,6 +17,7 @@ function CommentRow({ c, ctx, depth = 0 }) {
           <div className="text-sm text-slate-700">{c.content}</div>
           <div className="flex gap-3 mt-1 text-[11px] text-slate-500">
             <button data-testid={`comment-reply-${c.id}`} onClick={() => setReplyTo(c)} className="hover:text-purple-800 flex items-center gap-0.5"><CornerDownRight className="w-3 h-3" /> {t("reply")}</button>
+            {c.authorId !== user?.id && <button data-testid={`comment-report-${c.id}`} onClick={() => report(c)} className="hover:text-amber-600 flex items-center gap-0.5"><Flag className="w-3 h-3" /> {t("report")}</button>}
             {(c.authorId === user?.id || isMod) && <button data-testid={`comment-delete-${c.id}`} onClick={() => del(c)} className="hover:text-rose-600 flex items-center gap-0.5"><Trash2 className="w-3 h-3" /> {t("delete")}</button>}
           </div>
         </div>
@@ -43,8 +45,13 @@ export function Comments({ postId, onCount }) {
     setItems((x) => x.filter((i) => i.id !== c.id)); onCount?.(-1);
   };
 
+  const report = async (c) => {
+    const reason = window.prompt("રિપોર્ટનું કારણ:"); if (!reason) return;
+    await api.post("/reports", { targetType: "comment", targetId: c.id, reason }); toast.success("રિપોર્ટ મોકલાયો");
+  };
+
   const roots = items.filter((c) => !c.parentId);
-  const ctx = { items, user, isMod, t, setReplyTo, del };
+  const ctx = { items, user, isMod, t, setReplyTo, del, report };
 
   return (
     <div className="mt-3 pt-3 border-t border-slate-100 space-y-2">

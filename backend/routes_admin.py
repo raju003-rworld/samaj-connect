@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from typing import Optional
 
 from core import (db, get_current_user, require_admin, require_moderator, is_super, is_samaj_admin, can_moderate,
-                  get_doc, stream, now_iso, ROLES, DEFAULT_SAMAJ_ID)
+                  get_doc, stream, now_iso, notify, ROLES, DEFAULT_SAMAJ_ID)
 
 router = APIRouter(prefix="/admin")
 
@@ -105,6 +105,8 @@ def moderate_post(pid: str, body: dict, admin=Depends(require_moderator)):
         raise HTTPException(status_code=400, detail="Invalid action")
     upd.update({"updatedAt": now_iso(), "moderatedBy": admin["id"]})
     db.collection("posts").document(pid).update(upd)
+    msg = {"approve": "તમારી પોસ્ટ મંજૂર થઈ", "reject": "તમારી પોસ્ટ નામંજૂર થઈ", "hide": "તમારી પોસ્ટ છુપાવાઈ", "unhide": "તમારી પોસ્ટ ફરી દેખાય છે", "delete": "તમારી પોસ્ટ દૂર કરાઈ"}[action]
+    notify(p["createdBy"], f"post_{action}", msg, (p.get("caption") or "")[:80], {"postId": pid}, p.get("samajId"), admin["id"])
     return get_doc("posts", pid)
 
 
@@ -134,6 +136,7 @@ def resolve_report(rid: str, body: dict, admin=Depends(require_moderator)):
     if st not in ("open", "resolved", "dismissed"):
         raise HTTPException(status_code=400, detail="Invalid status")
     db.collection("reports").document(rid).update({"status": st, "resolvedBy": admin["id"], "resolvedAt": now_iso(), "note": body.get("note", "")})
+    notify(r["reportedBy"], "report_" + st, "તમારો રિપોર્ટ " + ("ઉકેલાયો" if st == "resolved" else "નકારાયો" if st == "dismissed" else "ફરી ખોલાયો"), r.get("reason", "")[:80], {}, r.get("samajId"), admin["id"])
     return {"ok": True}
 
 

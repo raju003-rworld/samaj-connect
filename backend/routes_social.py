@@ -6,10 +6,15 @@ from google.cloud.firestore_v1 import ArrayUnion, ArrayRemove, Increment
 import re
 
 from core import (db, get_current_user, can_view, resolve_visibility, visible_query_docs, get_doc, stream,
-                  now_iso, author_fields, notify, notify_samaj, can_moderate, is_samaj_admin, DEFAULT_SAMAJ_ID)
+                  now_iso, author_fields, notify, notify_samaj, can_moderate, is_samaj_admin, is_super, DEFAULT_SAMAJ_ID)
 
 router = APIRouter()
 HASHTAG_RE = re.compile(r"#([\w\u0A80-\u0AFF]+)")
+VIDEO_RE = re.compile(r"\.(mp4|webm|mov|m3u8)(\?|$)|video", re.I)
+
+
+def _is_video(url: str) -> bool:
+    return bool(VIDEO_RE.search(url or ""))
 
 
 class PostIn(BaseModel):
@@ -20,6 +25,14 @@ class PostIn(BaseModel):
     mediaType: str = "image"  # image | video | reel | text
     visibility: Optional[str] = "samaj"
     allowedUserIds: List[str] = []
+    eventId: Optional[str] = None
+    location: str = ""
+
+
+class RepostIn(BaseModel):
+    caption: str = ""
+    samajId: Optional[str] = None
+    visibility: Optional[str] = "samaj"
 
 
 class CommentIn(BaseModel):
@@ -74,14 +87,22 @@ def create_post(p: PostIn, user=Depends(get_current_user)):
     sid = user.get("activeSamajId") or DEFAULT_SAMAJ_ID
     samaj = get_doc("samaj", sid) or {}
     vis = resolve_visibility(user, p.visibility)
+    event = None
+    if p.eventId:
+        ev = get_doc("events", p.eventId)
+        if not ev or not can_view(ev, user):
+            raise HTTPException(status_code=404, detail="Event not found")
+        event = {"id": ev["id"], "title": ev.get("title", ""), "date": ev.get("date", ""), "location": ev.get("location", ""), "eventImage": ev.get("eventImage", "")}
     doc = {
         **author_fields(user),
         "samajId": sid, "caption": caption, "content": caption, "mediaUrls": media, "imageUrls": media,
+        "media": [{"url": u, "type": "video" if _is_video(u) else "image"} for u in media],
         "mediaType": p.mediaType if media else "text", "hashtags": [h.lower() for h in HASHTAG_RE.findall(caption)],
         "visibility": vis, "allowedUserIds": p.allowedUserIds if vis == "private" else [],
+        "eventId": p.eventId, "event": event, "location": p.location[:120],
         "createdAt": now_iso(), "updatedAt": now_iso(), "status": "active",
         "approved": not samaj.get("requirePostApproval", False) or is_samaj_admin(user, sid),
-        "likesCount": 0, "commentsCount": 0, "sharesCount": 0, "likedBy": [], "savedBy": [], "isActive": True,
+        "likesCount": 0, "commentsCount": 0, "sharesCount": 0, "viewsCount": 0, "likedBy": [], "savedBy": [], "isActive": True,
     }
     ref = db.collection("posts").document()
     ref.set(doc)
@@ -91,11 +112,12 @@ def create_post(p: PostIn, user=Depends(get_current_user)):
 
 
 @router.get("/posts")
-def list_posts(limit: int = Query(20, le=100), skip: int = 0, hashtag: Optional[str] = None,
+def list_posts(limit: int = Query(10, le=50), skip: int = 0, before: Optional[str] = None, hashtag: Optional[str] = None,
                authorId: Optional[str] = None, saved: bool = False, mediaType: Optional[str] = None,
                user=Depends(get_current_user)):
     def f(p):
         if not _visible_post(p, user): return False
+        if before and p.get("createdAt", "") >= before: return False
         if hashtag and hashtag.lower().lstrip("#") not in p.get("hashtags", []): return False
         if authorId and p.get("createdBy") != authorId: return False
         if saved and user["id"] not in p.get("savedBy", []): return False
@@ -103,7 +125,9 @@ def list_posts(limit: int = Query(20, le=100), skip: int = 0, hashtag: Optional[
         return True
     items = visible_query_docs("posts", user, f)
     items.sort(key=lambda x: x.get("createdAt", ""), reverse=True)
-    return {"items": [_post_out(p, user) for p in items[skip:skip + limit]], "total": len(items)}
+    page = items[skip:skip + limit]
+    return {"items": [_post_out(p, user) for p in page], "total": len(items),
+            "nextCursor": page[-1]["createdAt"] if len(page) == limit and len(items) > skip + limit else None}
 
 
 @router.get("/posts/{pid}")
@@ -148,6 +172,41 @@ def share_post(pid: str, user=Depends(get_current_user)):
     _load_visible_post(pid, user)
     db.collection("posts").document(pid).update({"sharesCount": Increment(1)})
     return {"ok": True}
+
+
+@router.post("/posts/{pid}/view")
+def view_post(pid: str, user=Depends(get_current_user)):
+    p = get_doc("posts", pid)
+    if p and can_view(p, user) and p.get("createdBy") != user["id"]:
+        db.collection("posts").document(pid).update({"viewsCount": Increment(1)})
+    return {"ok": True}
+
+
+@router.post("/posts/{pid}/repost")
+def repost(pid: str, body: RepostIn, user=Depends(get_current_user)):
+    """Share inside SAMAJ CONNECT (own samaj) or to another Samaj (admins only). Private posts cannot be re-shared."""
+    orig = _load_visible_post(pid, user)
+    if orig.get("visibility") == "private":
+        raise HTTPException(status_code=403, detail="Private post cannot be shared")
+    target = body.samajId or user.get("activeSamajId") or DEFAULT_SAMAJ_ID
+    if target not in user.get("samajIds", []) and not is_super(user):
+        raise HTTPException(status_code=403, detail="Not a member of target Samaj")
+    if target != orig.get("samajId") and orig.get("visibility") == "samaj" and not is_samaj_admin(user):
+        raise HTTPException(status_code=403, detail="Only admins can share Samaj-only posts to another Samaj")
+    vis = resolve_visibility(user, body.visibility)
+    if vis in ("all_samaj", "public") and orig.get("visibility") == "samaj":
+        raise HTTPException(status_code=403, detail="Samaj-only content cannot be shared publicly")
+    src = orig.get("sharedFrom") or {"id": orig["id"], "authorId": orig["createdBy"], "authorName": orig.get("authorName", ""), "caption": orig.get("caption", ""), "mediaUrls": orig.get("mediaUrls", []), "createdAt": orig.get("createdAt")}
+    doc = {**author_fields(user), "samajId": target, "caption": body.caption, "content": body.caption, "mediaUrls": [], "imageUrls": [], "media": [],
+           "mediaType": "share", "hashtags": [h.lower() for h in HASHTAG_RE.findall(body.caption)], "visibility": vis, "allowedUserIds": [],
+           "sharedFrom": src, "eventId": orig.get("eventId"), "event": orig.get("event"), "location": "",
+           "createdAt": now_iso(), "updatedAt": now_iso(), "status": "active", "approved": True,
+           "likesCount": 0, "commentsCount": 0, "sharesCount": 0, "viewsCount": 0, "likedBy": [], "savedBy": [], "isActive": True}
+    ref = db.collection("posts").document()
+    ref.set(doc)
+    db.collection("posts").document(src["id"]).update({"sharesCount": Increment(1)})
+    notify(src["authorId"], "share", f"{user.get('name')} એ તમારી પોસ્ટ શેર કરી", "", {"postId": ref.id}, target, user["id"])
+    return _post_out({"id": ref.id, **doc}, user)
 
 
 @router.post("/posts/{pid}/comments")
@@ -330,7 +389,9 @@ def search(q: str = "", user=Depends(get_current_user)):
             if ql in h:
                 tags[h] = tags.get(h, 0) + 1
     users = search_users(q, 10, user)["items"] if ql else []
-    return {"posts": [_post_out(p, user) for p in posts[:30]], "hashtags": [{"tag": k, "count": v} for k, v in sorted(tags.items(), key=lambda x: -x[1])], "users": users}
+    events = [e for e in visible_query_docs("events", user, lambda e: ql in e.get("title", "").lower() or ql in e.get("location", "").lower())] if ql else []
+    events.sort(key=lambda x: x.get("date", ""), reverse=True)
+    return {"posts": [_post_out(p, user) for p in posts[:30]], "hashtags": [{"tag": k, "count": v} for k, v in sorted(tags.items(), key=lambda x: -x[1])], "users": users, "events": events[:10]}
 
 
 # ---------- Reports ----------
