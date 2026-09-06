@@ -1,0 +1,207 @@
+{
+  "app_name": "SAMAJ CONNECT",
+  "tagline": "સમાજને જોડતું એક ડિજિટલ પ્લેટફોર્મ",
+  "design_archetype": "Modern Premium Gujarati Cultural Social Network",
+  "theme": {
+    "default_mode": "light",
+    "primary_color": "#5B21B6",
+    "primary_hover": "#4C1D95",
+    "secondary_color": "#7C3AED",
+    "secondary_light": "#DDD6FE",
+    "background_default": "#F8FAFC",
+    "background_paper": "#FFFFFF",
+    "surface_subtle": "#F1F5F9",
+    "border_subtle": "#E2E8F0",
+    "text_primary": "#0F172A",
+    "text_secondary": "#475569",
+    "text_muted": "#94A3B8",
+    "accent_green": "#16A34A",
+    "accent_whatsapp": "#25D366",
+    "accent_call": "#5B21B6"
+  },
+  "quick_access_grid_tiles": [
+    {
+      "id": "messenger",
+      "label_gu": "મેસેન્જર",
+      "label_en": "Messenger",
+      "bg_color": "#F3E8FF",
+      "icon_color": "#7C3AED",
+      "badge": "ચેટ"
+    },
+    {
+      "id": "live",
+      "label_gu": "લાઈવ સ્ટ્રીમ",
+      "label_en": "Live Stream",
+      "bg_color": "#FFE4E6",
+      "icon_color": "#E11D48",
+      "badge": "Live"
+    },
+    {
+      "id": "hall_booking",
+      "label_gu": "હોલ બુકિંગ",
+      "label_en": "Hall Booking",
+      "bg_color": "#FEF3C7",
+      "icon_color": "#D97706",
+      "badge": "બુક"
+    },
+    {
+      "id": "family_tree",
+      "label_gu": "કુટુંબ વૃક્ષ",
+      "label_en": "Family Tree",
+      "bg_color": "#DCFCE7",
+      "icon_color": "#16A34A",
+      "badge": "વૃક્ષ"
+    },
+    {
+      "id": "maran_nodh",
+      "label_gu": "મરણ નોંધ",
+      "label_en": "Maran Nodh",
+      "bg_color": "#E0F2FE",
+      "icon_color": "#0284C7",
+      "badge": "શ્રદ્ધાંજલિ"
+    },
+    {
+      "id": "business_directory",
+      "label_gu": "બિઝનેસ ડિરેક્ટરી",
+      "label_en": "Business Directory",
+      "bg_color": "#FFEDD5",
+      "icon_color": "#EA580C",
+      "badge": "વ્યવસાય"
+    },
+    {
+      "id": "photo_gallery",
+      "label_gu": "ફોટો ગેલેરી",
+      "label_en": "Photo Gallery",
+      "bg_color": "#FCE7F3",
+      "icon_color": "#DB2777",
+      "badge": "યાદો"
+    },
+    {
+      "id": "cloud_photos",
+      "label_gu": "ક્લાઉડ ફોટોઝ",
+      "label_en": "Cloud Drive",
+      "bg_color": "#EEF2FF",
+      "icon_color": "#4F46E5",
+      "badge": "સંગ્રહ"
+    }
+  ],
+  "typography": {
+    "font_family_heading": "'Noto Sans Gujarati', 'Outfit', sans-serif",
+    "font_family_body": "'Noto Sans Gujarati', 'Plus Jakarta Sans', sans-serif",
+    "google_fonts_url": "https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap",
+    "scale": {
+      "h1": "text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight",
+      "h2": "text-2xl sm:text-3xl font-bold tracking-tight",
+      "h3": "text-xl sm:text-2xl font-semibold",
+      "card_title": "text-lg sm:text-xl font-bold text-slate-900",
+      "body_lg": "text-base sm:text-lg font-medium text-slate-700",
+      "body": "text-sm sm:text-base text-slate-600 leading-relaxed",
+      "small": "text-xs sm:text-sm text-slate-500 font-medium"
+    }
+  },
+  "layout_and_spacing": {
+    "container_max_width": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+    "mobile_frame_max_width": "max-w-md mx-auto min-h-screen pb-24 bg-slate-50 border-x border-slate-200/60 shadow-xl",
+    "card_padding": "p-4 sm:p-6",
+    "card_radius": "rounded-2xl sm:rounded-3xl",
+    "button_radius": "rounded-xl sm:rounded-2xl",
+    "shadow_soft": "shadow-[0_4px_20px_-4px_rgba(91,33,182,0.08)]",
+    "shadow_card": "shadow-sm hover:shadow-md transition-shadow duration-200 border border-slate-100"
+  },
+  "mobile_navigation_pattern": {
+    "bottom_nav_container": "fixed bottom-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-xl border-t border-slate-200/80 px-4 py-2 flex items-center justify-around shadow-lg max-w-md mx-auto",
+    "floating_fab": "relative -top-5 w-14 h-14 bg-gradient-to-tr from-purple-700 to-indigo-600 text-white rounded-full flex items-center justify-center shadow-lg shadow-purple-900/30 hover:scale-105 active:scale-95 transition-all duration-200 border-4 border-slate-50",
+    "nav_items": [
+      { "id": "home", "label_gu": "હોમ", "label_en": "Home", "icon": "Home" },
+      { "id": "members", "label_gu": "સભ્યો", "label_en": "Members", "icon": "Users" },
+      { "id": "create", "label_gu": "ઉમેરો", "label_en": "Add", "is_fab": true, "icon": "Plus" },
+      { "id": "events", "label_gu": "ઈવેન્ટ્સ", "label_en": "Events", "icon": "Calendar" },
+      { "id": "menu", "label_gu": "મેનુ", "label_en": "Menu", "icon": "Menu" }
+    ]
+  },
+  "key_screens_and_components": {
+    "splash_screen": {
+      "bg_gradient": "bg-gradient-to-br from-purple-950 via-purple-900 to-indigo-900",
+      "icon_wrapper": "w-28 h-28 rounded-3xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-2xl text-purple-200",
+      "tagline": "સમાજને જોડતું એક ડિજિટલ પ્લેટફોર્મ"
+    },
+    "otp_login": {
+      "card_style": "bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-100",
+      "phone_prefix": "+91",
+      "social_buttons": ["Google", "Apple"]
+    },
+    "home_banner": {
+      "bg_gradient": "bg-gradient-to-r from-purple-900 via-purple-800 to-indigo-900 text-white rounded-3xl p-6 relative overflow-hidden shadow-lg",
+      "headline_gu": "સમાજનું જોડાણ... એકતા અમારી શક્તિ",
+      "subtext_gu": "તમામ સમાજ સભ્યો અને પરિવારો સાથે ડિજિટલ રીતે જોડાયેલા રહો"
+    },
+    "member_card": {
+      "avatar_style": "w-16 h-16 rounded-full object-cover border-2 border-purple-200 shadow-sm",
+      "action_buttons": {
+        "call_pill": "px-4 py-2 bg-purple-900 hover:bg-purple-950 text-white text-xs sm:text-sm font-semibold rounded-full flex items-center gap-1.5 shadow-sm transition-all",
+        "whatsapp_pill": "px-4 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-300 text-xs sm:text-sm font-semibold rounded-full flex items-center gap-1.5 transition-all"
+      }
+    },
+    "business_card": {
+      "badge_style": "px-2.5 py-1 bg-amber-50 text-amber-700 font-semibold text-xs rounded-lg border border-amber-200"
+    }
+  },
+  "image_urls": {
+    "banners": [
+      {
+        "url": "https://images.unsplash.com/photo-1774437668417-918107c19abc?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA3MDB8MHwxfHNlYXJjaHszfHxpbmRpYW4lMjBjb21tdW5pdHklMjBjZWxlYnJhdGlvbiUyMGN1bHR1cmFsJTIwZXZlbnQlMjBiYW5uZXJ8ZW58MHx8fHwxNzg4NjY4OTI5fDA&ixlib=rb-4.1.0&q=85",
+        "alt": "Gujarati Samaj Cultural Gathering & Festival Banner"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1759738102510-ec524f666274?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA3MDB8MHwxfHNlYXJjaHwyfHxpbmRpYW4lMjBjb21tdW5pdHklMjBjZWxlYnJhdGlvbiUyMGN1bHR1cmFsJTIwZXZlbnQlMjBiYW5uZXJ8ZW58MHx8fHwxNzg4NjY4OTI5fDA&ixlib=rb-4.1.0&q=85",
+        "alt": "Cultural Dance & Music Celebration"
+      }
+    ],
+    "avatars": [
+      {
+        "url": "https://images.pexels.com/photos/6722952/pexels-photo-6722952.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "gender": "male",
+        "name": "રમેશભાઈ પટેલ (Ramesh Patel)"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1701721865389-9935778b40e3?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Nzh8MHwxfHNlYXJjaHwyfHxpbmRpYW4lMjBtYW4lMjBwb3J0cmFpdHxlbnwwfHx8fDE3ODg2Njg5MzR8MA&ixlib=rb-4.1.0&q=85",
+        "gender": "male",
+        "name": "હર્ષિલ પટેલ (Harshil Patel)"
+      },
+      {
+        "url": "https://images.pexels.com/photos/38281680/pexels-photo-38281680.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "gender": "female",
+        "name": "ભાવનાબેન પટેલ (Bhavnaben Patel)"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1463335361701-e90f4c5045d0?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA0MTJ8MHwxfHNlYXJjaHw0fHxpbmRpYW4lMjB3b21hbiUyMHBvcnRyYWl0fGVufDB8fHx8MTc4ODY2ODkzNHww&ixlib=rb-4.1.0&q=85",
+        "gender": "female",
+        "name": "પૂજાબેન શાહ (Pujaben Shah)"
+      }
+    ]
+  },
+  "test_id_conventions": {
+    "rule": "Every interactive element (buttons, tabs, inputs, cards, selects) MUST contain a data-testid attribute in kebab-case.",
+    "examples": [
+      "data-testid=\"splash-continue-button\"",
+      "data-testid=\"otp-phone-input\"",
+      "data-testid=\"otp-verify-button\"",
+      "data-testid=\"nav-item-home\"",
+      "data-testid=\"nav-item-members\"",
+      "data-testid=\"nav-item-fab-add\"",
+      "data-testid=\"member-search-input\"",
+      "data-testid=\"member-tab-village\"",
+      "data-testid=\"member-call-button-1\"",
+      "data-testid=\"member-whatsapp-button-1\"",
+      "data-testid=\"language-toggle-button\""
+    ]
+  },
+  "instructions_to_main_agent": [
+    "Load Noto Sans Gujarati font in index.html or App.css so Gujarati text renders beautifully with full diacritics.",
+    "Ensure language state (Gujarati / English) toggles smoothly across all pages with full translations for UI labels.",
+    "Keep the primary branding deep purple (#5B21B6) with clean white rounded cards and colorful module icons as illustrated in user mockup.",
+    "Make bottom nav sticky with a prominent floating center purple FAB (+) button for quick actions on mobile viewports.",
+    "Ensure member cards feature prominent Call & WhatsApp CTA buttons.",
+    "All interactive elements must carry proper data-testid attributes for testing."
+  ]
+}

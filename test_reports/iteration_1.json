@@ -1,0 +1,25 @@
+{
+  "summary": "Full end-to-end UI + backend smoke test for SAMAJ CONNECT Phase 1. Verified splash, OTP login as super_admin (+919000000001 / OTP 123456), home dashboard, bottom nav, add-member, member search, social feed post + like, event creation, profile edit, admin panel stats, and logout. All 14 checks passed on mobile viewport 430x900.",
+  "tested_scope": ["frontend", "backend", "auth", "integration"],
+  "passed": [
+    "Splash renders SAMAJ CONNECT branding and auto-redirects to /login",
+    "OTP login (super_admin) navigates to /home",
+    "Home shows quick access tiles (members, social, events, profile)",
+    "Bottom mobile nav has home, members, fab-add, events, menu",
+    "Add Member form saves and returns to /members with new record visible",
+    "Member search filter works (debounced)",
+    "Social composer creates post; post-card renders; like button toggles",
+    "Event create dialog saves and shows event in Upcoming tab",
+    "Profile edit toggle + save works",
+    "Admin panel button visible for super_admin; /admin shows 4 stat cards",
+    "Logout returns to /login and clears session",
+    "Backend endpoints /api/auth/send-otp and /api/auth/verify-otp return 200 with valid JWT"
+  ],
+  "failed": [],
+  "action_items": [
+    "Non-blocking: Radix DialogContent warnings 'requires a DialogTitle' and missing aria-describedby on event/other dialogs. Add DialogTitle (VisuallyHidden if design requires) and DialogDescription for accessibility."
+  ],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "retest_needed": false,
+  "full_testing_deferred": true
+}
