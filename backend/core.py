@@ -1,10 +1,11 @@
 """Shared Firebase init, auth dependencies, Samaj/visibility authorization helpers."""
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
+import logging
 import os
 import uuid
 import firebase_admin
@@ -95,21 +96,26 @@ def upsert_user_from_token(decoded: dict) -> dict:
     return u
 
 
-def get_current_user(cred: Optional[HTTPAuthorizationCredentials] = Depends(bearer)) -> dict:
-    if not cred:
+def _decode(cred: Optional[HTTPAuthorizationCredentials], path: str = "") -> dict:
+    if not cred or not cred.credentials:
+        logging.warning("401 no-bearer-header path=%s", path)
         raise HTTPException(status_code=401, detail="Not authenticated")
     try:
-        decoded = fb_auth.verify_id_token(cred.credentials)
-    except Exception:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    return upsert_user_from_token(decoded)
+        return fb_auth.verify_id_token(cred.credentials, clock_skew_seconds=60)
+    except Exception as e:
+        logging.warning("401 invalid-token path=%s err=%s", path, str(e)[:160])
+        raise HTTPException(status_code=401, detail=f"Invalid token: {type(e).__name__}")
+
+
+def get_current_user(request: Request, cred: Optional[HTTPAuthorizationCredentials] = Depends(bearer)) -> dict:
+    return upsert_user_from_token(_decode(cred, request.url.path))
 
 
 def optional_user(cred: Optional[HTTPAuthorizationCredentials] = Depends(bearer)) -> Optional[dict]:
     if not cred:
         return None
     try:
-        return upsert_user_from_token(fb_auth.verify_id_token(cred.credentials))
+        return upsert_user_from_token(fb_auth.verify_id_token(cred.credentials, clock_skew_seconds=60))
     except Exception:
         return None
 

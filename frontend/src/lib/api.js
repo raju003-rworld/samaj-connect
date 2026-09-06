@@ -1,13 +1,26 @@
 import axios from "axios";
-import { getIdToken } from "@/lib/firebase";
+import { auth } from "@/lib/firebase";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 export const API = `${BACKEND_URL}/api`;
 
 export const api = axios.create({ baseURL: API });
 
+// Single shared auth interceptor: wait for Firebase Auth to restore the session, then attach the ID token.
 api.interceptors.request.use(async (config) => {
-  const token = await getIdToken();
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  await auth.authStateReady();
+  const u = auth.currentUser;
+  if (u) config.headers.Authorization = `Bearer ${await u.getIdToken(config._forceRefresh === true)}`;
   return config;
+});
+
+// On 401 (e.g. expired token), refresh the ID token once and retry.
+api.interceptors.response.use(undefined, async (error) => {
+  const cfg = error.config;
+  if (error.response?.status === 401 && cfg && !cfg._retried && auth.currentUser) {
+    cfg._retried = true;
+    cfg._forceRefresh = true;
+    return api(cfg);
+  }
+  return Promise.reject(error);
 });

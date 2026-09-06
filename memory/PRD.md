@@ -59,3 +59,7 @@ samaj, settings/global, users, persons (members), posts, comments, stories, foll
 
 ### Backlog
 P1: Hall booking, Photo gallery albums, Family tree, FCM push. P2: Death records, Business directory, export data.
+
+### Bug fix (June 2026): global 401 on protected modules
+- Root cause: axios interceptor read `auth.currentUser` before Firebase restored the session on page load/hard refresh → requests sent without Authorization header (backend log: `401 no-bearer-header`).
+- Fix: `frontend/src/lib/api.js` awaits `auth.authStateReady()` before attaching ID token; retries once with force-refreshed token on 401. `backend/core.py` logs 401 reason + 60s clock skew. Auth still enforced (no token → 401). Verified: test_reports/iteration_3.json.
