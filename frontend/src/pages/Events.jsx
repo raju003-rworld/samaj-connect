@@ -4,7 +4,10 @@ import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { useApp } from "@/context/AppContext";
 import { IDS } from "@/constants/testIds";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
+import { VisibilitySelect, VisibilityBadge } from "@/components/Visibility";
+
+const EMPTY = { title: "", description: "", location: "", date: "", startTime: "", endTime: "", eventImage: "", visibility: "samaj" };
 
 const fmt = (d) => {
   try { return new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }); }
@@ -16,7 +19,7 @@ export default function Events() {
   const [tab, setTab] = useState("upcoming");
   const [items, setItems] = useState([]);
   const [open, setOpen] = useState(false);
-  const [f, setF] = useState({ title: "", description: "", location: "", date: "", startTime: "", endTime: "", eventImage: "" });
+  const [f, setF] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
 
   const load = async () => {
@@ -32,9 +35,9 @@ export default function Events() {
       await api.post("/events", f);
       toast.success("ઈવેન્ટ બન્યો");
       setOpen(false);
-      setF({ title: "", description: "", location: "", date: "", startTime: "", endTime: "", eventImage: "" });
+      setF(EMPTY);
       load();
-    } catch { toast.error(t("saved_fail")); }
+    } catch (e) { toast.error(e?.response?.data?.detail || t("saved_fail")); }
     finally { setSaving(false); }
   };
 
@@ -54,7 +57,7 @@ export default function Events() {
             </button>
           </DialogTrigger>
           <DialogContent className="max-w-md rounded-3xl">
-            <DialogHeader><DialogTitle>{t("create_event")}</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{t("create_event")}</DialogTitle><DialogDescription className="sr-only">Event form</DialogDescription></DialogHeader>
             <div className="space-y-3 mt-2">
               {[
                 { k: "title", label: "Title", type: "text" },
@@ -76,6 +79,10 @@ export default function Events() {
                   />
                 </label>
               ))}
+              <label className="block">
+                <span className="text-xs font-semibold text-slate-600 mb-1 block">{t("visibility")}</span>
+                <VisibilitySelect testId="event-visibility" value={f.visibility} onChange={(v) => setF({ ...f, visibility: v })} className="w-full" />
+              </label>
               <button data-testid={IDS.eventSubmit} onClick={submit} disabled={saving} className="w-full py-3 rounded-2xl bg-purple-900 hover:bg-purple-950 text-white font-semibold disabled:opacity-60">
                 {saving ? "..." : t("save")}
               </button>
@@ -107,7 +114,7 @@ export default function Events() {
                 : <div className="w-full h-full grid place-items-center text-purple-500"><Calendar className="w-10 h-10" /></div>}
             </div>
             <div className="p-4 flex-1 min-w-0">
-              <div className="font-heading font-bold text-slate-900 text-lg">{e.title}</div>
+              <div className="font-heading font-bold text-slate-900 text-lg flex items-center gap-2 flex-wrap">{e.title} <VisibilityBadge value={e.visibility} /></div>
               <div className="text-xs text-slate-500 flex flex-wrap gap-3 mt-1">
                 <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {fmt(e.date)}</span>
                 {e.location && <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {e.location}</span>}

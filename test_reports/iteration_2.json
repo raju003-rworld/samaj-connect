@@ -1,0 +1,32 @@
+{
+  "summary": "End-to-end backend + frontend regression for SAMAJ CONNECT Phase-2 (Firebase). Ran 13 pytest cases against live Firestore-backed API (auth token exchange via Firebase, samaj isolation, visibility authorization, conv membership, live cross-samaj, public-feed toggle, live-start validation) — all pass. Ran Playwright flows on preview URL for login (admin + member), Social (post/like/comment/save/share/menu/tabs/search/stories bar), Live (create/start with YouTube URL, iframe embed, react, chat, end), Admin dashboard (4 tabs, toggle-public-access, toggle-approval-default per samaj), Messages (new-chat search + direct convo create + navigate to /messages/{cid} + chat-input), Samaj switcher, Language toggle (gu<->en), member visibility select restricted to samaj/private (2 options as expected). No blocking bugs found.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Global (all pages)", "issues": ["Console spam: '@firebase/firestore Could not reach Cloud Firestore backend. Connection failed 1 times.' The listener auto-reconnects and features still work, but the noise obscures real errors. Consider suppressing benign transient warnings or ensuring the preview environment can maintain a stable Firestore websocket."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "No blocking action items. Optional: mute or downgrade the transient Firestore 'unavailable' console warning to reduce noise in DevTools."
+  ],
+  "critical_code_review_comments": [
+    "routes_live.create_live allows creating a live session with empty streamUrl for 'created' status (no scheduledAt). Consider validating streamUrl at create-time as well, not only at /start, to match the UI contract 'no fake live'. Currently /start correctly rejects when streamUrl is empty (tested).",
+    "LiveRoom Player initial state shows an empty <div className='skeleton h-64'/> until GET /live/{lid} resolves; on slow networks this looks like a hang. Consider a labeled loading state.",
+    "Firestore listeners (listenMessages/listenLive/etc.) run directly from browser using client SDK; if Firestore rules deny or the browser is offline, users silently lose realtime updates while REST reads still succeed. Consider surfacing a small 'reconnecting…' indicator.",
+    "server.py dev_login always creates a Firebase user if not found — good, but there is no rate-limiting; keep DEV_AUTH_ENABLED=false in production."
+  ],
+  "updated_files": ["/app/backend/tests/backend_test.py"],
+  "success_rate": {"backend": "100% (13/13)", "frontend": "100% of critical flows"},
+  "test_credentials": "Super admin +919925514713 / OTP 123456 (uid KPojF63NGUb2mFcbd5ScIXPikmM2); member +919000000002 (in default + Samaj B 5a99297b87c14bf79b2c6bda6a524f1d); member +919000000003; also created +919000000999 during conv-membership test.",
+  "seed_data_creation": "Created a throwaway test user via dev-login (+919000009999) for conversation-membership 403 assertion. Created and deleted test posts / live sessions inside pytest teardown.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Reusable pytest suite at /app/backend/tests/backend_test.py exchanges Firebase custom token -> idToken via REACT_APP_FIREBASE_API_KEY. Covers auth, post visibility authz, samaj isolation (via /samaj/{sid}/activate switching), conv membership, live cross-samaj, public-feed toggle, live-start validation. Frontend testids verified on mobile 390x844 and desktop 1920x1080. LiveRoom needs ~5-7s after /start POST for playback state to hydrate; use longer waits. New-chat dialog only lists users AFTER typing in newchat-search (empty query returns empty list — expected behavior). Firestore listener 'unavailable' warnings are non-blocking (client auto-reconnects)."
+}

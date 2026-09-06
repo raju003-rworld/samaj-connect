@@ -1,9 +1,10 @@
 import React from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
-import { Home, Users, Plus, Calendar, Menu as MenuIcon, Bell, Languages, LogOut, Newspaper, LayoutDashboard, X, UserCircle2 } from "lucide-react";
+import { Home, Users, Plus, Calendar, Menu as MenuIcon, Bell, Languages, LogOut, Newspaper, LayoutDashboard, X, UserCircle2, Radio, MessageCircle, Building2 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Toaster } from "@/components/ui/sonner";
+import { SamajSwitcher } from "@/components/SamajSwitcher";
 import { IDS } from "@/constants/testIds";
 
 const NavItem = ({ to, icon: Icon, label, testId }) => (
@@ -22,21 +23,25 @@ const NavItem = ({ to, icon: Icon, label, testId }) => (
 );
 
 const SideMenu = ({ open, onOpenChange }) => {
-  const { user, t, toggleLang, logout, lang } = useApp();
+  const { user, t, toggleLang, logout, lang, isAdmin, isMod } = useApp();
   const nav = useNavigate();
   const items = [
     { to: "/home", icon: Home, label: t("home") },
     { to: "/members", icon: Users, label: t("members") },
     { to: "/social", icon: Newspaper, label: t("social") },
+    { to: "/live", icon: Radio, label: t("live") },
+    { to: "/messages", icon: MessageCircle, label: t("messages") },
     { to: "/events", icon: Calendar, label: t("events") },
     { to: "/profile", icon: UserCircle2, label: t("profile") },
   ];
-  if (user?.role === "admin" || user?.role === "super_admin") {
+  if (isMod) {
     items.push({ to: "/admin", icon: LayoutDashboard, label: t("admin") });
   }
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-[85%] sm:w-80 p-0 bg-gradient-to-b from-purple-950 to-indigo-900 text-white border-none">
+        <SheetTitle className="sr-only">Menu</SheetTitle>
+        <SheetDescription className="sr-only">Navigation</SheetDescription>
         <div className="flex items-center justify-between p-5 border-b border-white/10">
           <div>
             <div className="font-heading font-extrabold tracking-tight text-lg">SAMAJ CONNECT</div>
@@ -69,7 +74,7 @@ const SideMenu = ({ open, onOpenChange }) => {
           </button>
           <button
             data-testid={IDS.logoutBtn}
-            onClick={() => { logout(); nav("/login"); }}
+            onClick={async () => { await logout(); nav("/login"); }}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-white/10 text-sm text-rose-200"
           >
             <LogOut className="w-5 h-5" />
@@ -82,10 +87,11 @@ const SideMenu = ({ open, onOpenChange }) => {
 };
 
 export default function AppShell({ children }) {
-  const { user, t } = useApp();
+  const { user, t, unread, activeSamaj, isAdmin, lang } = useApp();
   const nav = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = React.useState(false);
+  const [samajOpen, setSamajOpen] = React.useState(false);
 
   const initial = (user?.name || "?").trim().charAt(0).toUpperCase();
 
@@ -102,9 +108,12 @@ export default function AppShell({ children }) {
             </div>
           </button>
           <div className="flex items-center gap-1">
-            <button data-testid="header-notifications" className="p-2 rounded-full hover:bg-slate-100 relative">
+            <button data-testid="header-samaj-chip" onClick={() => setSamajOpen(true)} className="flex items-center gap-1 text-[11px] font-semibold text-purple-800 bg-purple-50 border border-purple-200 px-2.5 py-1 rounded-full max-w-[130px] truncate">
+              <Building2 className="w-3.5 h-3.5 shrink-0" /> <span className="truncate">{(lang === "en" && activeSamaj?.nameEn) || activeSamaj?.name || "સમાજ"}</span>
+            </button>
+            <button data-testid="header-notifications" onClick={() => nav("/notifications")} className="p-2 rounded-full hover:bg-slate-100 relative">
               <Bell className="w-5 h-5 text-slate-700" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full" />
+              {unread > 0 && <span data-testid="notif-badge" className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[10px] font-bold rounded-full grid place-items-center">{unread > 99 ? "99+" : unread}</span>}
             </button>
             <button
               data-testid="header-avatar"
@@ -131,19 +140,16 @@ export default function AppShell({ children }) {
       <nav className="fixed bottom-0 left-0 right-0 z-40 md:hidden">
         <div className="max-w-md mx-auto bg-white/95 backdrop-blur-xl border-t border-slate-200/80 px-2 py-1.5 flex items-center justify-around shadow-[0_-4px_20px_-8px_rgba(91,33,182,0.15)]">
           <NavItem to="/home" icon={Home} label={t("home")} testId={IDS.navHome} />
-          <NavItem to="/members" icon={Users} label={t("members")} testId={IDS.navMembers} />
+          <NavItem to="/social" icon={Newspaper} label={t("social")} testId="nav-item-social" />
           <button
             data-testid={IDS.navFab}
-            onClick={() => nav(location.pathname.startsWith("/social") ? "/social?compose=1" : "/members/add")}
+            onClick={() => nav(location.pathname.startsWith("/social") ? "/social?compose=1" : location.pathname.startsWith("/live") ? "/live?go=1" : location.pathname.startsWith("/messages") ? "/messages?new=1" : "/members/add")}
             className="relative -top-4 w-14 h-14 bg-gradient-to-tr from-purple-700 to-indigo-600 text-white rounded-full grid place-items-center shadow-lg shadow-purple-900/30 border-4 border-slate-50 hover:scale-105 active:scale-95 transition-transform"
           >
             <Plus className="w-6 h-6" />
           </button>
-          <NavItem to="/events" icon={Calendar} label={t("events")} testId={IDS.navEvents} />
-          <button data-testid={IDS.navMenu} onClick={() => setMenuOpen(true)} className="flex flex-col items-center gap-0.5 px-3 py-1.5 text-[11px] font-medium text-slate-500 hover:text-purple-700">
-            <MenuIcon className="w-5 h-5" />
-            <span>{t("menu")}</span>
-          </button>
+          <NavItem to="/live" icon={Radio} label={t("live")} testId="nav-item-live" />
+          <NavItem to="/messages" icon={MessageCircle} label={t("messages")} testId="nav-item-messages" />
         </div>
       </nav>
 
@@ -153,8 +159,10 @@ export default function AppShell({ children }) {
           { to: "/home", label: t("home") },
           { to: "/members", label: t("members") },
           { to: "/social", label: t("social") },
+          { to: "/live", label: t("live") },
+          { to: "/messages", label: t("messages") },
           { to: "/events", label: t("events") },
-          ...(user?.role === "admin" || user?.role === "super_admin" ? [{ to: "/admin", label: t("admin") }] : []),
+          ...(isAdmin || user?.role === "moderator" ? [{ to: "/admin", label: t("admin") }] : []),
         ].map((l) => (
           <NavLink
             key={l.to}
@@ -170,6 +178,7 @@ export default function AppShell({ children }) {
       </div>
 
       <SideMenu open={menuOpen} onOpenChange={setMenuOpen} />
+      <SamajSwitcher open={samajOpen} onOpenChange={setSamajOpen} />
       <Toaster position="top-center" richColors />
     </div>
   );

@@ -14,6 +14,12 @@ import Events from "@/pages/Events";
 import Profile from "@/pages/Profile";
 import Admin from "@/pages/Admin";
 import ComingSoon from "@/pages/ComingSoon";
+import Messages from "@/pages/Messages";
+import Live from "@/pages/Live";
+import LiveRoom from "@/pages/LiveRoom";
+import Notifications from "@/pages/Notifications";
+import UserProfile from "@/pages/UserProfile";
+import Search from "@/pages/Search";
 
 const Protected = ({ children }) => {
   const { user, booting } = useApp();
@@ -35,6 +41,13 @@ function AppRoutes() {
       <Route path="/events" element={<Protected><Events /></Protected>} />
       <Route path="/profile" element={<Protected><Profile /></Protected>} />
       <Route path="/admin" element={<Protected><Admin /></Protected>} />
+      <Route path="/messages" element={<Protected><Messages /></Protected>} />
+      <Route path="/messages/:cid" element={<Protected><Messages /></Protected>} />
+      <Route path="/live" element={<Protected><Live /></Protected>} />
+      <Route path="/live/:lid" element={<Protected><LiveRoom /></Protected>} />
+      <Route path="/notifications" element={<Protected><Notifications /></Protected>} />
+      <Route path="/users/:uid" element={<Protected><UserProfile /></Protected>} />
+      <Route path="/search" element={<Protected><Search /></Protected>} />
       <Route path="/coming-soon" element={<Protected><ComingSoon /></Protected>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

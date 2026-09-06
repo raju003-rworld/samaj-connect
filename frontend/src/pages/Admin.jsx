@@ -3,6 +3,7 @@ import { Users, Newspaper, Calendar, MessageSquare, UserCog, ToggleLeft, ToggleR
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { useApp } from "@/context/AppContext";
+import { PostsModeration, Reports, UsersAdmin, SamajSettings } from "@/components/admin/Moderation";
 
 const StatCard = ({ icon: Icon, label, value, color, testId }) => (
   <div data-testid={testId} className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex items-center gap-3">
@@ -17,16 +18,18 @@ const StatCard = ({ icon: Icon, label, value, color, testId }) => (
 );
 
 export default function Admin() {
-  const { user, t } = useApp();
+  const { user, t, isMod, isAdmin } = useApp();
   const [stats, setStats] = useState({});
   const [members, setMembers] = useState([]);
   const [q, setQ] = useState("");
+  const [tab, setTab] = useState("members");
 
   useEffect(() => {
     api.get("/admin/stats").then(({ data }) => setStats(data)).catch(() => toast.error("Admin access required"));
   }, []);
 
   const loadMembers = async () => {
+    if (!isAdmin) return;
     const { data } = await api.get("/admin/members", { params: q ? { q } : {} });
     setMembers(data.items);
   };
@@ -37,9 +40,11 @@ export default function Admin() {
     loadMembers();
   };
 
-  if (user?.role !== "admin" && user?.role !== "super_admin") {
+  if (!isMod) {
     return <div className="text-center text-sm text-slate-500 py-10">Admin only. તમારો role: {user?.role}</div>;
   }
+
+  const tabs = [["members", "Members"], ["posts", t("moderation")], ["reports", `${t("reports")} (${stats.openReports ?? 0})`], ...(isAdmin ? [["users", t("users")], ["samaj", "Samaj"]] : [])];
 
   return (
     <div className="space-y-5">
@@ -55,6 +60,15 @@ export default function Admin() {
         <StatCard testId="admin-stat-events" icon={Calendar} label={t("total_events")} value={stats.events} color="#D97706" />
       </div>
 
+      <div className="bg-white border border-slate-100 rounded-2xl p-1 shadow-sm inline-flex flex-wrap">
+        {tabs.map(([k, l]) => <button key={k} data-testid={`admin-tab-${k}`} onClick={() => setTab(k)} className={`text-sm font-semibold px-4 py-1.5 rounded-xl ${tab === k ? "bg-purple-900 text-white" : "text-slate-600 hover:bg-slate-50"}`}>{l}</button>)}
+      </div>
+
+      {tab === "posts" && <PostsModeration />}
+      {tab === "reports" && <Reports />}
+      {tab === "users" && <UsersAdmin />}
+      {tab === "samaj" && <SamajSettings />}
+      {tab === "members" && (
       <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-100 shadow-sm">
         <div className="flex items-center justify-between gap-2 mb-3">
           <h3 className="font-heading font-bold text-slate-900">Members Management</h3>
@@ -108,6 +122,7 @@ export default function Admin() {
           </table>
         </div>
       </div>
+      )}
     </div>
   );
 }

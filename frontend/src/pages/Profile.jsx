@@ -5,6 +5,7 @@ import { Pencil, LogOut, Newspaper, Calendar, LayoutDashboard, Settings, HelpCir
 import { api } from "@/lib/api";
 import { useApp } from "@/context/AppContext";
 import { IDS } from "@/constants/testIds";
+import { MediaUploader } from "@/components/MediaUploader";
 
 const Item = ({ icon: Icon, label, onClick, testId }) => (
   <button data-testid={testId} onClick={onClick} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 border-b border-slate-100 last:border-none text-left">
@@ -15,10 +16,10 @@ const Item = ({ icon: Icon, label, onClick, testId }) => (
 );
 
 export default function Profile() {
-  const { user, updateUser, logout, t } = useApp();
+  const { user, updateUser, logout, t, isMod } = useApp();
   const nav = useNavigate();
   const [edit, setEdit] = useState(false);
-  const [f, setF] = useState({ name: user?.name || "", village: user?.village || "", district: user?.district || "", profilePhoto: user?.profilePhoto || "" });
+  const [f, setF] = useState({ name: user?.name || "", village: user?.village || "", district: user?.district || "", bio: user?.bio || "", profilePhoto: user?.profilePhoto || "" });
 
   const save = async () => {
     try {
@@ -50,7 +51,7 @@ export default function Profile() {
 
         {edit && (
           <div className="mt-4 space-y-2">
-            {["name", "village", "district", "profilePhoto"].map((k) => (
+            {["name", "village", "district", "bio"].map((k) => (
               <input
                 key={k}
                 data-testid={`profile-${k}`}
@@ -60,6 +61,10 @@ export default function Profile() {
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-purple-400 text-sm"
               />
             ))}
+            <div className="flex items-center gap-2">
+              <MediaUploader multiple={false} accept="image/*" kind="profile" onDone={(u) => setF({ ...f, profilePhoto: u[0] })} label={t("profile_photo_url")} testId="profile-photo-upload" />
+              {f.profilePhoto && <img src={f.profilePhoto} alt="" className="w-10 h-10 rounded-full object-cover" />}
+            </div>
             <button data-testid="profile-save" onClick={save} className="w-full py-2.5 rounded-2xl bg-purple-900 hover:bg-purple-950 text-white font-semibold flex items-center justify-center gap-2">
               <Save className="w-4 h-4" /> {t("save")}
             </button>
@@ -70,12 +75,12 @@ export default function Profile() {
       <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
         <Item icon={Newspaper} label={t("my_posts")} testId="profile-my-posts" onClick={() => nav("/social")} />
         <Item icon={Calendar} label={t("my_events")} testId="profile-my-events" onClick={() => nav("/events")} />
-        {(user?.role === "admin" || user?.role === "super_admin") && (
+        {isMod && (
           <Item icon={LayoutDashboard} label={t("admin")} testId={IDS.adminPanelBtn} onClick={() => nav("/admin")} />
         )}
         <Item icon={Settings} label={t("settings")} testId="profile-settings" onClick={() => toast.info("Settings coming soon")} />
         <Item icon={HelpCircle} label={t("help")} testId="profile-help" onClick={() => toast.info("Help coming soon")} />
-        <Item icon={LogOut} label={t("logout")} testId="profile-logout" onClick={() => { logout(); nav("/login"); }} />
+        <Item icon={LogOut} label={t("logout")} testId="profile-logout" onClick={async () => { await logout(); nav("/login"); }} />
       </div>
     </div>
   );

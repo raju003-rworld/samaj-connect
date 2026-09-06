@@ -3,12 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { Phone, ShieldCheck, ArrowLeft, Users2 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
+import { startPhoneSignIn, signInCustom } from "@/lib/firebase";
 import { useApp } from "@/context/AppContext";
 import { IDS } from "@/constants/testIds";
 
 export default function Login() {
   const nav = useNavigate();
-  const { login, t, lang, toggleLang } = useApp();
+  const { refreshUser, t, lang, toggleLang } = useApp();
   const [step, setStep] = useState("phone");
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
@@ -23,17 +24,21 @@ export default function Login() {
   }, [timer]);
 
   const cleanPhone = phone.replace(/\D/g, "").slice(-10);
+  const fullPhone = "+91" + cleanPhone;
+  const [confirm, setConfirm] = useState(null);
+  const [devAuth, setDevAuth] = useState(false);
+  useEffect(() => { api.get("/auth/config").then(({ data }) => setDevAuth(!!data.devAuth)).catch(() => {}); }, []);
 
   const sendOtp = async () => {
     if (cleanPhone.length !== 10) return toast.error("10 અંકનો સાચો મોબાઇલ નંબર દાખલ કરો");
     setLoading(true);
     try {
-      await api.post("/auth/send-otp", { phone: "+91" + cleanPhone });
-      toast.success("OTP મોકલાયો. ડેમો OTP: 123456");
+      if (devAuth) { setConfirm(null); toast.success("ડેમો OTP: 123456"); }
+      else { const c = await startPhoneSignIn(fullPhone); setConfirm(c); toast.success("OTP મોકલાયો"); }
       setStep("otp");
       setTimer(30);
     } catch (e) {
-      toast.error("OTP મોકલવામાં નિષ્ફળ");
+      toast.error("OTP મોકલવામાં નિષ્ફળ: " + (e?.code || e.message));
     } finally { setLoading(false); }
   };
 
@@ -41,9 +46,15 @@ export default function Login() {
     if (otp.length !== 6) return toast.error("6 અંકનો OTP દાખલ કરો");
     setLoading(true);
     try {
-      const { data } = await api.post("/auth/verify-otp", { phone: "+91" + cleanPhone, otp, name: name || undefined });
-      login(data.token, data.user);
-      toast.success(`${t("hello")}, ${data.user.name}!`);
+      if (confirm) {
+        await confirm.confirm(otp);
+      } else {
+        const { data } = await api.post("/auth/dev-login", { phone: fullPhone, otp, name: name || undefined });
+        await signInCustom(data.customToken);
+      }
+      const u = await refreshUser();
+      if (name && (!u.name || u.name.startsWith("Member "))) await api.patch("/auth/me", { name }).then(refreshUser);
+      toast.success(`${t("hello")}!`);
       nav("/home", { replace: true });
     } catch (e) {
       toast.error(e?.response?.data?.detail || "OTP ખોટો છે");
@@ -143,6 +154,7 @@ export default function Login() {
           )}
         </div>
         <p className="text-center text-[11px] text-slate-500 mt-4 px-6">Terms & Privacy Policy સ્વીકારીને આગળ વધો</p>
+        <div id="recaptcha-container" />
       </div>
     </div>
   );
