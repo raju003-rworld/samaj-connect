@@ -1,0 +1,38 @@
+{
+  "summary": "Tested Events management RBAC (edit/delete buttons + canManage gating). Backend: 13/13 pytest cases PASS in /app/backend/tests/test_events_manage_rbac.py covering (a) super admin PATCH returns same id and list count unchanged, (b) member PATCH/DELETE on admin's event -> 403, (c) member canManage=false, (d) promoting 9000000003 to event_manager on default samaj -> canManage=true, (e) after 9000000003 activates Samaj B: GET returns 404 for the default samaj-only event AND PATCH -> 403, (f) role restored to member, (g) Samaj B active user cannot GET default samaj-only event (404). Frontend (Playwright, super admin 9925514713 login OTP 123456): create -> new card exposes event-manage-{id} with edit+delete; clicking event-edit-{id} opens dialog titled 'ઈવેન્ટ સંપાદિત કરો' with fields prefilled; editing title + submit updates the SAME card (event-card-{id}) with total upcoming count UNCHANGED (no duplicate); event-delete-{id} triggers window.confirm -> dismiss keeps event, accept removes it (server DELETE fires; toast 'ઈવેન્ટ રદ થયો'). Member (9000000002): sees admin-created event cards (raju, UI Test Event, TEST_ui_evt_210515_e) with NO event-manage-*, event-edit-*, event-delete-* buttons; event-register-{id} still present.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {"flow": "Events register/delete list refresh", "issue": "After successful register or delete API call, load() is invoked but the visible card state occasionally still shows the previous items for a couple of seconds (register button text unchanged within 2.5s wait, deleted card still present within 2.5s wait). Toast confirms server success. Not a data issue - a full page reload always shows the correct state. Consider awaiting load() and/or optimistically updating the affected card.", "affected_selectors": ["event-register-{id}", "event-card-{id}"]}
+    ],
+    "design_issues": [
+      {"screen": "/events", "issues": ["'નવો ઈવેન્ટ' (event-create-button) is rendered unconditionally for all authenticated users. Spec is silent on this so kept as design note - if intentional (members allowed to create events in their samaj), fine; otherwise gate by canCreate role.", "Fixed desktop nav bar (top-right) overlaps event-create-button on wider viewports (~1440px). Playwright normal click was intercepted by the /members link — had to fall back to JS .click(). Users may hit the nav instead of the create button in some layouts. Consider z-index / positioning."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_events_manage_rbac.py",
+    "/app/test_reports/pytest/events_rbac.xml"
+  ],
+  "action_items": [
+    "(Optional) Fix Events list refresh timing: after api.patch/delete/register, the setItems from load() sometimes reads a stale response window; consider optimistic updates or awaiting the request-cycle before allowing user actions.",
+    "(Optional) Adjust z-index/layout so the fixed desktop nav (AppShell.jsx ~line 159) doesn't overlap the event-create-button at ~1440px viewport."
+  ],
+  "critical_code_review_comments": [
+    "_can_manage_event correctly enforces: super_admin bypass, else event's samajId must equal user's activeSamajId AND (createdBy==user or is_event_manager). Matches spec exactly.",
+    "_event_out attaches canManage per-user - good; frontend gate `e.canManage && (...)` in Events.jsx line 166 is correct.",
+    "PATCH allowed field-set is explicit whitelist (title, description, eventImage, location, date, startTime, endTime, allowedUserIds, visibility) - safe. resolve_visibility applied so members cannot escalate visibility.",
+    "Delete endpoint returns 403 on non-manager and 404 on missing event - good. Both verified.",
+    "Frontend Events.jsx correctly reuses create Dialog in edit mode: sets `editing` and calls PATCH; on success calls load() which re-fetches. The Dialog title is gated on `editing ? 'ઈવેન્ટ સંપાદિત કરો' : t('create_event')` - matches spec.",
+    "window.confirm delete UX is functional but not accessible. Consider AlertDialog for consistency with rest of app.",
+    "Minor: Events.jsx PATCH body includes all form fields (title, description, location, date, startTime, endTime, eventImage, visibility). If user only changed the title, all others are re-sent. Backend filters via whitelist so safe, but a diff-only PATCH would be cleaner."
+  ],
+  "updated_files": ["/app/backend/tests/test_events_manage_rbac.py (new)"],
+  "success_rate": {"backend": "100% (13/13 events RBAC tests pass)", "frontend": "95% (all spec assertions pass; minor UI list-refresh timing observed but backend confirms state, and full reload always shows correct state)"},
+  "test_credentials": "super admin 9925514713 / OTP 123456; member 9000000002 / OTP 123456; member 9000000003 / OTP 123456",
+  "seed_data_creation": "Ephemeral TEST_ui_evt_*, TEST_mem_vis_* events created and deleted at end of each test run. Test also toggled 9000000003 role to event_manager on default samaj then restored to member.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Events RBAC (canManage, PATCH/DELETE 403 gating, Samaj-scoped event_manager role) is fully working per backend tests + frontend Playwright. If regressions appear in isolation (Samaj B users seeing default samaj events), rerun /app/backend/tests/test_events_manage_rbac.py and /app/backend/tests/test_isolation_fix_retest.py. UI Playwright note: desktop nav overlaps event-create-button ~1440px width; use JS-based .click() via page.evaluate to bypass. Register/delete UI can appear stale within ~2.5s of the API call; reload always shows correct state (not a data bug).",
+  "rca of the issue": "N/A - implementation matches spec. Minor observations: (1) Events.jsx load() is triggered but not awaited; if the network round trip + setItems race with the test wait, UI shows stale card. Backend state is always correct. (2) Fixed nav bar in AppShell.jsx line 159 uses `fixed top-16 right-6 z-20` which can intercept clicks over the events header button. Neither is a spec violation."
+}

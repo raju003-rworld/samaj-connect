@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Calendar, MapPin, Clock, Plus, X } from "lucide-react";
+import { Calendar, MapPin, Clock, Plus, X, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { useApp } from "@/context/AppContext";
@@ -38,17 +38,38 @@ export default function Events() {
   };
   useEffect(() => { load(); }, [tab]);
 
+  const [editing, setEditing] = useState(null);
+
+  const openCreate = () => { setEditing(null); setF(EMPTY); setOpen(true); };
+  const openEdit = (e) => {
+    setEditing(e);
+    setF({ title: e.title || "", description: e.description || "", location: e.location || "", date: e.date || "", startTime: e.startTime || "", endTime: e.endTime || "", eventImage: e.eventImage || "", visibility: e.visibility || "samaj" });
+    setOpen(true);
+  };
+
   const submit = async () => {
     if (!f.title || !f.date) return toast.error("Title અને Date જરૂરી છે");
     setSaving(true);
     try {
-      await api.post("/events", f);
-      toast.success("ઈવેન્ટ બન્યો");
+      if (editing) {
+        await api.patch(`/events/${editing.id}`, f);
+        toast.success("ઈવેન્ટ અપડેટ થયો");
+      } else {
+        await api.post("/events", f);
+        toast.success("ઈવેન્ટ બન્યો");
+      }
       setOpen(false);
+      setEditing(null);
       setF(EMPTY);
       load();
     } catch (e) { toast.error(e?.response?.data?.detail || t("saved_fail")); }
     finally { setSaving(false); }
+  };
+
+  const remove = async (e) => {
+    if (!window.confirm(`"${e.title}" ઈવેન્ટ ડિલીટ/રદ કરવો?`)) return;
+    try { await api.delete(`/events/${e.id}`); toast.success("ઈવેન્ટ રદ થયો"); load(); }
+    catch (err) { toast.error(err?.response?.data?.detail || t("saved_fail")); }
   };
 
   const register = async (e) => {
@@ -60,14 +81,14 @@ export default function Events() {
     <div className="max-w-3xl mx-auto space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="font-heading font-extrabold text-slate-900 text-xl sm:text-2xl">{t("events")}</h2>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setEditing(null); setF(EMPTY); } }}>
           <DialogTrigger asChild>
-            <button data-testid={IDS.eventCreateBtn} className="inline-flex items-center gap-1 bg-purple-900 hover:bg-purple-950 text-white text-sm font-semibold px-3.5 py-2 rounded-full shadow">
+            <button data-testid={IDS.eventCreateBtn} onClick={openCreate} className="inline-flex items-center gap-1 bg-purple-900 hover:bg-purple-950 text-white text-sm font-semibold px-3.5 py-2 rounded-full shadow">
               <Plus className="w-4 h-4" /> {t("create_event")}
             </button>
           </DialogTrigger>
           <DialogContent className="max-w-md rounded-3xl">
-            <DialogHeader><DialogTitle>{t("create_event")}</DialogTitle><DialogDescription className="sr-only">Event form</DialogDescription></DialogHeader>
+            <DialogHeader><DialogTitle>{editing ? "ઈવેન્ટ સંપાદિત કરો" : t("create_event")}</DialogTitle><DialogDescription className="sr-only">Event form</DialogDescription></DialogHeader>
             <div className="space-y-3 mt-2">
               {[
                 { k: "title", label: "Title", type: "text" },
@@ -142,6 +163,12 @@ export default function Events() {
                   </button>
                 )}
                 <span className="text-xs text-slate-500">{e.registrationCount || 0} રજિસ્ટર્ડ</span>
+                {e.canManage && (
+                  <span className="ml-auto flex items-center gap-1" data-testid={`event-manage-${e.id}`}>
+                    <button data-testid={`event-edit-${e.id}`} onClick={() => openEdit(e)} className="p-1.5 rounded-full bg-slate-50 border border-slate-200 text-slate-700 hover:bg-purple-50 hover:text-purple-800" title={t("edit")}><Pencil className="w-3.5 h-3.5" /></button>
+                    <button data-testid={`event-delete-${e.id}`} onClick={() => remove(e)} className="p-1.5 rounded-full bg-rose-50 border border-rose-100 text-rose-600 hover:bg-rose-100" title={t("delete")}><Trash2 className="w-3.5 h-3.5" /></button>
+                  </span>
+                )}
               </div>
             </div>
           </div>

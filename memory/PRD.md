@@ -70,3 +70,7 @@ P1: Hall booking, Photo gallery albums, Family tree, FCM push. P2: Death records
 - Share: `POST /posts/{id}/repost` (own samaj; other samaj admins only; private never; samaj-only never public) → post `mediaType=share` with `sharedFrom`; native/copy link; public landing `/p/:pid` → `GET /public/posts/{id}` (public + publicAccessEnabled only).
 - Reports: post/comment/user; moderation + report resolution send notifications (post_approve/reject/hide/unhide/delete, report_resolved/dismissed).
 - Search returns people/posts/hashtags/events. Client-side image compression (≤1600px JPEG) in uploadFile.
+
+### Fix (June 2026): Events management actions — tests iteration_7.json pass
+- `server.py`: `_can_manage_event` (super admin; owner / samaj_admin / event_manager only for active-Samaj events); `canManage` returned on events; PATCH/DELETE use it.
+- `Events.jsx`: Edit (prefilled dialog, PATCH same id) + Delete (confirm) actions shown only when `canManage`.

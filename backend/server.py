@@ -12,7 +12,7 @@ import os
 import logging
 from firebase_admin import auth as fb_auth
 
-from core import (db, get_current_user, optional_user, require_admin, is_samaj_admin, is_super, can_view,
+from core import (db, get_current_user, optional_user, require_admin, is_samaj_admin, is_super, is_event_manager, can_view,
                   resolve_visibility, visible_query_docs, snap_dict, get_doc, stream, now_iso, new_id,
                   ensure_default_samaj, public_access_enabled, DEV_AUTH_ENABLED, DEV_OTP, DEFAULT_SAMAJ_ID,
                   notify_samaj, ROLES)
@@ -232,11 +232,23 @@ def delete_member(mid: str, admin=Depends(require_admin)):
 
 
 # ---------- Events ----------
-def _event_out(e: dict, uid: str) -> dict:
+def _event_out(e: dict, user: dict) -> dict:
+    uid = user["id"]
     e.setdefault("visibility", "samaj")
     e["registeredByMe"] = uid in e.get("registrations", [])
     e["registrationCount"] = len(e.get("registrations", []))
+    e["canManage"] = _can_manage_event(e, user)
     return e
+
+
+def _can_manage_event(e: dict, user: dict) -> bool:
+    """Owner, super admin, or samaj_admin / event_manager of the event's Samaj (must be the active Samaj for non-super)."""
+    if is_super(user):
+        return True
+    sid = e.get("samajId", DEFAULT_SAMAJ_ID)
+    if sid != user.get("activeSamajId"):
+        return False
+    return e.get("createdBy") == user["id"] or is_event_manager(user, sid)
 
 
 @api.post("/events")
@@ -262,7 +274,7 @@ def list_events(filter: Literal["upcoming", "past", "mine"] = "upcoming", user=D
     else:
         items = [d for d in docs if d.get("date", "") >= today]
     items.sort(key=lambda x: x.get("date", ""), reverse=(filter == "past"))
-    return {"items": [_event_out(i, user["id"]) for i in items]}
+    return {"items": [_event_out(i, user) for i in items]}
 
 
 @api.get("/events/{eid}")
@@ -270,7 +282,7 @@ def get_event(eid: str, user=Depends(get_current_user)):
     e = get_doc("events", eid)
     if not e or not can_view(e, user):
         raise HTTPException(status_code=404, detail="Event not found")
-    return _event_out(e, user["id"])
+    return _event_out(e, user)
 
 
 @api.post("/events/{eid}/register")
@@ -292,7 +304,7 @@ def update_event(eid: str, patch: dict, user=Depends(get_current_user)):
     e = get_doc("events", eid)
     if not e:
         raise HTTPException(status_code=404, detail="Event not found")
-    if e.get("createdBy") != user["id"] and not is_samaj_admin(user, e.get("samajId")):
+    if not _can_manage_event(e, user):
         raise HTTPException(status_code=403, detail="Not allowed")
     allowed = {"title", "description", "eventImage", "location", "date", "startTime", "endTime", "allowedUserIds"}
     upd = {k: v for k, v in patch.items() if k in allowed}
@@ -300,7 +312,7 @@ def update_event(eid: str, patch: dict, user=Depends(get_current_user)):
         upd["visibility"] = resolve_visibility(user, patch["visibility"])
     if upd:
         db.collection("events").document(eid).update(upd)
-    return _event_out(get_doc("events", eid), user["id"])
+    return _event_out(get_doc("events", eid), user)
 
 
 @api.delete("/events/{eid}")
@@ -308,7 +320,7 @@ def delete_event(eid: str, user=Depends(get_current_user)):
     e = get_doc("events", eid)
     if not e:
         raise HTTPException(status_code=404, detail="Event not found")
-    if e.get("createdBy") != user["id"] and not is_samaj_admin(user, e.get("samajId")):
+    if not _can_manage_event(e, user):
         raise HTTPException(status_code=403, detail="Not allowed")
     db.collection("events").document(eid).delete()
     return {"ok": True}
