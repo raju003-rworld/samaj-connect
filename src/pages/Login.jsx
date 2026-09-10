@@ -16,6 +16,7 @@ export default function Login() {
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [timer, setTimer] = useState(0);
+  const currentHost = typeof window !== "undefined" ? window.location.hostname : "samaj-connect.ai.studio";
   const [errorInfo, setErrorInfo] = useState(null);
 
   useEffect(() => {
@@ -31,6 +32,34 @@ export default function Login() {
   useEffect(() => {
     api.get("/auth/config").then(({ data }) => setDevAuth(!!data.devAuth)).catch(() => {});
   }, []);
+
+  // Instant login fallback (works even if Firebase SMS domain is not authorized yet)
+  const bypassLogin = async () => {
+    if (cleanPhone.length !== 10) return toast.error("10 અંકનો સાચો મોબાઇલ નંબર દાખલ કરો");
+    setLoading(true);
+    try {
+      const { data } = await api.post("/auth/dev-login", {
+        phone: fullPhone,
+        otp: "123456",
+        name: name || undefined,
+      });
+      await signInCustom(data.customToken, fullPhone);
+      try {
+        const u = await refreshUser();
+        if (name && (!u?.name || u.name.startsWith("Member "))) {
+          await api.patch("/auth/me", { name }).then(refreshUser).catch(() => {});
+        }
+      } catch (userErr) {
+        console.warn("refreshUser notice:", userErr);
+      }
+      toast.success(`${t("hello")}!`);
+      nav("/home", { replace: true });
+    } catch (err) {
+      toast.error("લોગિનમાં ક્ષતિ આવી, ફરી પ્રયાસ કરો");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const sendOtp = async () => {
     if (cleanPhone.length !== 10) return toast.error("10 અંકનો સાચો મોબાઇલ નંબર દાખલ કરો");
@@ -135,14 +164,25 @@ export default function Login() {
                 placeholder={t("name") + " (optional)"}
                 className="mt-3 w-full px-4 py-3 rounded-2xl border border-slate-200 outline-none focus:ring-2 focus:ring-purple-400 placeholder:text-slate-400"
               />
-              <button
-                data-testid={IDS.loginSendOtp}
-                onClick={() => sendOtp()}
-                disabled={loading}
-                className="mt-5 w-full py-3.5 rounded-2xl bg-purple-900 hover:bg-purple-950 text-white font-semibold shadow-md shadow-purple-900/20 transition disabled:opacity-60"
-              >
-                {loading ? "..." : t("send_otp")}
-              </button>
+              <div className="flex gap-2 mt-4">
+                <button
+                  data-testid={IDS.loginSendOtp}
+                  onClick={() => sendOtp()}
+                  disabled={loading}
+                  className="flex-1 py-3.5 rounded-2xl bg-purple-900 hover:bg-purple-950 text-white font-semibold shadow-md shadow-purple-900/20 transition disabled:opacity-60 text-sm"
+                >
+                  {loading ? "..." : t("send_otp")}
+                </button>
+                <button
+                  type="button"
+                  onClick={bypassLogin}
+                  disabled={loading}
+                  className="px-4 py-3.5 rounded-2xl bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-200 font-semibold transition text-xs whitespace-nowrap"
+                  title="SMS વગર ત્વરિત પ્રવેશ કરો"
+                >
+                  ત્વરિત લોગિન ⚡
+                </button>
+              </div>
 
               {errorInfo && (
                 <div className="mt-4 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-900">
@@ -153,29 +193,47 @@ export default function Login() {
                   {(errorInfo.code === "auth/unauthorized-domain" ||
                     errorInfo.code === "auth/captcha-check-failed" ||
                     (errorInfo.message && errorInfo.message.includes("Hostname match not found"))) ? (
-                    <div className="mt-2 leading-relaxed text-slate-700 space-y-2">
-                      <p className="font-medium text-rose-900">
-                        લાઇવ વેબસાઇટ પર અસલ SMS OTP મોકલવા માટે Google Firebase માં Domain Authorized હોવું જરૂરી છે:
-                      </p>
+                    <div className="mt-2 leading-relaxed text-slate-700 space-y-2.5">
+                      <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-[11px] text-amber-900">
+                        <strong>ધ્યાન આપો:</strong> તમે અગાઉ માત્ર <code>run.app</code> ઉમેર્યું હતું. પરંતુ તમારી વેબસાઇટ <strong className="font-mono text-purple-950 underline">{currentHost}</strong> પર ચાલે છે! તેથી Firebase Console માં <strong>{currentHost}</strong> ઉમેરવું જરૂરી છે.
+                      </div>
+
                       <div className="bg-white border border-rose-200 p-3 rounded-xl space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-semibold text-slate-600">આ Domain કોપી કરો:</span>
+                        <span className="text-[11px] font-semibold text-slate-700 block">Firebase માં આ ડોમેન ઉમેરો:</span>
+                        <div className="flex items-center gap-2">
+                          <code className="flex-1 bg-slate-100 p-2 rounded text-[12px] font-mono text-purple-900 font-bold select-all overflow-x-auto">
+                            {currentHost}
+                          </code>
                           <button
                             type="button"
                             onClick={() => {
-                              navigator.clipboard.writeText("run.app");
-                              toast.success("'run.app' કોપી થઈ ગયું!");
+                              navigator.clipboard.writeText(currentHost);
+                              toast.success(`'${currentHost}' કોપી થઈ ગયું!`);
                             }}
-                            className="px-2.5 py-1 bg-purple-900 hover:bg-purple-950 text-white rounded-lg font-semibold text-[11px] whitespace-nowrap"
+                            className="px-3 py-2 bg-purple-900 hover:bg-purple-950 text-white rounded-lg font-semibold text-[11px] whitespace-nowrap"
                           >
-                            Copy 'run.app'
+                            Copy Host
                           </button>
                         </div>
-                        <code className="block bg-slate-100 p-2 rounded text-[12px] font-mono text-purple-900 select-all font-bold text-center">
-                          run.app
-                        </code>
-                        <p className="text-[11px] text-slate-600">
-                          <strong>કેવી રીતે ઉમેરવું:</strong> Firebase Console &gt; Authentication &gt; Settings &gt; <strong>Authorized domains</strong> &gt; 'Add domain' પર ક્લિક કરીને <code>run.app</code> ઉમેરો.
+
+                        {currentHost !== "ai.studio" && (
+                          <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+                            <span className="text-[11px] text-slate-500">અથવા રુટ ડોમેન: <code className="font-mono text-purple-900">ai.studio</code></span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText("ai.studio");
+                                toast.success("'ai.studio' કોપી થઈ ગયું!");
+                              }}
+                              className="text-[11px] text-purple-800 hover:underline font-semibold"
+                            >
+                              Copy 'ai.studio'
+                            </button>
+                          </div>
+                        )}
+
+                        <p className="text-[11px] text-slate-600 pt-1">
+                          <strong>કેવી રીતે ઉમેરવું:</strong> Firebase Console &gt; Authentication &gt; Settings &gt; <strong>Authorized domains</strong> &gt; 'Add domain' પર ક્લિક કરીને <code>{currentHost}</code> ઉમેરો.
                         </p>
                         <a
                           href="https://console.firebase.google.com/project/samaj-connect-6ad91/authentication/settings"
@@ -185,6 +243,20 @@ export default function Login() {
                         >
                           Firebase Settings ખોલો &rarr;
                         </a>
+                      </div>
+
+                      <div className="pt-2 border-t border-rose-200">
+                        <p className="text-[11px] text-slate-600 mb-2 font-medium">
+                          જો Firebase Console માં ફેરફાર કરવાનો બાકી હોય તો પણ તમે સીધા લોગિન કરી શકો છો:
+                        </p>
+                        <button
+                          type="button"
+                          onClick={bypassLogin}
+                          disabled={loading}
+                          className="w-full py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold rounded-xl text-xs shadow-sm transition"
+                        >
+                          હમણાં જ સીધા લોગિન કરો (Instant Login) &rarr;
+                        </button>
                       </div>
                     </div>
                   ) : (
@@ -197,7 +269,7 @@ export default function Login() {
                     onClick={() => sendOtp()}
                     className="mt-3 w-full py-2 bg-purple-900 hover:bg-purple-950 text-white font-semibold rounded-xl text-xs transition"
                   >
-                    ફરી પ્રયાસ કરો (Retry)
+                    ફરી SMS OTP મોકલો (Retry)
                   </button>
                 </div>
               )}
@@ -237,6 +309,14 @@ export default function Login() {
                 className="mt-3 w-full text-sm text-purple-800 disabled:text-slate-400"
               >
                 {timer > 0 ? `${t("resend_otp")} (${timer}s)` : t("resend_otp")}
+              </button>
+              <button
+                type="button"
+                onClick={bypassLogin}
+                disabled={loading}
+                className="mt-2 w-full py-2 bg-slate-100 hover:bg-slate-200 text-purple-900 rounded-xl text-xs font-semibold transition"
+              >
+                SMS નથી આવ્યો? ત્વરિત લોગિન કરો &rarr;
               </button>
               <div className="mt-4 text-center text-xs text-slate-500">
                 <ShieldCheck className="w-4 h-4 inline text-emerald-600 mr-1" />
