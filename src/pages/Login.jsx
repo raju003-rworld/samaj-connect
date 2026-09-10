@@ -32,25 +32,20 @@ export default function Login() {
     api.get("/auth/config").then(({ data }) => setDevAuth(!!data.devAuth)).catch(() => {});
   }, []);
 
-  const sendOtp = async (forceDemo = false) => {
+  const sendOtp = async () => {
     if (cleanPhone.length !== 10) return toast.error("10 અંકનો સાચો મોબાઇલ નંબર દાખલ કરો");
     setLoading(true);
     setErrorInfo(null);
     try {
-      if (devAuth || forceDemo) {
+      if (devAuth) {
         setConfirm(null);
-        toast.success("ડેમો OTP: 123456");
+        toast.success("OTP મોકલાયો");
         setStep("otp");
         setTimer(30);
       } else {
         const c = await startPhoneSignIn(fullPhone);
         setConfirm(c);
-        if (c?.isFallback) {
-          toast.info("પ્રિવ્યૂ માટે OTP: 123456");
-          setOtp("123456");
-        } else {
-          toast.success("OTP મોકલાયો");
-        }
+        toast.success("તમારા મોબાઇલ પર OTP મોકલાયો છે");
         setStep("otp");
         setTimer(30);
       }
@@ -70,26 +65,30 @@ export default function Login() {
     setLoading(true);
     try {
       if (confirm) {
-        try {
-          await confirm.confirm(otp);
-        } catch (fbErr) {
-          if (otp === "123456") {
-            const { data } = await api.post("/auth/dev-login", { phone: fullPhone, otp, name: name || undefined });
-            await signInCustom(data.customToken, fullPhone);
-          } else {
-            throw fbErr;
-          }
-        }
+        await confirm.confirm(otp);
       } else {
         const { data } = await api.post("/auth/dev-login", { phone: fullPhone, otp, name: name || undefined });
         await signInCustom(data.customToken, fullPhone);
       }
-      const u = await refreshUser();
-      if (name && (!u.name || u.name.startsWith("Member "))) await api.patch("/auth/me", { name }).then(refreshUser);
+      try {
+        const u = await refreshUser();
+        if (name && (!u?.name || u.name.startsWith("Member "))) {
+          await api.patch("/auth/me", { name }).then(refreshUser).catch(() => {});
+        }
+      } catch (userErr) {
+        console.warn("refreshUser notice:", userErr);
+      }
       toast.success(`${t("hello")}!`);
       nav("/home", { replace: true });
     } catch (e) {
-      toast.error(e?.response?.data?.detail || (e?.code ? `${e.code}` : (e?.message || "OTP ખોટો છે")));
+      const code = e?.code;
+      if (code === "auth/invalid-verification-code") {
+        toast.error("દાખલ કરેલ OTP ખોટો છે. કૃપા કરીને SMS માં આવેલો સાચો 6 અંકનો કોડ દાખલ કરો.");
+      } else if (code === "auth/code-expired" || code === "auth/session-expired") {
+        toast.error("OTP નો સમય સમાપ્ત થઈ ગયો છે. 'ફરી OTP મોકલો' પર ક્લિક કરો.");
+      } else {
+        toast.error(e?.response?.data?.detail || (code ? `${code}` : (e?.message || "OTP ખોટો છે")));
+      }
     } finally {
       setLoading(false);
     }
@@ -138,7 +137,7 @@ export default function Login() {
               />
               <button
                 data-testid={IDS.loginSendOtp}
-                onClick={() => sendOtp(false)}
+                onClick={() => sendOtp()}
                 disabled={loading}
                 className="mt-5 w-full py-3.5 rounded-2xl bg-purple-900 hover:bg-purple-950 text-white font-semibold shadow-md shadow-purple-900/20 transition disabled:opacity-60"
               >
@@ -146,67 +145,60 @@ export default function Login() {
               </button>
 
               {errorInfo && (
-                <div className="mt-4 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900">
-                  <div className="font-bold flex items-center gap-1.5 text-amber-800 mb-1">
-                    <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                    <span>Firebase OTP ભૂલ: {errorInfo.code}</span>
+                <div className="mt-4 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-900">
+                  <div className="font-bold flex items-center gap-1.5 text-rose-800 mb-1">
+                    <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                    <span>{(errorInfo.code === "auth/captcha-check-failed" || errorInfo.code === "auth/unauthorized-domain" || (errorInfo.message && errorInfo.message.includes("Hostname match not found"))) ? "Firebase Domain સુરક્ષા પરવાનગી જરૂરી" : `OTP ભૂલ: ${errorInfo.code}`}</span>
                   </div>
                   {(errorInfo.code === "auth/unauthorized-domain" ||
                     errorInfo.code === "auth/captcha-check-failed" ||
                     (errorInfo.message && errorInfo.message.includes("Hostname match not found"))) ? (
                     <div className="mt-2 leading-relaxed text-slate-700 space-y-2">
-                      <p className="font-medium text-amber-900">
-                        Google reCAPTCHA સુરક્ષા માટે Cloud Run Domain પરવાનગી માંગી રહ્યું છે:
+                      <p className="font-medium text-rose-900">
+                        લાઇવ વેબસાઇટ પર અસલ SMS OTP મોકલવા માટે Google Firebase માં Domain Authorized હોવું જરૂરી છે:
                       </p>
-                      <div className="bg-white border border-amber-200 p-2.5 rounded-xl space-y-1.5">
-                        <p className="text-[11px] text-slate-600 font-semibold">પગલું 1: આ Domain કોપી કરો:</p>
-                        <div className="flex items-center gap-1.5">
-                          <code className="bg-slate-100 px-2 py-1 rounded text-[11px] font-mono text-purple-900 flex-1 truncate select-all">
-                            {window.location.hostname}
-                          </code>
+                      <div className="bg-white border border-rose-200 p-3 rounded-xl space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-semibold text-slate-600">આ Domain કોપી કરો:</span>
                           <button
                             type="button"
                             onClick={() => {
-                              navigator.clipboard.writeText(window.location.hostname);
-                              toast.success("Domain કોપી થઈ ગયું!");
+                              navigator.clipboard.writeText("run.app");
+                              toast.success("'run.app' કોપી થઈ ગયું!");
                             }}
-                            className="px-2 py-1 bg-purple-100 hover:bg-purple-200 text-purple-900 rounded font-semibold text-[11px] whitespace-nowrap"
+                            className="px-2.5 py-1 bg-purple-900 hover:bg-purple-950 text-white rounded-lg font-semibold text-[11px] whitespace-nowrap"
                           >
-                            Copy Domain
+                            Copy 'run.app'
                           </button>
                         </div>
-                        <p className="text-[11px] text-slate-600 pt-1">
-                          પગલું 2: Firebase Console &gt; Authentication &gt; Settings &gt; <strong>Authorized domains</strong> માં ઉમેરો.
+                        <code className="block bg-slate-100 p-2 rounded text-[12px] font-mono text-purple-900 select-all font-bold text-center">
+                          run.app
+                        </code>
+                        <p className="text-[11px] text-slate-600">
+                          <strong>કેવી રીતે ઉમેરવું:</strong> Firebase Console &gt; Authentication &gt; Settings &gt; <strong>Authorized domains</strong> &gt; 'Add domain' પર ક્લિક કરીને <code>run.app</code> ઉમેરો.
                         </p>
+                        <a
+                          href="https://console.firebase.google.com/project/samaj-connect-6ad91/authentication/settings"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-block text-purple-800 hover:underline font-semibold text-[11px]"
+                        >
+                          Firebase Settings ખોલો &rarr;
+                        </a>
                       </div>
-                      <p className="text-[11px] text-slate-500">
-                        અથવા Firebase Console માં <strong>Phone numbers for testing</strong> માં તમારો નંબર અને કોડ 123456 ઉમેરી શકો છો.
-                      </p>
                     </div>
                   ) : (
                     <p className="mt-1 leading-relaxed text-slate-700">
                       {errorInfo.message}
                     </p>
                   )}
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        sendOtp(true);
-                        setOtp("123456");
-                      }}
-                      className="px-3 py-1.5 bg-amber-700 hover:bg-amber-800 text-white font-medium rounded-xl text-xs transition"
-                    >
-                      ડેમો OTP (123456) વાપરો
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => sendOtp(false)}
-                      className="px-3 py-1.5 bg-white border border-amber-300 text-amber-800 hover:bg-amber-100 font-medium rounded-xl text-xs transition"
-                    >
-                      ફરી પ્રયાસ કરો (Retry)
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => sendOtp()}
+                    className="mt-3 w-full py-2 bg-purple-900 hover:bg-purple-950 text-white font-semibold rounded-xl text-xs transition"
+                  >
+                    ફરી પ્રયાસ કરો (Retry)
+                  </button>
                 </div>
               )}
 
@@ -241,23 +233,11 @@ export default function Login() {
               <button
                 data-testid={IDS.otpResend}
                 disabled={timer > 0}
-                onClick={() => sendOtp(false)}
+                onClick={() => sendOtp()}
                 className="mt-3 w-full text-sm text-purple-800 disabled:text-slate-400"
               >
                 {timer > 0 ? `${t("resend_otp")} (${timer}s)` : t("resend_otp")}
               </button>
-              <div className="mt-3 text-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOtp("123456");
-                    toast.info("ડેમો OTP 123456 ભરવામાં આવ્યો");
-                  }}
-                  className="text-xs text-purple-700 hover:underline font-medium"
-                >
-                  SMS નથી મળ્યો? ડેમો OTP (123456) વાપરો
-                </button>
-              </div>
               <div className="mt-4 text-center text-xs text-slate-500">
                 <ShieldCheck className="w-4 h-4 inline text-emerald-600 mr-1" />
                 {t("demo_hint")}

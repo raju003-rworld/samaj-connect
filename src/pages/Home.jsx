@@ -1,81 +1,450 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
-import { Users, MessageCircle, Calendar, Radio, Building2, TreeDeciduous, HeartHandshake, Store, Images, Cloud, UserCircle2, Newspaper, ArrowRight } from "lucide-react";
+import React, { useEffect, useState, useRef } from "react";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import {
+  Sparkles,
+  Image as ImageIcon,
+  MapPin,
+  Calendar,
+  Send,
+  X,
+  Megaphone,
+  Filter,
+  Film,
+  Bookmark,
+  Layers,
+  Building2,
+  RefreshCw,
+  Plus,
+} from "lucide-react";
+import { toast } from "sonner";
+import { api } from "@/lib/api";
 import { useApp } from "@/context/AppContext";
-
-const Tile = ({ to, icon: Icon, bg, ic, label, badge, testId }) => {
-  const nav = useNavigate();
-  return (
-    <button
-      data-testid={testId}
-      onClick={() => nav(to)}
-      className="group relative bg-white rounded-2xl p-3 sm:p-4 border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all text-left"
-    >
-      <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl grid place-items-center mb-2" style={{ background: bg }}>
-        <Icon className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: ic }} />
-      </div>
-      <div className="text-[13px] sm:text-sm font-semibold text-slate-800 leading-tight">{label}</div>
-      {badge && <div className="text-[10px] text-slate-500 mt-0.5">{badge}</div>}
-    </button>
-  );
-};
+import { IDS } from "@/constants/testIds";
+import { Stories } from "@/components/social/Stories";
+import { PostCard } from "@/components/social/PostCard";
+import { MediaUploader, isVideoUrl } from "@/components/MediaUploader";
+import { VisibilitySelect } from "@/components/Visibility";
 
 export default function Home() {
-  const { user, t } = useApp();
+  const { user, t, activeSamaj, lang } = useApp();
   const nav = useNavigate();
+  const [params, setParams] = useSearchParams();
 
-  const tiles = [
-    { to: "/members", icon: Users, bg: "#F3E8FF", ic: "#7C3AED", label: t("members"), badge: "સભ્યો", testId: "tile-members" },
-    { to: "/social", icon: Newspaper, bg: "#E0E7FF", ic: "#4F46E5", label: t("social"), badge: "ફીડ", testId: "tile-social" },
-    { to: "/events", icon: Calendar, bg: "#FEF3C7", ic: "#D97706", label: t("events"), badge: "ઈવેન્ટ્સ", testId: "tile-events" },
-    { to: "/messages", icon: MessageCircle, bg: "#DBEAFE", ic: "#2563EB", label: t("messages"), badge: "ચેટ", testId: "tile-messenger" },
-    { to: "/live", icon: Radio, bg: "#FFE4E6", ic: "#E11D48", label: t("live"), badge: "Live", testId: "tile-live" },
-    { to: "/hall", icon: Building2, bg: "#FEF3C7", ic: "#B45309", label: "હોલ બુકિંગ", badge: "બુક", testId: "tile-hall" },
-    { to: "/coming-soon?m=family", icon: TreeDeciduous, bg: "#DCFCE7", ic: "#16A34A", label: "ફેમિલી ટ્રી", badge: "વૃક્ષ", testId: "tile-family" },
-    { to: "/coming-soon?m=maran", icon: HeartHandshake, bg: "#E0F2FE", ic: "#0284C7", label: "મરણ નોંધ", badge: "શ્રદ્ધાંજલિ", testId: "tile-maran" },
-    { to: "/coming-soon?m=business", icon: Store, bg: "#FFEDD5", ic: "#EA580C", label: "બિઝનેસ", badge: "ડિરેક્ટરી", testId: "tile-business" },
-    { to: "/photos", icon: Images, bg: "#FCE7F3", ic: "#DB2777", label: "ફોટો ગેલેરી", badge: "યાદો", testId: "tile-gallery" },
-    { to: "/photos", icon: Cloud, bg: "#EEF2FF", ic: "#4F46E5", label: "ક્લાઉડ ફોટોઝ", badge: "સંગ્રહ", testId: "tile-cloud" },
-    { to: "/profile", icon: UserCircle2, bg: "#F5F3FF", ic: "#5B21B6", label: t("profile"), badge: "મારું", testId: "tile-profile" },
+  // Feed Filter: "all" | "announcements" | "photos" | "reels" | "saved"
+  const [tab, setTab] = useState(params.get("tab") || "all");
+  const [items, setItems] = useState([]);
+  const [cursor, setCursor] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+
+  // Post Composer State
+  const [composeOpen, setComposeOpen] = useState(params.get("compose") === "1");
+  const [caption, setCaption] = useState("");
+  const [mediaUrls, setMediaUrls] = useState([]);
+  const [location, setLocation] = useState("");
+  const [showLocation, setShowLocation] = useState(false);
+  const [eventId, setEventId] = useState("");
+  const [events, setEvents] = useState([]);
+  const [visibility, setVisibility] = useState("samaj");
+  const [posting, setPosting] = useState(false);
+
+  // Official Announcements
+  const [announcements, setAnnouncements] = useState([]);
+
+  // Load user events for composer tagging
+  useEffect(() => {
+    api
+      .get("/events", { params: { filter: "upcoming" } })
+      .then(({ data }) => setEvents(data.items || []))
+      .catch(() => {});
+  }, [activeSamaj?.id]);
+
+  // Load feed posts
+  const loadFeed = async (reset = false) => {
+    if (reset) {
+      setLoading(true);
+      setCursor(null);
+    }
+    try {
+      const q = { limit: 12 };
+      if (!reset && cursor) q.before = cursor;
+      if (tab === "saved") q.saved = true;
+      if (tab === "photos") q.mediaType = "image";
+      if (tab === "reels") q.mediaType = "reel";
+
+      const { data } = await api.get("/posts", { params: q });
+      let loaded = data.items || [];
+
+      if (tab === "announcements") {
+        // Filter for announcements (admin posts, all_samaj visibility, or hashtag #announcement / #જાહેરાત)
+        loaded = loaded.filter(
+          (p) =>
+            p.visibility === "all_samaj" ||
+            ["admin", "samaj_admin", "super_admin"].includes(p.authorRole) ||
+            p.hashtags?.some((h) => ["announcement", "જાહેરાત", "notice"].includes(h.toLowerCase()))
+        );
+      }
+
+      if (reset) {
+        setItems(loaded);
+      } else {
+        setItems((prev) => [...prev, ...loaded]);
+      }
+      setCursor(data.nextCursor || null);
+      setHasMore(Boolean(data.nextCursor));
+    } catch (e) {
+      toast.error("ફીડ લોડ કરવામાં ક્ષતિ આવી");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  // Load official announcements
+  useEffect(() => {
+    api
+      .get("/posts", { params: { limit: 10 } })
+      .then(({ data }) => {
+        const ann = (data.items || []).filter(
+          (p) =>
+            p.visibility === "all_samaj" ||
+            ["admin", "samaj_admin", "super_admin"].includes(p.authorRole) ||
+            p.hashtags?.some((h) => ["announcement", "જાહેરાત"].includes(h.toLowerCase()))
+        );
+        setAnnouncements(ann.slice(0, 2));
+      })
+      .catch(() => {});
+  }, [activeSamaj?.id]);
+
+  useEffect(() => {
+    loadFeed(true);
+  }, [tab, activeSamaj?.id]);
+
+  // Handle URL compose trigger
+  useEffect(() => {
+    if (params.get("compose") === "1") {
+      setComposeOpen(true);
+    }
+  }, [params]);
+
+  // Submit new post
+  const handleCreatePost = async () => {
+    if (!caption.trim() && !mediaUrls.length) {
+      return toast.error("કૃપા કરીને લખાણ અથવા ફોટો/વિડિયો ઉમેરો");
+    }
+    setPosting(true);
+    try {
+      const mediaType = mediaUrls.length > 0 ? (isVideoUrl(mediaUrls[0]) ? "video" : "image") : "text";
+      const { data } = await api.post("/posts", {
+        caption,
+        mediaUrls,
+        imageUrls: mediaUrls,
+        mediaType,
+        visibility,
+        location,
+        eventId: eventId || null,
+      });
+
+      setItems((prev) => [data, ...prev]);
+      setCaption("");
+      setMediaUrls([]);
+      setLocation("");
+      setShowLocation(false);
+      setEventId("");
+      setComposeOpen(false);
+      // Remove compose param from URL if present
+      if (params.get("compose")) {
+        params.delete("compose");
+        setParams(params);
+      }
+      toast.success("પોસ્ટ સફળતાપૂર્વક શેર થઈ ગઈ!");
+    } catch (err) {
+      toast.error(err?.response?.data?.detail || "પોસ્ટ કરવામાં ક્ષતિ આવી");
+    } finally {
+      setPosting(false);
+    }
+  };
+
+  // Intersection Observer for Infinite Scroll
+  const sentinelRef = useRef(null);
+  useEffect(() => {
+    if (!sentinelRef.current || !hasMore || loading) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !loading && hasMore) {
+          loadFeed(false);
+        }
+      },
+      { threshold: 0.5 }
+    );
+    observer.observe(sentinelRef.current);
+    return () => observer.disconnect();
+  }, [hasMore, loading, cursor]);
+
+  const filterTabs = [
+    { key: "all", label: "તમામ (All)", icon: Layers },
+    { key: "announcements", label: "જાહેરાતો (Announcements)", icon: Megaphone },
+    { key: "photos", label: "ફોટોઝ (Photos)", icon: ImageIcon },
+    { key: "reels", label: "રીલ્સ (Reels)", icon: Film },
+    { key: "saved", label: "સેવ કરેલ (Saved)", icon: Bookmark },
   ];
 
   return (
-    <div className="space-y-5">
-      {/* Greeting card */}
-      <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-100 shadow-sm flex items-center gap-4">
-        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-purple-100 border-2 border-purple-200 grid place-items-center text-purple-800 font-extrabold text-lg overflow-hidden">
-          {user?.profilePhoto ? <img src={user.profilePhoto} alt="" className="w-full h-full object-cover"/> : (user?.name?.[0] || "?").toUpperCase()}
+    <div className="space-y-4">
+      {/* 1. INSTAGRAM-STYLE STORIES SECTION */}
+      <section className="bg-white rounded-3xl p-3 sm:p-4 border border-slate-100 shadow-xs">
+        <div className="flex items-center justify-between mb-2.5 px-1">
+          <div className="font-heading font-extrabold text-sm text-slate-900 tracking-tight flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-gradient-to-tr from-purple-600 to-fuchsia-500 animate-pulse" />
+            {t("stories")}
+          </div>
+          <span className="text-[11px] font-semibold text-purple-800">24h અપડેટ્સ</span>
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-xs text-slate-500">{t("hello")},</div>
-          <div className="font-heading font-bold text-slate-900 text-lg truncate">{user?.name}</div>
-          <div className="text-[11px] text-slate-500 truncate">{user?.phone}</div>
+        <Stories />
+      </section>
+
+      {/* 2. POST COMPOSER (INSTAGRAM / SOCIAL STYLE) */}
+      <section className="bg-white rounded-3xl p-4 border border-slate-100 shadow-xs">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-900 grid place-items-center font-bold text-sm shrink-0 overflow-hidden border border-purple-200">
+            {user?.profilePhoto ? (
+              <img src={user.profilePhoto} alt="" className="w-full h-full object-cover" />
+            ) : (
+              (user?.name?.[0] || "?").toUpperCase()
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <textarea
+              data-testid={IDS.postCreateInput}
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+              onClick={() => setComposeOpen(true)}
+              placeholder={`તમારા મનમાં શું છે, ${user?.name?.split(" ")[0] || "સમાજ સભ્ય"}? #હૅશટૅગ...`}
+              rows={composeOpen ? 3 : 2}
+              className="w-full resize-none rounded-2xl bg-slate-50/80 hover:bg-slate-50 focus:bg-white border border-slate-200/80 p-3 text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-purple-400 transition"
+            />
+
+            {/* Media Previews in Composer */}
+            {mediaUrls.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {mediaUrls.map((u, i) => (
+                  <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden border border-slate-200 bg-black">
+                    {isVideoUrl(u) ? (
+                      <video src={u} className="w-full h-full object-cover" />
+                    ) : (
+                      <img src={u} alt="" className="w-full h-full object-cover" />
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setMediaUrls((prev) => prev.filter((_, idx) => idx !== i))}
+                      className="absolute top-1 right-1 p-0.5 rounded-full bg-black/70 text-white hover:bg-black"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Optional Location Input */}
+            {showLocation && (
+              <div className="mt-2 flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-1.5 border border-slate-200">
+                <MapPin className="w-4 h-4 text-purple-700 shrink-0" />
+                <input
+                  type="text"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="ગામ / શહેર / સ્થળ દાખલ કરો..."
+                  className="w-full text-xs bg-transparent outline-none text-slate-800"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLocation("");
+                    setShowLocation(false);
+                  }}
+                  className="text-slate-400 hover:text-slate-600"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+
+            {/* Expanded Composer Options */}
+            {composeOpen && (
+              <div className="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {/* Media Uploader */}
+                  <MediaUploader
+                    multiple={true}
+                    accept="image/*,video/*"
+                    kind="posts"
+                    onDone={(urls) => setMediaUrls((prev) => [...prev, ...urls])}
+                    label={
+                      <span className="flex items-center gap-1 text-xs font-semibold text-purple-800 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-full transition">
+                        <ImageIcon className="w-3.5 h-3.5" /> ફોટો/વિડિયો
+                      </span>
+                    }
+                    testId="post-media-upload"
+                  />
+
+                  {/* Location Toggle */}
+                  <button
+                    type="button"
+                    onClick={() => setShowLocation(!showLocation)}
+                    className={`flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full transition ${
+                      showLocation || location
+                        ? "bg-purple-900 text-white"
+                        : "text-slate-600 bg-slate-100 hover:bg-slate-200"
+                    }`}
+                  >
+                    <MapPin className="w-3.5 h-3.5" /> સ્થળ
+                  </button>
+
+                  {/* Event Linking */}
+                  {events.length > 0 && (
+                    <select
+                      value={eventId}
+                      onChange={(e) => setEventId(e.target.value)}
+                      className="text-xs font-semibold bg-slate-100 border border-slate-200 text-slate-700 px-2.5 py-1.5 rounded-full outline-none"
+                    >
+                      <option value="">ઈવેન્ટ લિંક કરો</option>
+                      {events.map((ev) => (
+                        <option key={ev.id} value={ev.id}>
+                          📅 {ev.title}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+
+                  {/* Visibility */}
+                  <VisibilitySelect value={visibility} onChange={setVisibility} testId="post-visibility" />
+                </div>
+
+                {/* Submit Post Button */}
+                <button
+                  data-testid={IDS.postSubmit}
+                  onClick={handleCreatePost}
+                  disabled={posting || (!caption.trim() && !mediaUrls.length)}
+                  className="inline-flex items-center gap-1.5 px-5 py-2 rounded-full bg-purple-900 hover:bg-purple-950 text-white text-xs font-semibold shadow-sm transition disabled:opacity-50"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>{posting ? "શેરિંગ..." : "પોસ્ટ કરો"}</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-        <span className="hidden sm:inline-block text-[10px] font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-full">Active</span>
+      </section>
+
+      {/* 3. PINNED OFFICIAL SAMAJ ANNOUNCEMENT BANNER */}
+      {announcements.length > 0 && tab !== "reels" && (
+        <div className="bg-gradient-to-r from-purple-900 via-indigo-900 to-purple-950 rounded-3xl p-4 text-white shadow-md shadow-purple-950/20 relative overflow-hidden">
+          <div className="flex items-start gap-3 relative z-10">
+            <div className="w-10 h-10 rounded-2xl bg-white/15 backdrop-blur-md grid place-items-center text-amber-300 shrink-0">
+              <Megaphone className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-400 text-purple-950">
+                  સમાજ મહત્વપૂર્ણ જાહેરાત
+                </span>
+                <span className="text-[11px] text-purple-200 truncate">
+                  {activeSamaj?.name || "સમાજ કાર્યાલય"}
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-white/95 line-clamp-2 leading-relaxed font-medium">
+                {announcements[0].caption || announcements[0].content}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 4. FEED TABS FILTER BAR */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
+        {filterTabs.map((ft) => {
+          const isActive = tab === ft.key;
+          return (
+            <button
+              key={ft.key}
+              data-testid={`feed-filter-${ft.key}`}
+              onClick={() => {
+                setTab(ft.key);
+                params.set("tab", ft.key);
+                setParams(params);
+              }}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all shadow-2xs ${
+                isActive
+                  ? "bg-purple-900 text-white shadow-sm shadow-purple-900/20 scale-102"
+                  : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80"
+              }`}
+            >
+              <ft.icon className={`w-3.5 h-3.5 ${isActive ? "text-white" : "text-purple-700"}`} />
+              <span>{ft.label}</span>
+            </button>
+          );
+        })}
       </div>
 
-      {/* Banner */}
-      <div className="relative bg-gradient-to-r from-purple-900 via-purple-800 to-indigo-900 text-white rounded-3xl p-5 sm:p-7 overflow-hidden shadow-lg">
-        <div className="absolute -right-10 -top-10 w-48 h-48 bg-white/5 rounded-full" />
-        <div className="absolute -right-16 -bottom-16 w-60 h-60 bg-white/5 rounded-full" />
-        <div className="relative max-w-md">
-          <h2 className="font-heading font-extrabold text-2xl sm:text-3xl leading-tight">{t("banner_head")}<br/>{t("banner_head2")}</h2>
-          <p className="text-purple-200 text-sm mt-2">{t("banner_sub")}</p>
-          <button data-testid="banner-cta" onClick={() => nav("/members")} className="mt-4 inline-flex items-center gap-1.5 bg-white text-purple-900 text-sm font-semibold px-4 py-2 rounded-full shadow hover:bg-purple-50 transition">
-            {t("members")} <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
+      {/* 5. MAIN SOCIAL FEED POSTS */}
+      <div className="space-y-4">
+        {loading && items.length === 0 ? (
+          <div className="space-y-4">
+            {[1, 2, 3].map((n) => (
+              <div key={n} className="bg-white rounded-3xl p-4 border border-slate-100 animate-pulse space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-slate-200" />
+                  <div className="space-y-1.5 flex-1">
+                    <div className="h-3.5 bg-slate-200 rounded w-1/3" />
+                    <div className="h-2.5 bg-slate-100 rounded w-1/4" />
+                  </div>
+                </div>
+                <div className="h-16 bg-slate-100 rounded-2xl" />
+                <div className="h-48 bg-slate-100 rounded-2xl" />
+              </div>
+            ))}
+          </div>
+        ) : items.length === 0 ? (
+          <div className="bg-white rounded-3xl p-8 border border-slate-100 text-center space-y-3">
+            <div className="w-14 h-14 mx-auto rounded-2xl bg-purple-50 text-purple-800 grid place-items-center">
+              <Sparkles className="w-7 h-7" />
+            </div>
+            <h3 className="font-heading font-bold text-slate-900 text-base">હજી કોઈ પોસ્ટ નથી</h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+              તમારા સમાજ સાથે સુંદર યાદો, ફોટા અથવા વિચારો શેર કરનાર પ્રથમ બનો!
+            </p>
+            <button
+              onClick={() => setComposeOpen(true)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-purple-900 text-white text-xs font-semibold shadow"
+            >
+              <Plus className="w-4 h-4" /> નવી પોસ્ટ બનાવો
+            </button>
+          </div>
+        ) : (
+          items.map((post) => (
+            <PostCard
+              key={post.id}
+              p={post}
+              onChange={(np) => setItems((prev) => prev.map((x) => (x.id === np.id ? { ...x, ...np } : x)))}
+              onRemove={(id) => setItems((prev) => prev.filter((x) => x.id !== id))}
+              onCreated={(newPost) => setItems((prev) => [newPost, ...prev])}
+            />
+          ))
+        )}
 
-      {/* Quick Access */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-heading font-bold text-slate-900 text-base sm:text-lg">{t("quick_access")}</h3>
-          <button data-testid="quick-access-view-all" className="text-xs font-semibold text-purple-800">{t("view_all")}</button>
-        </div>
-        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2.5 sm:gap-3">
-          {tiles.map((tile) => <Tile key={tile.to + tile.label} {...tile} />)}
-        </div>
+        {/* Infinite scroll sentinel */}
+        {hasMore && (
+          <div ref={sentinelRef} className="py-6 flex items-center justify-center">
+            {loading && (
+              <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
+                <RefreshCw className="w-4 h-4 animate-spin text-purple-700" />
+                <span>વધુ પોસ્ટ્સ લોડ થઈ રહી છે...</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

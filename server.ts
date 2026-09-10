@@ -453,15 +453,23 @@ app.get("/api/auth/config", (req: Request, res: Response) => {
 
 app.post("/api/auth/dev-login", (req: Request, res: Response) => {
   const { phone, name } = req.body;
-  if (phone) {
-    currentUser.phone = phone;
+  const targetPhone = phone || currentUser.phone;
+  const phoneDigits = targetPhone.replace(/\D/g, "");
+  const uid = `user_${phoneDigits.slice(-10) || "demo"}`;
+
+  if (!usersMap[uid]) {
+    usersMap[uid] = {
+      ...currentUser,
+      id: uid,
+      phone: targetPhone,
+      name: name || `સભ્ય (${targetPhone.slice(-4)})`,
+    };
+  } else if (name) {
+    usersMap[uid].name = name;
   }
-  if (name) {
-    currentUser.name = name;
-  }
-  // Return customToken
+
   res.json({
-    customToken: `mock-token-${currentUser.phone.replace(/\D/g, "")}`,
+    customToken: `mock-token-${phoneDigits}`,
   });
 });
 
@@ -842,8 +850,37 @@ app.post("/api/albums", (req: Request, res: Response) => {
 });
 
 // Live Sessions
+const liveChats: Record<string, any[]> = {};
+
 app.get("/api/live", (req: Request, res: Response) => {
   res.json({ items: liveSessions });
+});
+
+app.post("/api/live", (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+  const body = req.body;
+  const streamUrl = body.streamUrl || "";
+  const newLive = {
+    id: `live_${Date.now()}`,
+    title: body.title,
+    description: body.description || "",
+    thumbnail: body.thumbnail || "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=800&auto=format&fit=crop&q=80",
+    streamUrl,
+    scheduledAt: body.scheduledAt || null,
+    visibility: body.visibility || "samaj",
+    status: body.scheduledAt ? "scheduled" : "live",
+    hostId: user.id,
+    hostName: user.name,
+    viewerCount: 1,
+    reactions: { "❤️": 0, "👏": 0, "🙏": 0, "🎉": 0 },
+    playback: {
+      playbackType: streamUrl.includes("youtube") ? "youtube" : (streamUrl.includes("facebook") ? "facebook" : (streamUrl.includes(".m3u8") ? "hls" : "embed")),
+      playbackUrl: streamUrl || "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    },
+    createdAt: new Date().toISOString(),
+  };
+  liveSessions.unshift(newLive);
+  res.json(newLive);
 });
 
 app.get("/api/live/config", (req: Request, res: Response) => {
@@ -857,6 +894,86 @@ app.get("/api/live/:lid", (req: Request, res: Response) => {
     return;
   }
   res.json(live);
+});
+
+app.post("/api/live/:lid/start", (req: Request, res: Response) => {
+  const live = liveSessions.find((l) => l.id === req.params.lid);
+  if (!live) {
+    res.status(404).json({ detail: "Live stream not found" });
+    return;
+  }
+  const { streamUrl } = req.body;
+  if (streamUrl) {
+    live.streamUrl = streamUrl;
+    live.playback = {
+      playbackType: streamUrl.includes("youtube") ? "youtube" : (streamUrl.includes("facebook") ? "facebook" : (streamUrl.includes(".m3u8") ? "hls" : "embed")),
+      playbackUrl: streamUrl,
+    };
+  }
+  live.status = "live";
+  res.json(live);
+});
+
+app.post("/api/live/:lid/end", (req: Request, res: Response) => {
+  const live = liveSessions.find((l) => l.id === req.params.lid);
+  if (!live) {
+    res.status(404).json({ detail: "Live stream not found" });
+    return;
+  }
+  live.status = "ended";
+  live.replayUrl = live.playback?.playbackUrl || live.streamUrl;
+  res.json(live);
+});
+
+app.post("/api/live/:lid/join", (req: Request, res: Response) => {
+  const live = liveSessions.find((l) => l.id === req.params.lid);
+  if (live) {
+    live.viewerCount = (live.viewerCount || 0) + 1;
+  }
+  res.json({ ok: true });
+});
+
+app.post("/api/live/:lid/leave", (req: Request, res: Response) => {
+  const live = liveSessions.find((l) => l.id === req.params.lid);
+  if (live && live.viewerCount && live.viewerCount > 0) {
+    live.viewerCount -= 1;
+  }
+  res.json({ ok: true });
+});
+
+app.post("/api/live/:lid/chat", (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+  const lid = req.params.lid;
+  const { text } = req.body;
+  if (!text) {
+    res.status(400).json({ detail: "Text is required" });
+    return;
+  }
+  const msg = {
+    id: `msg_${Date.now()}`,
+    userId: user.id,
+    userName: user.name,
+    userPhoto: user.profilePhoto,
+    text,
+    createdAt: new Date().toISOString(),
+  };
+  liveChats[lid] = liveChats[lid] || [];
+  liveChats[lid].push(msg);
+  res.json(msg);
+});
+
+app.post("/api/live/:lid/react", (req: Request, res: Response) => {
+  const live = liveSessions.find((l) => l.id === req.params.lid);
+  const { emoji } = req.body;
+  if (live && emoji) {
+    live.reactions = live.reactions || {};
+    live.reactions[emoji] = (live.reactions[emoji] || 0) + 1;
+  }
+  res.json({ ok: true });
+});
+
+app.post("/api/live/:lid/moderate", (req: Request, res: Response) => {
+  res.json({ ok: true });
 });
 
 // Admin Endpoints

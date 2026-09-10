@@ -1,186 +1,544 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
-import { Home, Users, Plus, Calendar, Menu as MenuIcon, Bell, Languages, LogOut, Newspaper, LayoutDashboard, X, UserCircle2, Radio, MessageCircle, Building2, Images } from "lucide-react";
+import {
+  Home,
+  Film,
+  Images,
+  Calendar,
+  User,
+  Search,
+  Bell,
+  Menu as MenuIcon,
+  X,
+  Plus,
+  Languages,
+  LogOut,
+  Building2,
+  Radio,
+  MessageCircle,
+  TreeDeciduous,
+  FileText,
+  ShoppingBag,
+  Store,
+  HeartHandshake,
+  PhoneCall,
+  HelpCircle,
+  Settings,
+  LayoutDashboard,
+  Sparkles,
+  ChevronRight,
+  Users,
+  Grid,
+  TrendingUp,
+} from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Toaster } from "@/components/ui/sonner";
 import { SamajSwitcher } from "@/components/SamajSwitcher";
 import { IDS } from "@/constants/testIds";
+import { api } from "@/lib/api";
 
-const NavItem = ({ to, icon: Icon, label, testId }) => (
-  <NavLink
-    to={to}
-    data-testid={testId}
-    className={({ isActive }) =>
-      `flex flex-col items-center gap-0.5 px-3 py-1.5 text-[11px] font-medium transition-colors ${
-        isActive ? "text-purple-800" : "text-slate-500 hover:text-purple-700"
-      }`
-    }
-  >
-    <Icon className="w-5 h-5" />
-    <span>{label}</span>
-  </NavLink>
-);
+const MobileNavItem = ({ to, icon: Icon, label, testId, activePrefix }) => {
+  const location = useLocation();
+  const isActive = activePrefix ? location.pathname.startsWith(activePrefix) : location.pathname === to;
+  return (
+    <NavLink
+      to={to}
+      data-testid={testId}
+      className={`flex flex-col items-center justify-center py-1 px-3 text-[10px] font-medium transition-all ${
+        isActive ? "text-purple-900 font-bold scale-105" : "text-slate-500 hover:text-purple-700"
+      }`}
+    >
+      <div className={`p-1 rounded-xl transition-colors ${isActive ? "bg-purple-100 text-purple-900" : ""}`}>
+        <Icon className="w-5 h-5" />
+      </div>
+      <span className="mt-0.5 tracking-tight">{label}</span>
+    </NavLink>
+  );
+};
 
-const SideMenu = ({ open, onOpenChange }) => {
-  const { user, t, toggleLang, logout, lang, isAdmin, isMod } = useApp();
+// "More" Menu Drawer showcasing all secondary community modules
+const MoreMenuSheet = ({ open, onOpenChange }) => {
+  const { user, t, toggleLang, logout, lang, isMod, activeSamaj } = useApp();
   const nav = useNavigate();
-  const items = [
-    { to: "/home", icon: Home, label: t("home") },
-    { to: "/members", icon: Users, label: t("members") },
-    { to: "/social", icon: Newspaper, label: t("social") },
-    { to: "/live", icon: Radio, label: t("live") },
-    { to: "/messages", icon: MessageCircle, label: t("messages") },
-    { to: "/events", icon: Calendar, label: t("events") },
-    { to: "/photos", icon: Images, label: t("cloud_photos") },
-    { to: "/hall", icon: Building2, label: t("hall_booking") },
-    { to: "/profile", icon: UserCircle2, label: t("profile") },
+
+  const sections = [
+    {
+      title: "સમાજ સુવિધાઓ (Community Modules)",
+      items: [
+        { to: "/members", icon: Users, label: "સભ્યો ડિરેક્ટરી (Members)", badge: "સંપર્ક" },
+        { to: "/coming-soon?m=family", icon: TreeDeciduous, label: "ફેમિલી ટ્રી (Family Tree)", badge: "વંશાવલિ" },
+        { to: "/hall", icon: Building2, label: "હોલ બુકિંગ (Hall Booking)", badge: "બુકિંગ" },
+        { to: "/coming-soon?m=finance", icon: HeartHandshake, label: "દાન & ફંડ (Finance & Donations)", badge: "દાન" },
+        { to: "/coming-soon?m=docs", icon: FileText, label: "સમાજ દસ્તાવેજો (Documents)", badge: "PDF" },
+        { to: "/coming-soon?m=orders", icon: ShoppingBag, label: "મીઠાઈ & પ્રસાદ ઓર્ડર (Orders)", badge: "ઓર્ડર" },
+        { to: "/coming-soon?m=business", icon: Store, label: "બિઝનેસ & ક્લાસિફાઇડ્સ (Classifieds)", badge: "વેપાર" },
+      ],
+    },
+    {
+      title: "સંચાર & લાઈવ (Media & Communication)",
+      items: [
+        { to: "/messages", icon: MessageCircle, label: "સંદેશા (Messages)", badge: "ચેટ" },
+        { to: "/live", icon: Radio, label: "લાઈવ પ્રસારણ (Live)", badge: "Live" },
+        { to: "/photos", icon: Images, label: "ક્લાઉડ ફોટો ગેલેરી (Photos)", badge: "યાદો" },
+        { to: "/notifications", icon: Bell, label: "સૂચનાઓ (Notifications)", badge: "" },
+      ],
+    },
+    {
+      title: "મદદ & એકાઉન્ટ (Support & Settings)",
+      items: [
+        { to: "/coming-soon?m=contacts", icon: PhoneCall, label: "સમાજ હોદ્દેદારો & સંપર્ક", badge: "" },
+        { to: "/coming-soon?m=help", icon: HelpCircle, label: "હેલ્પ & સપોર્ટ (Help & Support)", badge: "" },
+        { to: "/profile", icon: Settings, label: "પ્રોફાઇલ સેટિંગ્સ (Settings)", badge: "" },
+      ],
+    },
   ];
+
   if (isMod) {
-    items.push({ to: "/admin", icon: LayoutDashboard, label: t("admin") });
+    sections.push({
+      title: "એડમિન કંટ્રોલ (Management)",
+      items: [{ to: "/admin", icon: LayoutDashboard, label: "એડમિન પેનલ (Admin Panel)", badge: "Admin" }],
+    });
   }
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-[85%] sm:w-80 p-0 bg-gradient-to-b from-purple-950 to-indigo-900 text-white border-none">
-        <SheetTitle className="sr-only">Menu</SheetTitle>
-        <SheetDescription className="sr-only">Navigation</SheetDescription>
-        <div className="flex items-center justify-between p-5 border-b border-white/10">
-          <div>
-            <div className="font-heading font-extrabold tracking-tight text-lg">SAMAJ CONNECT</div>
-            <div className="text-xs text-purple-200/80 mt-0.5">{t("tagline_short")}</div>
-          </div>
-          <button data-testid="side-menu-close" onClick={() => onOpenChange(false)} className="p-2 rounded-full hover:bg-white/10">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        <nav className="p-3 space-y-1">
-          {items.map((it) => (
+      <SheetContent
+        side="right"
+        className="w-[90%] sm:w-96 p-0 bg-white text-slate-900 border-l border-slate-200 overflow-y-auto"
+      >
+        <SheetTitle className="sr-only">Community Menu</SheetTitle>
+        <SheetDescription className="sr-only">Access community modules</SheetDescription>
+
+        {/* Drawer Header with Purple Gradient */}
+        <div className="bg-gradient-to-r from-purple-900 via-purple-800 to-indigo-900 p-5 text-white">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-md grid place-items-center font-extrabold text-lg">
+                SC
+              </div>
+              <div>
+                <div className="font-heading font-extrabold text-base tracking-tight">SAMAJ CONNECT</div>
+                <div className="text-[11px] text-purple-200">{activeSamaj?.name || "એક સમાજ... એક પરિવાર"}</div>
+              </div>
+            </div>
             <button
-              key={it.to}
-              data-testid={`side-nav-${it.to.slice(1)}`}
-              onClick={() => { nav(it.to); onOpenChange(false); }}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-white/10 transition-colors text-sm font-medium"
+              data-testid="side-menu-close"
+              onClick={() => onOpenChange(false)}
+              className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition"
             >
-              <it.icon className="w-5 h-5 text-purple-200" />
-              <span>{it.label}</span>
+              <X className="w-5 h-5" />
             </button>
+          </div>
+        </div>
+
+        {/* Drawer Body - Categorized Modules */}
+        <div className="p-4 space-y-5">
+          {sections.map((sec, idx) => (
+            <div key={idx} className="space-y-1.5">
+              <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-2">
+                {sec.title}
+              </div>
+              <div className="space-y-0.5">
+                {sec.items.map((it) => (
+                  <button
+                    key={it.to + it.label}
+                    data-testid={`more-nav-${it.to.replace(/[^a-zA-Z0-9]/g, "-")}`}
+                    onClick={() => {
+                      nav(it.to);
+                      onOpenChange(false);
+                    }}
+                    className="w-full flex items-center justify-between p-2.5 rounded-2xl hover:bg-purple-50 transition text-left group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-900 grid place-items-center group-hover:bg-purple-900 group-hover:text-white transition-colors">
+                        <it.icon className="w-4 h-4" />
+                      </div>
+                      <span className="text-sm font-medium text-slate-800 group-hover:text-purple-950">
+                        {it.label}
+                      </span>
+                    </div>
+                    {it.badge ? (
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800">
+                        {it.badge}
+                      </span>
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-purple-600 transition" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
           ))}
-          <div className="my-2 h-px bg-white/10" />
-          <button
-            data-testid={IDS.langToggle}
-            onClick={toggleLang}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-white/10 text-sm"
-          >
-            <Languages className="w-5 h-5 text-purple-200" />
-            <span>{lang === "gu" ? "English" : "ગુજરાતી"}</span>
-          </button>
-          <button
-            data-testid={IDS.logoutBtn}
-            onClick={async () => { await logout(); nav("/login"); }}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-white/10 text-sm text-rose-200"
-          >
-            <LogOut className="w-5 h-5" />
-            <span>{t("logout")}</span>
-          </button>
-        </nav>
+
+          {/* Language & Logout Controls */}
+          <div className="pt-2 border-t border-slate-100 space-y-1.5">
+            <button
+              data-testid={IDS.langToggle}
+              onClick={toggleLang}
+              className="w-full flex items-center gap-3 p-2.5 rounded-2xl hover:bg-slate-50 transition text-left text-sm text-slate-700"
+            >
+              <Languages className="w-5 h-5 text-purple-800" />
+              <span className="font-medium">ભાષા (Language): {lang === "gu" ? "English" : "ગુજરાતી"}</span>
+            </button>
+            <button
+              data-testid={IDS.logoutBtn}
+              onClick={async () => {
+                await logout();
+                onOpenChange(false);
+                nav("/login");
+              }}
+              className="w-full flex items-center gap-3 p-2.5 rounded-2xl hover:bg-rose-50 text-rose-600 transition text-left text-sm font-medium"
+            >
+              <LogOut className="w-5 h-5" />
+              <span>{t("logout")}</span>
+            </button>
+          </div>
+        </div>
       </SheetContent>
     </Sheet>
   );
 };
 
+// Desktop Right Sidebar Widget
+const DesktopRightSidebar = () => {
+  const { activeSamaj, lang } = useApp();
+  const nav = useNavigate();
+  const [upcomingEvents, setUpcomingEvents] = useState([]);
+  const [trendingTags, setTrendingTags] = useState([]);
+
+  useEffect(() => {
+    api
+      .get("/events", { params: { filter: "upcoming" } })
+      .then(({ data }) => setUpcomingEvents((data.items || []).slice(0, 3)))
+      .catch(() => {});
+    api
+      .get("/hashtags/trending")
+      .then(({ data }) => setTrendingTags((data.items || []).slice(0, 5)))
+      .catch(() => {});
+  }, [activeSamaj?.id]);
+
+  return (
+    <aside className="w-80 shrink-0 space-y-4">
+      {/* Samaj Card */}
+      <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-800 to-indigo-700 text-white grid place-items-center font-bold text-lg shadow-sm">
+            <Building2 className="w-6 h-6" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-purple-700">સક્રિય સમાજ</div>
+            <div className="font-heading font-bold text-slate-900 text-base truncate">
+              {(lang === "en" && activeSamaj?.nameEn) || activeSamaj?.name || "સમાજ"}
+            </div>
+            <div className="text-xs text-slate-500 truncate">
+              {activeSamaj?.city || "ગુજરાત, ભારત"}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Upcoming Events */}
+      <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
+        <div className="flex items-center justify-between mb-3">
+          <div className="font-heading font-bold text-sm text-slate-900 flex items-center gap-1.5">
+            <Calendar className="w-4 h-4 text-purple-700" />
+            <span>આગામી ઈવેન્ટ્સ</span>
+          </div>
+          <button
+            onClick={() => nav("/events")}
+            className="text-[11px] font-semibold text-purple-800 hover:underline"
+          >
+            બધા જુઓ
+          </button>
+        </div>
+        <div className="space-y-2.5">
+          {upcomingEvents.length > 0 ? (
+            upcomingEvents.map((ev) => (
+              <div
+                key={ev.id}
+                onClick={() => nav(`/events?event=${ev.id}`)}
+                className="p-2.5 rounded-2xl bg-slate-50 hover:bg-purple-50/70 border border-slate-100 transition cursor-pointer flex items-center gap-3"
+              >
+                <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-900 font-bold text-xs grid place-items-center shrink-0">
+                  {ev.date ? new Date(ev.date).getDate() : "EV"}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-semibold text-slate-800 truncate">{ev.title}</div>
+                  <div className="text-[10px] text-slate-500 truncate">
+                    {ev.date} · {ev.location || "સમાજ હોલ"}
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="text-xs text-slate-400 py-2 text-center">કોઈ નવી ઈવેન્ટ નથી</p>
+          )}
+        </div>
+      </div>
+
+      {/* Trending Hashtags */}
+      {trendingTags.length > 0 && (
+        <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
+          <div className="font-heading font-bold text-sm text-slate-900 flex items-center gap-1.5 mb-3">
+            <TrendingUp className="w-4 h-4 text-purple-700" />
+            <span>ટ્રેન્ડિંગ હૅશટૅગ</span>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {trendingTags.map((h) => (
+              <button
+                key={h.tag}
+                onClick={() => nav(`/search?q=${encodeURIComponent("#" + h.tag)}`)}
+                className="text-xs font-semibold px-3 py-1.5 rounded-full bg-purple-50 text-purple-900 hover:bg-purple-100 border border-purple-100 transition"
+              >
+                #{h.tag} <span className="text-slate-400 font-normal">({h.count})</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Quick Community Services Links */}
+      <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
+        <div className="font-heading font-bold text-xs text-slate-400 uppercase tracking-wider mb-2">
+          ઝડપી સેવાઓ
+        </div>
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <button
+            onClick={() => nav("/hall")}
+            className="p-2.5 rounded-xl bg-purple-50/50 hover:bg-purple-100 text-purple-900 font-semibold text-left transition"
+          >
+            🏢 હોલ બુકિંગ
+          </button>
+          <button
+            onClick={() => nav("/members")}
+            className="p-2.5 rounded-xl bg-purple-50/50 hover:bg-purple-100 text-purple-900 font-semibold text-left transition"
+          >
+            👥 સભ્ય યાદી
+          </button>
+          <button
+            onClick={() => nav("/coming-soon?m=family")}
+            className="p-2.5 rounded-xl bg-purple-50/50 hover:bg-purple-100 text-purple-900 font-semibold text-left transition"
+          >
+            🌳 ફેમિલી ટ્રી
+          </button>
+          <button
+            onClick={() => nav("/coming-soon?m=orders")}
+            className="p-2.5 rounded-xl bg-purple-50/50 hover:bg-purple-100 text-purple-900 font-semibold text-left transition"
+          >
+            🛍️ મીઠાઈ ઓર્ડર
+          </button>
+        </div>
+      </div>
+    </aside>
+  );
+};
+
 export default function AppShell({ children }) {
-  const { user, t, unread, activeSamaj, isAdmin, lang } = useApp();
+  const { user, t, unread, activeSamaj, lang } = useApp();
   const nav = useNavigate();
   const location = useLocation();
-  const [menuOpen, setMenuOpen] = React.useState(false);
-  const [samajOpen, setSamajOpen] = React.useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [samajOpen, setSamajOpen] = useState(false);
 
   const initial = (user?.name || "?").trim().charAt(0).toUpperCase();
 
+  // Desktop Left Nav Items
+  const desktopNavItems = [
+    { to: "/home", icon: Home, label: t("home"), matchExact: true },
+    { to: "/reels", icon: Film, label: t("reels") },
+    { to: "/photos", icon: Images, label: t("cloud_photos") },
+    { to: "/events", icon: Calendar, label: t("events") },
+    { to: "/messages", icon: MessageCircle, label: t("messages") },
+    { to: "/live", icon: Radio, label: t("live") },
+    { to: "/profile", icon: User, label: t("profile") },
+  ];
+
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Top App Bar */}
-      <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-xl border-b border-slate-200/80">
-        <div className="max-w-6xl mx-auto flex items-center justify-between px-4 sm:px-6 h-14">
-          <button data-testid="header-logo" onClick={() => nav("/home")} className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-700 to-indigo-600 grid place-items-center text-white font-extrabold shadow-sm">SC</div>
-            <div className="hidden sm:block">
-              <div className="font-heading font-extrabold text-sm tracking-tight text-slate-900">SAMAJ CONNECT</div>
-              <div className="text-[10px] text-slate-500 -mt-0.5">{t("tagline_short")}</div>
+    <div className="min-h-screen bg-slate-50/80">
+      {/* TOP HEADER */}
+      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl border-b border-slate-200/80 shadow-xs">
+        <div className="max-w-7xl mx-auto flex items-center justify-between px-3 sm:px-6 h-15">
+          {/* Logo & Brand */}
+          <button
+            data-testid="header-logo"
+            onClick={() => nav("/home")}
+            className="flex items-center gap-2.5 group text-left"
+          >
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-800 to-indigo-700 grid place-items-center text-white font-extrabold shadow-md shadow-purple-900/20 group-hover:scale-105 transition">
+              SC
+            </div>
+            <div>
+              <div className="font-heading font-extrabold text-base tracking-tight text-slate-900 leading-none">
+                SAMAJ CONNECT
+              </div>
+              <div className="text-[10px] font-semibold text-purple-700 tracking-wide mt-0.5">
+                {t("tagline_short")}
+              </div>
             </div>
           </button>
-          <div className="flex items-center gap-1">
-            <button data-testid="header-samaj-chip" onClick={() => setSamajOpen(true)} className="flex items-center gap-1 text-[11px] font-semibold text-purple-800 bg-purple-50 border border-purple-200 px-2.5 py-1 rounded-full max-w-[130px] truncate">
-              <Building2 className="w-3.5 h-3.5 shrink-0" /> <span className="truncate">{(lang === "en" && activeSamaj?.nameEn) || activeSamaj?.name || "સમાજ"}</span>
+
+          {/* Center / Right Header Actions */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* Current Samaj Selector Chip */}
+            <button
+              data-testid="header-samaj-chip"
+              onClick={() => setSamajOpen(true)}
+              className="flex items-center gap-1.5 text-xs font-semibold text-purple-900 bg-purple-50 hover:bg-purple-100 border border-purple-200/80 px-3 py-1.5 rounded-full max-w-[150px] sm:max-w-[200px] truncate transition shadow-xs"
+            >
+              <Building2 className="w-3.5 h-3.5 text-purple-700 shrink-0" />
+              <span className="truncate">
+                {(lang === "en" && activeSamaj?.nameEn) || activeSamaj?.name || "સમાજ પસંદ કરો"}
+              </span>
             </button>
-            <button data-testid="header-notifications" onClick={() => nav("/notifications")} className="p-2 rounded-full hover:bg-slate-100 relative">
-              <Bell className="w-5 h-5 text-slate-700" />
-              {unread > 0 && <span data-testid="notif-badge" className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[10px] font-bold rounded-full grid place-items-center">{unread > 99 ? "99+" : unread}</span>}
+
+            {/* Search Icon */}
+            <button
+              data-testid="header-search"
+              onClick={() => nav("/search")}
+              className="p-2 rounded-full hover:bg-slate-100 text-slate-700 transition"
+              title="Search"
+            >
+              <Search className="w-5 h-5" />
             </button>
+
+            {/* Notifications Icon with Badge */}
+            <button
+              data-testid="header-notifications"
+              onClick={() => nav("/notifications")}
+              className="p-2 rounded-full hover:bg-slate-100 text-slate-700 relative transition"
+              title="Notifications"
+            >
+              <Bell className="w-5 h-5" />
+              {unread > 0 && (
+                <span
+                  data-testid="notif-badge"
+                  className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[10px] font-bold rounded-full grid place-items-center shadow-xs"
+                >
+                  {unread > 99 ? "99+" : unread}
+                </span>
+              )}
+            </button>
+
+            {/* User Profile Avatar */}
             <button
               data-testid="header-avatar"
               onClick={() => nav("/profile")}
-              className="w-9 h-9 rounded-full bg-purple-100 text-purple-800 grid place-items-center font-bold border border-purple-200 overflow-hidden"
+              className="w-9 h-9 rounded-full bg-purple-100 text-purple-900 grid place-items-center font-bold border-2 border-purple-200 overflow-hidden shadow-xs hover:ring-2 hover:ring-purple-400 transition"
+              title="Profile"
             >
-              {user?.profilePhoto
-                ? <img src={user.profilePhoto} alt="" className="w-full h-full object-cover" />
-                : <span>{initial}</span>}
+              {user?.profilePhoto ? (
+                <img src={user.profilePhoto} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <span>{initial}</span>
+              )}
             </button>
-            <button data-testid="header-menu" onClick={() => setMenuOpen(true)} className="p-2 rounded-full hover:bg-slate-100 md:hidden">
-              <MenuIcon className="w-5 h-5 text-slate-700" />
+
+            {/* More Menu Trigger Button */}
+            <button
+              data-testid={IDS.navMenu || "header-menu"}
+              onClick={() => setMoreOpen(true)}
+              className="p-2 rounded-full hover:bg-purple-50 text-slate-700 hover:text-purple-900 transition flex items-center justify-center"
+              title="More Menu"
+            >
+              <MenuIcon className="w-5 h-5" />
             </button>
           </div>
         </div>
       </header>
 
-      {/* Content */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-4 pb-28">
-        {children}
-      </main>
+      {/* MAIN LAYOUT WRAPPER: DESKTOP SIDEBARS + CENTER CONTENT */}
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-4 flex gap-6 justify-center">
+        {/* DESKTOP LEFT SIDEBAR (STICKY) */}
+        <aside className="hidden lg:flex flex-col w-64 shrink-0 space-y-5 sticky top-20 self-start">
+          {/* Main Navigation links */}
+          <div className="bg-white rounded-3xl p-3 border border-slate-100 shadow-sm space-y-1">
+            {desktopNavItems.map((it) => {
+              const isActive = it.matchExact
+                ? location.pathname === it.to
+                : location.pathname.startsWith(it.to);
+              return (
+                <NavLink
+                  key={it.to}
+                  to={it.to}
+                  className={`flex items-center gap-3.5 px-4 py-3 rounded-2xl font-semibold text-sm transition-all ${
+                    isActive
+                      ? "bg-purple-900 text-white shadow-md shadow-purple-900/20"
+                      : "text-slate-700 hover:bg-purple-50 hover:text-purple-950"
+                  }`}
+                >
+                  <it.icon className={`w-5 h-5 ${isActive ? "text-white" : "text-purple-700"}`} />
+                  <span>{it.label}</span>
+                </NavLink>
+              );
+            })}
 
-      {/* Bottom Mobile Nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 md:hidden">
-        <div className="max-w-md mx-auto bg-white/95 backdrop-blur-xl border-t border-slate-200/80 px-2 py-1.5 flex items-center justify-around shadow-[0_-4px_20px_-8px_rgba(91,33,182,0.15)]">
-          <NavItem to="/home" icon={Home} label={t("home")} testId={IDS.navHome} />
-          <NavItem to="/social" icon={Newspaper} label={t("social")} testId="nav-item-social" />
+            {/* More Modules Trigger */}
+            <button
+              onClick={() => setMoreOpen(true)}
+              className="w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl font-semibold text-sm text-slate-700 hover:bg-purple-50 hover:text-purple-950 transition"
+            >
+              <Grid className="w-5 h-5 text-purple-700" />
+              <span>વધુ સુવિધાઓ (More)</span>
+            </button>
+          </div>
+
+          {/* Quick Post Action Card */}
           <button
-            data-testid={IDS.navFab}
-            onClick={() => nav(location.pathname.startsWith("/social") ? "/social?compose=1" : location.pathname.startsWith("/live") ? "/live?go=1" : location.pathname.startsWith("/messages") ? "/messages?new=1" : "/members/add")}
-            className="relative -top-4 w-14 h-14 bg-gradient-to-tr from-purple-700 to-indigo-600 text-white rounded-full grid place-items-center shadow-lg shadow-purple-900/30 border-4 border-slate-50 hover:scale-105 active:scale-95 transition-transform"
+            onClick={() => nav("/home?compose=1")}
+            className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-purple-800 to-indigo-700 hover:from-purple-900 hover:to-indigo-800 text-white font-semibold text-sm shadow-md shadow-purple-900/25 flex items-center justify-center gap-2 transition active:scale-98"
           >
-            <Plus className="w-6 h-6" />
+            <Plus className="w-5 h-5" />
+            <span>નવી પોસ્ટ બનાવો</span>
           </button>
-          <NavItem to="/live" icon={Radio} label={t("live")} testId="nav-item-live" />
-          <NavItem to="/messages" icon={MessageCircle} label={t("messages")} testId="nav-item-messages" />
+
+          {/* Current User Mini Badge */}
+          <div
+            onClick={() => nav("/profile")}
+            className="bg-white rounded-3xl p-3.5 border border-slate-100 shadow-sm flex items-center gap-3 cursor-pointer hover:bg-purple-50/50 transition"
+          >
+            <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-900 grid place-items-center font-extrabold overflow-hidden border border-purple-200 shrink-0">
+              {user?.profilePhoto ? (
+                <img src={user.profilePhoto} alt="" className="w-full h-full object-cover" />
+              ) : (
+                initial
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="font-heading font-bold text-sm text-slate-900 truncate">
+                {user?.name || "સભ્ય"}
+              </div>
+              <div className="text-[11px] text-slate-500 truncate">{user?.phone}</div>
+            </div>
+          </div>
+        </aside>
+
+        {/* CENTER CONTENT */}
+        <main className="flex-1 max-w-2xl min-w-0 pb-24 md:pb-12">{children}</main>
+
+        {/* DESKTOP RIGHT SIDEBAR (STICKY ON XL SCREENS) */}
+        <div className="hidden xl:block">
+          <DesktopRightSidebar />
+        </div>
+      </div>
+
+      {/* BOTTOM MOBILE NAVIGATION (EXACTLY: Home | Reels | Photos | Events | Profile) */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 md:hidden">
+        <div className="max-w-md mx-auto bg-white/95 backdrop-blur-xl border-t border-slate-200/80 px-2 py-1.5 flex items-center justify-around shadow-[0_-4px_25px_-5px_rgba(91,33,182,0.12)]">
+          <MobileNavItem to="/home" icon={Home} label={t("home")} testId={IDS.navHome} activePrefix="/home" />
+          <MobileNavItem to="/reels" icon={Film} label={t("reels")} testId="nav-item-reels" activePrefix="/reels" />
+          <MobileNavItem to="/photos" icon={Images} label="ફોટોઝ" testId="nav-item-photos" activePrefix="/photos" />
+          <MobileNavItem to="/events" icon={Calendar} label={t("events")} testId={IDS.navEvents} activePrefix="/events" />
+          <MobileNavItem to="/profile" icon={User} label={t("profile")} testId="nav-item-profile" activePrefix="/profile" />
         </div>
       </nav>
 
-      {/* Desktop sidebar-like top links */}
-      <div className="hidden md:flex fixed top-16 right-6 z-20 gap-1 bg-white border border-slate-200 rounded-2xl p-1 shadow-sm">
-        {[
-          { to: "/home", label: t("home") },
-          { to: "/members", label: t("members") },
-          { to: "/social", label: t("social") },
-          { to: "/live", label: t("live") },
-          { to: "/messages", label: t("messages") },
-          { to: "/events", label: t("events") },
-          ...(isAdmin || user?.role === "moderator" ? [{ to: "/admin", label: t("admin") }] : []),
-        ].map((l) => (
-          <NavLink
-            key={l.to}
-            to={l.to}
-            data-testid={`desk-nav-${l.to.slice(1)}`}
-            className={({ isActive }) =>
-              `px-3 py-1.5 text-sm rounded-xl font-medium ${isActive ? "bg-purple-900 text-white" : "text-slate-700 hover:bg-slate-100"}`
-            }
-          >
-            {l.label}
-          </NavLink>
-        ))}
-      </div>
+      {/* Side / More Menu Sheet */}
+      <MoreMenuSheet open={moreOpen} onOpenChange={setMoreOpen} />
 
-      <SideMenu open={menuOpen} onOpenChange={setMenuOpen} />
+      {/* Samaj Switcher Modal */}
       <SamajSwitcher open={samajOpen} onOpenChange={setSamajOpen} />
+
       <Toaster position="top-center" richColors />
     </div>
   );

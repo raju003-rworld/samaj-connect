@@ -24,6 +24,7 @@ import PublicPost from "@/pages/PublicPost";
 import Photos from "@/pages/Photos";
 import Album from "@/pages/Album";
 import HallBooking from "@/pages/HallBooking";
+import Reels from "@/pages/Reels";
 
 const Protected = ({ children }) => {
   const { user, booting } = useApp();
@@ -38,6 +39,7 @@ function AppRoutes() {
       <Route path="/" element={<Splash />} />
       <Route path="/login" element={<Login />} />
       <Route path="/home" element={<Protected><Home /></Protected>} />
+      <Route path="/reels" element={<Protected><Reels /></Protected>} />
       <Route path="/members" element={<Protected><Members /></Protected>} />
       <Route path="/members/add" element={<Protected><AddMember /></Protected>} />
       <Route path="/members/:id" element={<Protected><MemberProfile /></Protected>} />

@@ -103,14 +103,7 @@ export const auth = {
 let recaptcha = null;
 export const startPhoneSignIn = async (phone, containerId = "recaptcha-container") => {
   if (!hasRealFirebase) {
-    return {
-      confirm: async (otp) => {
-        mockCurrentUser = createMockUser(phone);
-        localStorage.setItem(DEMO_USER_KEY, phone);
-        notifyAuthListeners();
-        return { user: mockCurrentUser };
-      },
-    };
+    throw new Error("Firebase Auth is not configured");
   }
 
   const containerEl = typeof containerId === "string" ? document.getElementById(containerId) : containerId;
@@ -125,45 +118,18 @@ export const startPhoneSignIn = async (phone, containerId = "recaptcha-container
     recaptcha = null;
   }
 
-  try {
-    recaptcha = new RecaptchaVerifier(realAuth, containerEl || containerId, {
-      size: "invisible",
-      callback: () => {
-        // reCAPTCHA solved
-      },
-      "expired-callback": () => {
-        // Response expired
-      },
-    });
+  recaptcha = new RecaptchaVerifier(realAuth, containerEl || containerId, {
+    size: "invisible",
+    callback: () => {
+      // reCAPTCHA solved
+    },
+    "expired-callback": () => {
+      // Response expired
+    },
+  });
 
-    await recaptcha.render();
-    return await signInWithPhoneNumber(realAuth, phone, recaptcha);
-  } catch (err) {
-    const isDomainError =
-      err?.code === "auth/captcha-check-failed" ||
-      err?.code === "auth/unauthorized-domain" ||
-      (err?.message && err.message.includes("Hostname match not found"));
-
-    if (isDomainError) {
-      console.warn("Firebase reCAPTCHA domain check: hostname not yet authorized in Firebase console. Falling back to local OTP verification (123456).");
-      return {
-        isFallback: true,
-        confirm: async (otp) => {
-          if (otp === "123456" || (otp && otp.length === 6)) {
-            mockCurrentUser = createMockUser(phone);
-            localStorage.setItem(DEMO_USER_KEY, phone);
-            notifyAuthListeners();
-            return { user: mockCurrentUser };
-          }
-          const error = new Error("Invalid verification code");
-          error.code = "auth/invalid-verification-code";
-          throw error;
-        },
-      };
-    }
-    console.warn("Firebase startPhoneSignIn warning:", err);
-    throw err;
-  }
+  await recaptcha.render();
+  return await signInWithPhoneNumber(realAuth, phone, recaptcha);
 };
 
 export const signInCustom = async (token, phone = "+919876543210") => {
