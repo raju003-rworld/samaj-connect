@@ -1,6 +1,6 @@
 {
   "name": "Samaj Connect",
   "description": "સમાજને જોડતું ડિજિટલ પ્લેટફોર્મ — Digital community platform for Samaj members, directory, events, photos, hall booking, announcements, and matrimonial connections.",
-  "requestFramePermissions": [],
+  "requestFramePermissions": ["camera", "microphone"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

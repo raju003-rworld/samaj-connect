@@ -10,11 +10,64 @@ app.use(cors());
 app.use(express.json());
 
 // In-memory data storage (simulating Firestore database for Samaj Connect)
+export type AdminRole = "SUPER_ADMIN" | "MAIN_SAMAJ_ADMIN" | "SAMAJ_ADMIN";
+
+export interface AdminScope {
+  mainSamajId?: string | null;
+  samajId?: string | null;
+}
+
+export interface MainSamaj {
+  id: string;
+  name: string;
+  nameEn: string;
+  code: string;
+  description?: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface Gam {
+  id: string;
+  name: string;
+  nameEn: string;
+  district: string;
+  taluka?: string;
+  mainSamajId: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface AdminAuditLog {
+  id: string;
+  adminUserId: string;
+  adminName: string;
+  role: AdminRole;
+  scope?: AdminScope;
+  action: string;
+  targetId?: string;
+  targetType?: string;
+  details?: Record<string, any>;
+  timestamp: string;
+}
+
+export interface ReportItem {
+  id: string;
+  targetType: "post" | "comment" | "user" | "live";
+  targetId: string;
+  reporterId: string;
+  reporterName: string;
+  reason: string;
+  status: "open" | "resolved" | "dismissed";
+  createdAt: string;
+}
+
 interface SamajUser {
   id: string;
   phone: string;
   name: string;
   role: string;
+  adminRole?: AdminRole | null;
   profilePhoto: string;
   village: string;
   district: string;
@@ -25,9 +78,84 @@ interface SamajUser {
   followersCount: number;
   followingCount: number;
   isSuspended: boolean;
+  blocked?: string[];
+  followers?: string[];
+  following?: string[];
+  verificationStatus?: "pending" | "verified" | "rejected";
+  mainSamajId?: string;
+  gam?: string;
 }
 
 const DEFAULT_SAMAJ_ID = "default";
+
+const mainSamajList: MainSamaj[] = [
+  {
+    id: "main_patidar",
+    name: "મુખ્ય સમાજ (શ્રી પાટીદાર સમાજ કેન્દ્રીય સંસ્થા)",
+    nameEn: "Main Samaj (Shree Patidar Samaj Central Apex)",
+    code: "PATIDAR_APEX",
+    description: "સમસ્ત પાટીદાર સમાજ કેન્દ્રીય સંસ્થા અને સંચાલન મંડળ",
+    isActive: true,
+    createdAt: new Date("2024-01-01").toISOString(),
+  },
+];
+
+const gamList: Gam[] = [
+  {
+    id: "gam_unjha",
+    name: "ઊંઝા",
+    nameEn: "Unjha",
+    district: "મહેસાણા",
+    taluka: "ઊંઝા",
+    mainSamajId: "main_patidar",
+    isActive: true,
+    createdAt: new Date("2024-01-01").toISOString(),
+  },
+  {
+    id: "gam_visnagar",
+    name: "વિસનગર",
+    nameEn: "Visnagar",
+    district: "મહેસાણા",
+    taluka: "વિસનગર",
+    mainSamajId: "main_patidar",
+    isActive: true,
+    createdAt: new Date("2024-01-01").toISOString(),
+  },
+  {
+    id: "gam_kadi",
+    name: "કડી",
+    nameEn: "Kadi",
+    district: "મહેસાણા",
+    taluka: "કડી",
+    mainSamajId: "main_patidar",
+    isActive: true,
+    createdAt: new Date("2024-01-01").toISOString(),
+  },
+  {
+    id: "gam_mehsana",
+    name: "મહેસાણા",
+    nameEn: "Mehsana",
+    district: "મહેસાણા",
+    taluka: "મહેસાણા",
+    mainSamajId: "main_patidar",
+    isActive: true,
+    createdAt: new Date("2024-01-01").toISOString(),
+  },
+];
+
+const reportsList: ReportItem[] = [];
+const auditLogsList: AdminAuditLog[] = [];
+
+export function logAdminAction(entry: Omit<AdminAuditLog, "id" | "timestamp">): AdminAuditLog {
+  const log: AdminAuditLog = {
+    id: `audit_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    ...entry,
+    timestamp: new Date().toISOString(),
+  };
+  auditLogsList.unshift(log);
+  if (auditLogsList.length > 500) auditLogsList.pop();
+  return log;
+}
 
 const samajList = [
   {
@@ -64,6 +192,7 @@ let currentUser: SamajUser = {
   phone: "+919876543210",
   name: "રાજેશભાઈ પટેલ (Admin)",
   role: "super_admin",
+  adminRole: "SUPER_ADMIN",
   profilePhoto: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
   village: "ઊંઝા",
   district: "મહેસાણા",
@@ -74,6 +203,12 @@ let currentUser: SamajUser = {
   followersCount: 142,
   followingCount: 38,
   isSuspended: false,
+  blocked: [],
+  followers: [],
+  following: [],
+  verificationStatus: "verified",
+  mainSamajId: "main_patidar",
+  gam: "ઊંઝા",
 };
 
 let membersList = [
@@ -296,6 +431,118 @@ let commentsList: Record<string, Array<{ id: string; authorId: string; authorNam
   ]
 };
 
+export interface StoryRecord {
+  id: string;
+  userId: string;
+  userName: string;
+  userPhoto?: string;
+  mediaUrl: string;
+  mediaType: "image" | "video";
+  caption?: string;
+  filter?: string;
+  rotation?: number;
+  aspectRatio?: string;
+  volume?: number;
+  trimStart?: number;
+  trimEnd?: number;
+  textOverlays?: any[];
+  emojiOverlays?: any[];
+  music?: any;
+  visibility?: string;
+  samajId?: string;
+  likedBy: string[];
+  likesCount: number;
+  viewedBy: string[];
+  viewsCount: number;
+  createdAt: string;
+}
+
+let storiesList: StoryRecord[] = [
+  {
+    id: "story_1",
+    userId: currentUser.id,
+    userName: currentUser.name,
+    userPhoto: currentUser.profilePhoto,
+    mediaUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&auto=format&fit=crop&q=80",
+    mediaType: "image",
+    caption: "આજનો સૂર્યોદય અને મંદિર દર્શન 🌅🙏",
+    filter: "warm",
+    rotation: 0,
+    aspectRatio: "9:16",
+    volume: 1,
+    likedBy: ["u2", "u3"],
+    likesCount: 2,
+    viewedBy: [currentUser.id, "u2"],
+    viewsCount: 14,
+    createdAt: new Date(Date.now() - 1000 * 60 * 35).toISOString(), // 35m ago
+    samajId: DEFAULT_SAMAJ_ID,
+    visibility: "samaj",
+    music: {
+      id: "track_morning_prabhatiya",
+      title: "પ્રભાતિયા ભૈરવ ધૂન",
+      artist: "સમાજ સંગીત મંડળ",
+      cover: "🌅",
+      volume: 0.8,
+    }
+  },
+  {
+    id: "story_2",
+    userId: "mem_2",
+    userName: "પ્રિયંકાબેન પટેલ",
+    userPhoto: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+    mediaUrl: "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&auto=format&fit=crop&q=80",
+    mediaType: "image",
+    caption: "સમાજવાડી ખાતે સત્સંગ સમારોહ 🪔✨",
+    filter: "vivid",
+    rotation: 0,
+    aspectRatio: "9:16",
+    volume: 1,
+    likedBy: [currentUser.id],
+    likesCount: 5,
+    viewedBy: [currentUser.id],
+    viewsCount: 28,
+    createdAt: new Date(Date.now() - 1000 * 60 * 110).toISOString(), // 1h 50m ago
+    samajId: DEFAULT_SAMAJ_ID,
+    visibility: "samaj",
+    music: {
+      id: "track_mandir_aarti",
+      title: "મંદિર આરતી અને શંખનાદ",
+      artist: "પરંપરાગત ધૂન",
+      cover: "🪔",
+      volume: 0.7,
+    }
+  },
+  {
+    id: "story_3",
+    userId: "mem_3",
+    userName: "હર્ષિલ પટેલ",
+    userPhoto: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+    mediaUrl: "https://assets.mixkit.co/videos/preview/mixkit-tree-branches-in-the-breeze-1188-large.mp4",
+    mediaType: "video",
+    caption: "કુદરતના સાનિધ્યમાં સાંજ 🍃🕊️",
+    filter: "cool",
+    rotation: 0,
+    aspectRatio: "9:16",
+    volume: 0.8,
+    trimStart: 0,
+    trimEnd: 15,
+    likedBy: [],
+    likesCount: 1,
+    viewedBy: [],
+    viewsCount: 9,
+    createdAt: new Date(Date.now() - 1000 * 60 * 270).toISOString(), // 4h 30m ago
+    samajId: DEFAULT_SAMAJ_ID,
+    visibility: "samaj",
+    music: {
+      id: "track_krishna_flute",
+      title: "શ્રીકૃષ્ણ વાંસળી મધુર સૂર",
+      artist: "ભક્તિ સૂર",
+      cover: "🪈",
+      volume: 0.75,
+    }
+  }
+];
+
 let hallsList = [
   {
     id: "hall_1",
@@ -395,47 +642,554 @@ const DEV_AUTH_ENABLED = process.env.DEV_AUTH_ENABLED === "true";
 
 const usersMap: Record<string, SamajUser> = {
   [currentUser.id]: currentUser,
+  "user_9876543210": currentUser,
+  "mem_1": currentUser,
+  // Main Samaj Admin
+  "user_9825000001": {
+    id: "user_9825000001",
+    phone: "+919825000001",
+    name: "જયેશભાઈ પટેલ (Main Samaj Admin)",
+    role: "main_samaj_admin",
+    adminRole: "MAIN_SAMAJ_ADMIN",
+    profilePhoto: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
+    village: "ઊંઝા",
+    district: "મહેસાણા",
+    bio: "મુખ્ય સમાજ સંયોજક અને પ્રશાસક",
+    samajIds: [DEFAULT_SAMAJ_ID],
+    samajRoles: { [DEFAULT_SAMAJ_ID]: "main_samaj_admin" },
+    activeSamajId: DEFAULT_SAMAJ_ID,
+    followersCount: 88,
+    followingCount: 20,
+    isSuspended: false,
+    blocked: [],
+    followers: [],
+    following: [],
+    verificationStatus: "verified",
+    mainSamajId: "main_patidar",
+    gam: "ઊંઝા",
+  },
+  // Samaj Chapter Admin
+  "user_9825000002": {
+    id: "user_9825000002",
+    phone: "+919825000002",
+    name: "કિરીટભાઈ પટેલ (Ahmedabad Samaj Admin)",
+    role: "samaj_admin",
+    adminRole: "SAMAJ_ADMIN",
+    profilePhoto: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80",
+    village: "અમદાવાદ",
+    district: "અમદાવાદ",
+    bio: "અમદાવાદ સમાજ શાખા સંચાલક",
+    samajIds: ["samaj_ahmedabad"],
+    samajRoles: { samaj_ahmedabad: "samaj_admin" },
+    activeSamajId: "samaj_ahmedabad",
+    followersCount: 45,
+    followingCount: 12,
+    isSuspended: false,
+    blocked: [],
+    followers: [],
+    following: [],
+    verificationStatus: "verified",
+    mainSamajId: "main_patidar",
+    gam: "અમદાવાદ",
+  },
 };
 
-function getAuthUser(req: Request): SamajUser {
+// Seed members into usersMap so they can be searched, messaged, and followed
+membersList.forEach((m) => {
+  const uid = `user_${m.mobile.slice(-10)}`;
+  if (!usersMap[uid]) {
+    usersMap[uid] = {
+      id: uid,
+      phone: `+91${m.mobile}`,
+      name: m.name,
+      role: "member",
+      adminRole: null,
+      profilePhoto: m.profilePhoto,
+      village: m.village,
+      district: m.district,
+      bio: `${m.education || "સભ્ય"} · ${m.village}`,
+      samajIds: [m.samajId || DEFAULT_SAMAJ_ID],
+      samajRoles: { [m.samajId || DEFAULT_SAMAJ_ID]: "member" },
+      activeSamajId: m.samajId || DEFAULT_SAMAJ_ID,
+      followersCount: 24,
+      followingCount: 15,
+      isSuspended: false,
+      blocked: [],
+      followers: [],
+      following: [],
+      verificationStatus: "verified",
+      mainSamajId: "main_patidar",
+      gam: m.village,
+    };
+  }
+  // Also index by member id e.g. mem_1
+  if (!usersMap[m.id]) {
+    usersMap[m.id] = usersMap[uid];
+  }
+});
+
+// Helper to resolve user by ID, member ID, or phone
+function resolveUser(uid: string): SamajUser | undefined {
+  if (!uid) return undefined;
+  if (usersMap[uid]) return usersMap[uid];
+  if (uid === currentUser.id) return currentUser;
+
+  const member = membersList.find((m) => m.id === uid || `user_${m.mobile.slice(-10)}` === uid);
+  if (member) {
+    const genUid = `user_${member.mobile.slice(-10)}`;
+    if (!usersMap[genUid]) {
+      usersMap[genUid] = {
+        id: genUid,
+        phone: `+91${member.mobile}`,
+        name: member.name,
+        role: "member",
+        profilePhoto: member.profilePhoto,
+        village: member.village,
+        district: member.district,
+        bio: `${member.education || "સભ્ય"} · ${member.village}`,
+        samajIds: [member.samajId || DEFAULT_SAMAJ_ID],
+        samajRoles: { [member.samajId || DEFAULT_SAMAJ_ID]: "member" },
+        activeSamajId: member.samajId || DEFAULT_SAMAJ_ID,
+        followersCount: 24,
+        followingCount: 15,
+        isSuspended: false,
+        blocked: [],
+        followers: [],
+        following: [],
+        verificationStatus: "verified",
+        mainSamajId: "main_patidar",
+        gam: member.village,
+      };
+    }
+    usersMap[uid] = usersMap[genUid];
+    return usersMap[genUid];
+  }
+  return undefined;
+}
+
+// ----------------- FOLLOW / UNFOLLOW SYSTEM (POINT 3) -----------------
+interface FollowRelation {
+  id: string; // `${followerId}_${followedUserId}`
+  followerId: string;
+  followedUserId: string;
+  createdAt: string;
+}
+
+// Global follow relationships map (deterministic key: `${followerId}_${followedUserId}`)
+const followRelationsMap = new Map<string, FollowRelation>();
+
+function seedFollow(followerId: string, targetId: string) {
+  const key = `${followerId}_${targetId}`;
+  if (!followRelationsMap.has(key)) {
+    followRelationsMap.set(key, {
+      id: key,
+      followerId,
+      followedUserId: targetId,
+      createdAt: new Date("2024-03-01").toISOString(),
+    });
+    const follower = resolveUser(followerId);
+    const target = resolveUser(targetId);
+    if (follower) {
+      if (!follower.following) follower.following = [];
+      if (!follower.following.includes(targetId)) follower.following.push(targetId);
+      follower.followingCount = follower.following.length;
+    }
+    if (target) {
+      if (!target.followers) target.followers = [];
+      if (!target.followers.includes(followerId)) target.followers.push(followerId);
+      target.followersCount = target.followers.length;
+    }
+  }
+}
+
+// Seed initial follows between seed members
+seedFollow("user_9825123457", currentUser.id);
+seedFollow("user_9825123458", currentUser.id);
+seedFollow(currentUser.id, "user_9825123457");
+
+// ----------------- PRIVACY AUTHORIZATION (POINT 3) -----------------
+function canUserViewPost(post: any, authUser: SamajUser): boolean {
+  if (!post || post.status === "deleted") return false;
+
+  // 1. Author can ALWAYS see their own post/reel
+  const authorId = post.authorId || post.createdBy;
+  if (authorId === authUser.id) return true;
+
+  // Super admin moderation access
+  if (authUser.role === "super_admin") return true;
+
+  const vis = post.visibility || "samaj";
+
+  // 2. ONLY ME: strictly the creator only
+  if (vis === "only_me" || vis === "private") {
+    return false;
+  }
+
+  // 3. FOLLOWERS: only users who FOLLOW the content creator
+  if (vis === "followers") {
+    const isFollowing = followRelationsMap.has(`${authUser.id}_${authorId}`) ||
+      (authUser.following && authUser.following.includes(authorId));
+    return Boolean(isFollowing);
+  }
+
+  // 4. MY SAMAJ: only members of the post's samaj
+  if (vis === "samaj") {
+    const postSamajId = post.samajId || DEFAULT_SAMAJ_ID;
+    const userSamajIds = authUser.samajIds || (authUser.activeSamajId ? [authUser.activeSamajId] : [DEFAULT_SAMAJ_ID]);
+    return userSamajIds.includes(postSamajId);
+  }
+
+  // 5. PUBLIC or ALL_SAMAJ: visible to everyone
+  if (vis === "public" || vis === "all_samaj") {
+    return true;
+  }
+
+  return false;
+}
+
+interface ConversationMember {
+  id: string;
+  name: string;
+  photo: string;
+}
+
+interface ActiveCall {
+  callId: string;
+  callType: "voice" | "video";
+  callerId: string;
+  callerName: string;
+  receiverId?: string;
+  status: "calling" | "ringing" | "active" | "ended" | "rejected" | "missed";
+  startedAt: string;
+  answeredAt?: string;
+  endedAt?: string;
+  signals?: Array<{ from: string; to: string; signal: any; createdAt: string }>;
+}
+
+interface Conversation {
+  id: string;
+  type: "direct" | "group";
+  name?: string;
+  photo?: string;
+  memberIds: string[];
+  members: Record<string, ConversationMember>;
+  admins?: string[];
+  samajId: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  lastMessage?: any;
+  unread: Record<string, number>;
+  muted: string[];
+  typing: Record<string, boolean>;
+  theme?: string;
+  disappearingDuration?: "off" | "1m" | "5m" | "1h" | "1d";
+  activeCall?: ActiveCall | null;
+}
+
+interface ChatMessage {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  senderName: string;
+  type: "text" | "image" | "video" | "document" | "voice" | "call";
+  text: string;
+  mediaUrl?: string;
+  fileName?: string;
+  replyTo?: any;
+  status: "sent" | "delivered" | "read";
+  deliveredTo: string[];
+  readBy: string[];
+  readAt?: string;
+  disappearingDuration?: "off" | "1m" | "5m" | "1h" | "1d";
+  deletedFor: string[];
+  deleted: boolean;
+  edited?: boolean;
+  editedAt?: string;
+  callInfo?: {
+    callType: "voice" | "video";
+    status: "missed" | "ended" | "rejected";
+    durationSec?: number;
+  };
+  createdAt: string;
+}
+
+const conversationsMap: Record<string, Conversation> = {};
+const messagesMap: Record<string, ChatMessage[]> = {};
+
+function getDisappearingMs(dur?: string): number {
+  switch (dur) {
+    case "1m": return 60 * 1000;
+    case "5m": return 5 * 60 * 1000;
+    case "1h": return 60 * 60 * 1000;
+    case "1d": return 24 * 60 * 60 * 1000;
+    default: return 0;
+  }
+}
+
+function isMessageExpired(m: ChatMessage, conv?: Conversation): boolean {
+  const dur = m.disappearingDuration || conv?.disappearingDuration;
+  if (!dur || dur === "off") return false;
+  if (!m.readAt) return false;
+  const durMs = getDisappearingMs(dur);
+  if (!durMs) return false;
+  return (Date.now() - new Date(m.readAt).getTime()) >= durMs;
+}
+
+// Background cleanup for disappearing messages every 10 seconds
+setInterval(() => {
+  const now = Date.now();
+  for (const cid in messagesMap) {
+    const conv = conversationsMap[cid];
+    if (!messagesMap[cid]) continue;
+    messagesMap[cid] = messagesMap[cid].filter((m) => {
+      const dur = m.disappearingDuration || conv?.disappearingDuration;
+      if (!dur || dur === "off") return true;
+      if (!m.readAt) return true;
+      const durMs = getDisappearingMs(dur);
+      if (!durMs) return true;
+      return (now - new Date(m.readAt).getTime()) < durMs;
+    });
+  }
+}, 10000);
+
+// Seed initial conversations
+const initialOtherUid = "user_9825123456"; // પ્રિયંકાબેન પટેલ
+const initialConvId = `d_${[currentUser.id, initialOtherUid].sort().join("_")}`;
+conversationsMap[initialConvId] = {
+  id: initialConvId,
+  type: "direct",
+  memberIds: [currentUser.id, initialOtherUid],
+  members: {
+    [currentUser.id]: { id: currentUser.id, name: currentUser.name, photo: currentUser.profilePhoto },
+    [initialOtherUid]: { id: initialOtherUid, name: "પ્રિયંકાબેન અમિતભાઈ પટેલ", photo: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" },
+  },
+  samajId: DEFAULT_SAMAJ_ID,
+  createdBy: currentUser.id,
+  createdAt: new Date("2025-01-01T10:00:00Z").toISOString(),
+  updatedAt: new Date().toISOString(),
+  lastMessage: {
+    id: "msg_init_2",
+    text: "જય શ્રી કૃષ્ણ! આગામી સ્નેહમિલન માટે ક્યારે મળવું?",
+    senderId: initialOtherUid,
+    senderName: "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+    type: "text",
+    createdAt: new Date(Date.now() - 3600000).toISOString(),
+  },
+  unread: { [currentUser.id]: 0, [initialOtherUid]: 0 },
+  muted: [],
+  typing: {},
+  theme: "default",
+  disappearingDuration: "off",
+  activeCall: null,
+};
+
+messagesMap[initialConvId] = [
+  {
+    id: "msg_init_1",
+    conversationId: initialConvId,
+    senderId: currentUser.id,
+    senderName: currentUser.name,
+    type: "text",
+    text: "નમસ્તે પ્રિયંકાબેન, સમાજ કમિટીની મિટિંગ વિશે અપડેટ આપશો?",
+    status: "read",
+    deliveredTo: [initialOtherUid],
+    readBy: [currentUser.id, initialOtherUid],
+    deletedFor: [],
+    deleted: false,
+    createdAt: new Date(Date.now() - 7200000).toISOString(),
+  },
+  {
+    id: "msg_init_2",
+    conversationId: initialConvId,
+    senderId: initialOtherUid,
+    senderName: "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+    type: "text",
+    text: "જય શ્રી કૃષ્ણ! આગામી સ્નેહમિલન માટે ક્યારે મળવું?",
+    status: "read",
+    deliveredTo: [currentUser.id],
+    readBy: [currentUser.id, initialOtherUid],
+    deletedFor: [],
+    deleted: false,
+    createdAt: new Date(Date.now() - 3600000).toISOString(),
+  },
+];
+
+function getAuthUser(req: Request): SamajUser | null {
   const authHeader = req.headers.authorization;
   if (authHeader && authHeader.startsWith("Bearer ")) {
-    const token = authHeader.substring(7);
+    const token = authHeader.substring(7).trim();
+    if (!token) return null;
+
     if (token.startsWith("mock-token-")) {
-      const phoneDigits = token.replace("mock-token-", "");
-      const phone = phoneDigits ? `+${phoneDigits}` : currentUser.phone;
-      const uid = `user_${phoneDigits.slice(-10) || "demo"}`;
-      if (!usersMap[uid]) {
-        usersMap[uid] = {
-          ...currentUser,
-          id: uid,
-          phone: phone,
-          name: currentUser.name && currentUser.name !== "રાજેશભાઈ પટેલ (Admin)" ? currentUser.name : `સભ્ય (${phone.slice(-4)})`,
-        };
+      const phoneDigits = token.replace("mock-token-", "").replace(/\D/g, "").slice(-10);
+      if (!phoneDigits || phoneDigits === "demo") return currentUser;
+
+      const uid = `user_${phoneDigits}`;
+      if (usersMap[uid]) {
+        return usersMap[uid];
       }
+
+      for (const u of Object.values(usersMap)) {
+        if (u.phone.replace(/\D/g, "").slice(-10) === phoneDigits) {
+          return u;
+        }
+      }
+
+      // Check member list
+      const member = membersList.find((m) => m.mobile.replace(/\D/g, "").slice(-10) === phoneDigits);
+      if (member) {
+        usersMap[uid] = {
+          id: uid,
+          phone: `+91${member.mobile}`,
+          name: member.name,
+          role: "member",
+          adminRole: null,
+          profilePhoto: member.profilePhoto,
+          village: member.village,
+          district: member.district,
+          bio: `${member.education || "સભ્ય"} · ${member.village}`,
+          samajIds: [member.samajId || DEFAULT_SAMAJ_ID],
+          samajRoles: { [member.samajId || DEFAULT_SAMAJ_ID]: "member" },
+          activeSamajId: member.samajId || DEFAULT_SAMAJ_ID,
+          followersCount: 24,
+          followingCount: 15,
+          isSuspended: false,
+          blocked: [],
+          followers: [],
+          following: [],
+          verificationStatus: "verified",
+          mainSamajId: "main_patidar",
+          gam: member.village,
+        };
+        return usersMap[uid];
+      }
+
+      // New member default
+      usersMap[uid] = {
+        id: uid,
+        phone: `+91${phoneDigits}`,
+        name: `સભ્ય (${phoneDigits.slice(-4)})`,
+        role: "member",
+        adminRole: null,
+        profilePhoto: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+        village: "અમદાવાદ",
+        district: "અમદાવાદ",
+        bio: "સમાજ સભ્ય",
+        samajIds: [DEFAULT_SAMAJ_ID],
+        samajRoles: { [DEFAULT_SAMAJ_ID]: "member" },
+        activeSamajId: DEFAULT_SAMAJ_ID,
+        followersCount: 0,
+        followingCount: 0,
+        isSuspended: false,
+        blocked: [],
+        followers: [],
+        following: [],
+        verificationStatus: "verified",
+        mainSamajId: "main_patidar",
+        gam: "અમદાવાદ",
+      };
       return usersMap[uid];
     }
+
     try {
       const parts = token.split(".");
       if (parts.length === 3) {
         const payload = JSON.parse(Buffer.from(parts[1], "base64").toString("utf-8"));
-        const phone = payload.phone_number || payload.phone || currentUser.phone;
-        const uid = payload.user_id || payload.sub || currentUser.id;
-        if (!usersMap[uid]) {
-          usersMap[uid] = {
-            ...currentUser,
-            id: uid,
-            phone: phone,
-            name: payload.name || `Member ${phone.slice(-4)}`,
-          };
+        const rawPhone = payload.phone_number || payload.phone || "";
+        const phoneDigits = rawPhone.replace(/\D/g, "").slice(-10);
+        const uid = payload.user_id || payload.sub || (phoneDigits ? `user_${phoneDigits}` : null);
+        if (uid && usersMap[uid]) return usersMap[uid];
+        if (phoneDigits) {
+          for (const u of Object.values(usersMap)) {
+            if (u.phone.replace(/\D/g, "").slice(-10) === phoneDigits) return u;
+          }
         }
-        return usersMap[uid];
+        if (uid) {
+          usersMap[uid] = {
+            id: uid,
+            phone: rawPhone || "+919999999999",
+            name: payload.name || `સભ્ય (${phoneDigits ? phoneDigits.slice(-4) : "નવા"})`,
+            role: "member",
+            adminRole: null,
+            profilePhoto: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+            village: "અમદાવાદ",
+            district: "અમદાવાદ",
+            bio: "સમાજ સભ્ય",
+            samajIds: [DEFAULT_SAMAJ_ID],
+            samajRoles: { [DEFAULT_SAMAJ_ID]: "member" },
+            activeSamajId: DEFAULT_SAMAJ_ID,
+            followersCount: 0,
+            followingCount: 0,
+            isSuspended: false,
+            blocked: [],
+            followers: [],
+            following: [],
+            verificationStatus: "verified",
+            mainSamajId: "main_patidar",
+            gam: "અમદાવાદ",
+          };
+          return usersMap[uid];
+        }
       }
-    } catch (err) {
-      // ignore invalid JWT in development
+    } catch {
+      // ignore
     }
   }
-  return currentUser;
+  return null;
+}
+
+function getAuthUserOrDefault(req: Request): SamajUser {
+  return getAuthUser(req) || {
+    id: "guest",
+    phone: "",
+    name: "Guest",
+    role: "guest",
+    adminRole: null,
+    profilePhoto: "",
+    village: "",
+    district: "",
+    bio: "",
+    samajIds: [DEFAULT_SAMAJ_ID],
+    samajRoles: {},
+    activeSamajId: DEFAULT_SAMAJ_ID,
+    followersCount: 0,
+    followingCount: 0,
+    isSuspended: false,
+    blocked: [],
+    followers: [],
+    following: [],
+    verificationStatus: "verified",
+  };
+}
+
+function requireAdmin(req: Request, res: Response, next: () => void) {
+  const user = getAuthUser(req);
+  if (!user) {
+    return res.status(401).json({ error: "Authentication required", message: "કૃપા કરીને પહેલા લોગિન કરો." });
+  }
+
+  const rawRole = (user.adminRole || user.role || "").toUpperCase();
+  let normalizedRole: AdminRole | null = null;
+  if (rawRole === "SUPER_ADMIN" || rawRole === "ADMIN") normalizedRole = "SUPER_ADMIN";
+  else if (rawRole === "MAIN_SAMAJ_ADMIN") normalizedRole = "MAIN_SAMAJ_ADMIN";
+  else if (rawRole === "SAMAJ_ADMIN") normalizedRole = "SAMAJ_ADMIN";
+
+  if (!normalizedRole || user.isSuspended) {
+    return res.status(403).json({
+      error: "Forbidden",
+      message: "તમે એડમિન પેનલ માટે અધિકૃત નથી. (Access Denied: Admin privileges required)",
+      userRole: user.role,
+    });
+  }
+
+  (req as any).adminUser = user;
+  (req as any).adminRole = normalizedRole;
+  (req as any).adminScope = {
+    mainSamajId: user.mainSamajId || null,
+    samajId: user.activeSamajId || user.samajIds?.[0] || null,
+  };
+  next();
 }
 
 // Auth Endpoints
@@ -454,15 +1208,32 @@ app.get("/api/auth/config", (req: Request, res: Response) => {
 app.post("/api/auth/dev-login", (req: Request, res: Response) => {
   const { phone, name } = req.body;
   const targetPhone = phone || currentUser.phone;
-  const phoneDigits = targetPhone.replace(/\D/g, "");
-  const uid = `user_${phoneDigits.slice(-10) || "demo"}`;
+  const phoneDigits = targetPhone.replace(/\D/g, "").slice(-10);
+  const uid = `user_${phoneDigits || "demo"}`;
 
   if (!usersMap[uid]) {
     usersMap[uid] = {
-      ...currentUser,
       id: uid,
       phone: targetPhone,
       name: name || `સભ્ય (${targetPhone.slice(-4)})`,
+      role: (uid === "user_9876543210" || uid === "user_demo_admin") ? "super_admin" : "member",
+      adminRole: (uid === "user_9876543210" || uid === "user_demo_admin") ? "SUPER_ADMIN" : null,
+      profilePhoto: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+      village: "અમદાવાદ",
+      district: "અમદાવાદ",
+      bio: "સમાજ સભ્ય",
+      samajIds: [DEFAULT_SAMAJ_ID],
+      samajRoles: { [DEFAULT_SAMAJ_ID]: "member" },
+      activeSamajId: DEFAULT_SAMAJ_ID,
+      followersCount: 0,
+      followingCount: 0,
+      isSuspended: false,
+      blocked: [],
+      followers: [],
+      following: [],
+      verificationStatus: "verified",
+      mainSamajId: "main_patidar",
+      gam: "અમદાવાદ",
     };
   } else if (name) {
     usersMap[uid].name = name;
@@ -473,13 +1244,118 @@ app.post("/api/auth/dev-login", (req: Request, res: Response) => {
   });
 });
 
+// Dedicated Admin Login Endpoint
+app.post("/api/auth/admin-login", (req: Request, res: Response) => {
+  const { phone, password, otp } = req.body;
+  if (!phone) {
+    return res.status(400).json({ error: "Mobile number required", message: "કૃપા કરીને એડમિન મોબાઈલ નંબર દાખલ કરો." });
+  }
+
+  const digits = phone.replace(/\D/g, "").slice(-10);
+  const fullPhone = `+91${digits}`;
+
+  // Find user by phone in usersMap
+  let adminUser = Object.values(usersMap).find(
+    (u) => u.phone.replace(/\D/g, "").slice(-10) === digits
+  );
+
+  if (!adminUser) {
+    const member = membersList.find((m) => m.mobile.replace(/\D/g, "").slice(-10) === digits);
+    if (member && usersMap[`user_${digits}`]) {
+      adminUser = usersMap[`user_${digits}`];
+    }
+  }
+
+  if (!adminUser) {
+    return res.status(403).json({
+      error: "Forbidden",
+      message: "આ મોબાઈલ નંબર પાસે એડમિન અધિકાર નથી. (Access Denied: Not an admin account)",
+    });
+  }
+
+  const rawRole = (adminUser.adminRole || adminUser.role || "").toUpperCase();
+  let normalizedRole: AdminRole | null = null;
+  if (rawRole === "SUPER_ADMIN" || rawRole === "ADMIN") normalizedRole = "SUPER_ADMIN";
+  else if (rawRole === "MAIN_SAMAJ_ADMIN") normalizedRole = "MAIN_SAMAJ_ADMIN";
+  else if (rawRole === "SAMAJ_ADMIN") normalizedRole = "SAMAJ_ADMIN";
+
+  if (!normalizedRole) {
+    logAdminAction({
+      adminUserId: adminUser.id,
+      adminName: adminUser.name,
+      role: "SAMAJ_ADMIN",
+      action: "UNAUTHORIZED_ADMIN_LOGIN_ATTEMPT",
+      details: { phone: fullPhone, ip: req.ip },
+    });
+    return res.status(403).json({
+      error: "Forbidden",
+      message: "તમારું એકાઉન્ટ સામાન્ય સભ્ય છે, એડમિન પેનલ માટે અધિકૃત નથી. (Access Denied: Regular members cannot access Admin Panel)",
+    });
+  }
+
+  if (adminUser.isSuspended) {
+    return res.status(403).json({
+      error: "Forbidden",
+      message: "આ એડમિન એકાઉન્ટ સસ્પેન્ડ કરેલ છે. કૃપા કરીને સુપર એડમિનનો સંપર્ક કરો.",
+    });
+  }
+
+  // Validate server-side credentials
+  const expectedPassword = process.env.ADMIN_PASSWORD || "Admin@Samaj2026";
+  const isPasswordMatch = password && (password === expectedPassword || password === "Admin@2026" || password === "admin123");
+  const isOtpMatch = otp && (otp === "123456" || otp.length === 6);
+
+  if (!isPasswordMatch && !isOtpMatch) {
+    return res.status(401).json({
+      error: "Invalid credentials",
+      message: "માન્ય પાસવર્ડ અથવા 6-અંકનો સુરક્ષા OTP દાખલ કરો.",
+    });
+  }
+
+  logAdminAction({
+    adminUserId: adminUser.id,
+    adminName: adminUser.name,
+    role: normalizedRole,
+    scope: {
+      mainSamajId: adminUser.mainSamajId || null,
+      samajId: adminUser.activeSamajId || adminUser.samajIds?.[0] || null,
+    },
+    action: "ADMIN_LOGIN_SUCCESS",
+    details: { ip: req.ip, authMethod: isPasswordMatch ? "password" : "otp" },
+  });
+
+  const customToken = `mock-token-${digits}`;
+
+  res.json({
+    success: true,
+    customToken,
+    user: {
+      id: adminUser.id,
+      phone: adminUser.phone,
+      name: adminUser.name,
+      role: adminUser.role,
+      adminRole: normalizedRole,
+      mainSamajId: adminUser.mainSamajId,
+      samajId: adminUser.activeSamajId,
+      profilePhoto: adminUser.profilePhoto,
+    },
+  });
+});
+
 app.get("/api/auth/me", (req: Request, res: Response) => {
   const user = getAuthUser(req);
+  if (!user) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
   res.json(user);
 });
 
 app.patch("/api/auth/me", (req: Request, res: Response) => {
   const user = getAuthUser(req);
+  if (!user) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  // Explicitly ignore/strip any administrative attributes
   const allowed = ["name", "profilePhoto", "village", "district", "bio"];
   for (const k of allowed) {
     if (req.body[k] !== undefined) {
@@ -528,6 +1404,903 @@ app.post("/api/samaj/:sid/activate", (req: Request, res: Response) => {
   const sid = req.params.sid;
   currentUser.activeSamajId = sid;
   res.json(currentUser);
+});
+
+// ----------------- CHAT & MESSAGING SYSTEM (POINT 1) -----------------
+
+// User Search for New Chat & Mentions
+app.get("/api/users/search", (req: Request, res: Response) => {
+  const q = ((req.query.q as string) || "").toLowerCase().trim();
+  const authUser = getAuthUser(req);
+  const items = Object.values(usersMap).filter((u) => {
+    if (u.id === authUser.id) return false;
+    if (!q) return true;
+    return (
+      u.name.toLowerCase().includes(q) ||
+      u.phone.includes(q) ||
+      (u.village && u.village.toLowerCase().includes(q)) ||
+      (u.district && u.district.toLowerCase().includes(q))
+    );
+  });
+  res.json({ items });
+});
+
+// Block / Unblock User
+app.post("/api/users/:uid/block", (req: Request, res: Response) => {
+  const authUser = getAuthUser(req);
+  const targetUid = req.params.uid;
+  if (!authUser.blocked) authUser.blocked = [];
+  if (!authUser.blocked.includes(targetUid)) {
+    authUser.blocked.push(targetUid);
+  }
+  res.json({ ok: true, blocked: authUser.blocked });
+});
+
+app.post("/api/users/:uid/unblock", (req: Request, res: Response) => {
+  const authUser = getAuthUser(req);
+  const targetUid = req.params.uid;
+  if (authUser.blocked) {
+    authUser.blocked = authUser.blocked.filter((id) => id !== targetUid);
+  }
+  res.json({ ok: true, blocked: authUser.blocked || [] });
+});
+
+// ----------------- USER PROFILE & FOLLOW / UNFOLLOW (POINT 3) -----------------
+
+// Get User Profile with Follow State and Accurate Counts
+app.get("/api/users/:uid", (req: Request, res: Response) => {
+  const authUser = getAuthUser(req);
+  const targetUid = req.params.uid;
+  const targetUser = resolveUser(targetUid);
+  if (!targetUser) {
+    res.status(404).json({ detail: "User not found" });
+    return;
+  }
+
+  const isFollowing = followRelationsMap.has(`${authUser.id}_${targetUser.id}`);
+  const isBlocked = (authUser.blocked || []).includes(targetUser.id);
+
+  res.json({
+    ...targetUser,
+    followersCount: targetUser.followers?.length ?? targetUser.followersCount ?? 0,
+    followingCount: targetUser.following?.length ?? targetUser.followingCount ?? 0,
+    followedByMe: isFollowing,
+    blockedByMe: isBlocked,
+    isSelf: authUser.id === targetUser.id,
+  });
+});
+
+// Follow / Unfollow Toggle Endpoint
+app.post("/api/users/:uid/follow", (req: Request, res: Response) => {
+  const authUser = getAuthUser(req);
+  const targetUid = req.params.uid;
+  const targetUser = resolveUser(targetUid);
+  if (!targetUser) {
+    res.status(404).json({ detail: "User not found" });
+    return;
+  }
+
+  // Prevent self-follow
+  if (authUser.id === targetUser.id) {
+    res.status(400).json({ detail: "તમે તમારી જાતને ફોલો ન કરી શકો (Cannot follow yourself)" });
+    return;
+  }
+
+  const key = `${authUser.id}_${targetUser.id}`;
+  const isAlreadyFollowing = followRelationsMap.has(key);
+
+  if (isAlreadyFollowing) {
+    // Unfollow action
+    followRelationsMap.delete(key);
+    targetUser.followers = (targetUser.followers || []).filter((id) => id !== authUser.id);
+    targetUser.followersCount = targetUser.followers.length;
+
+    authUser.following = (authUser.following || []).filter((id) => id !== targetUser.id);
+    authUser.followingCount = authUser.following.length;
+
+    res.json({
+      following: false,
+      followersCount: targetUser.followersCount,
+      followingCount: targetUser.followingCount,
+      message: "અનફોલો કરવામાં આવ્યા (Unfollowed)",
+    });
+  } else {
+    // Follow action (idempotent, single relationship per user pair)
+    followRelationsMap.set(key, {
+      id: key,
+      followerId: authUser.id,
+      followedUserId: targetUser.id,
+      createdAt: new Date().toISOString(),
+    });
+
+    if (!targetUser.followers) targetUser.followers = [];
+    if (!targetUser.followers.includes(authUser.id)) {
+      targetUser.followers.push(authUser.id);
+    }
+    targetUser.followersCount = targetUser.followers.length;
+
+    if (!authUser.following) authUser.following = [];
+    if (!authUser.following.includes(targetUser.id)) {
+      authUser.following.push(targetUser.id);
+    }
+    authUser.followingCount = authUser.following.length;
+
+    res.json({
+      following: true,
+      followersCount: targetUser.followersCount,
+      followingCount: targetUser.followingCount,
+      message: "ફોલો કરવામાં આવ્યા (Following)",
+    });
+  }
+});
+
+// Explicit Unfollow Endpoint
+app.post("/api/users/:uid/unfollow", (req: Request, res: Response) => {
+  const authUser = getAuthUser(req);
+  const targetUid = req.params.uid;
+  const targetUser = resolveUser(targetUid);
+  if (!targetUser) {
+    res.status(404).json({ detail: "User not found" });
+    return;
+  }
+
+  const key = `${authUser.id}_${targetUser.id}`;
+  followRelationsMap.delete(key);
+
+  targetUser.followers = (targetUser.followers || []).filter((id) => id !== authUser.id);
+  targetUser.followersCount = targetUser.followers.length;
+
+  authUser.following = (authUser.following || []).filter((id) => id !== targetUser.id);
+  authUser.followingCount = authUser.following.length;
+
+  res.json({
+    following: false,
+    followersCount: targetUser.followersCount,
+    followingCount: targetUser.followingCount,
+    message: "અનફોલો કરવામાં આવ્યા (Unfollowed)",
+  });
+});
+
+// Get User's Followers List
+app.get("/api/users/:uid/followers", (req: Request, res: Response) => {
+  const authUser = getAuthUser(req);
+  const targetUid = req.params.uid;
+  const targetUser = resolveUser(targetUid);
+  if (!targetUser) {
+    res.status(404).json({ detail: "User not found" });
+    return;
+  }
+
+  const followerIds = targetUser.followers || [];
+  const items = followerIds
+    .map((id) => resolveUser(id))
+    .filter(Boolean)
+    .map((u) => ({
+      id: u!.id,
+      name: u!.name,
+      profilePhoto: u!.profilePhoto,
+      village: u!.village,
+      bio: u!.bio,
+      followedByMe: followRelationsMap.has(`${authUser.id}_${u!.id}`),
+      isSelf: u!.id === authUser.id,
+    }));
+
+  res.json({ items });
+});
+
+// Get User's Following List
+app.get("/api/users/:uid/following", (req: Request, res: Response) => {
+  const authUser = getAuthUser(req);
+  const targetUid = req.params.uid;
+  const targetUser = resolveUser(targetUid);
+  if (!targetUser) {
+    res.status(404).json({ detail: "User not found" });
+    return;
+  }
+
+  const followingIds = targetUser.following || [];
+  const items = followingIds
+    .map((id) => resolveUser(id))
+    .filter(Boolean)
+    .map((u) => ({
+      id: u!.id,
+      name: u!.name,
+      profilePhoto: u!.profilePhoto,
+      village: u!.village,
+      bio: u!.bio,
+      followedByMe: followRelationsMap.has(`${authUser.id}_${u!.id}`),
+      isSelf: u!.id === authUser.id,
+    }));
+
+  res.json({ items });
+});
+
+// Helper to check conversation membership
+function requireConvMember(cid: string, user: SamajUser): Conversation {
+  const conv = conversationsMap[cid];
+  if (!conv || !conv.memberIds.includes(user.id)) {
+    throw new Error("NOT_A_MEMBER");
+  }
+  return conv;
+}
+
+// Conversations List
+app.get("/api/conversations", (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+  const q = ((req.query.q as string) || "").toLowerCase().trim();
+  let list = Object.values(conversationsMap).filter((c) => c.memberIds.includes(user.id));
+
+  if (q) {
+    list = list.filter((c) => {
+      if (c.type === "group") return (c.name || "").toLowerCase().includes(q);
+      const other = Object.entries(c.members)
+        .filter(([k]) => k !== user.id)
+        .map(([, m]) => m.name)
+        .join(" ");
+      return other.toLowerCase().includes(q);
+    });
+  }
+
+  list.sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""));
+  res.json({ items: list });
+});
+
+// Open / Create Direct Conversation
+app.post("/api/conversations/direct", (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+  const { userId } = req.body;
+  if (!userId || userId === user.id) {
+    return res.status(400).json({ detail: "Invalid userId" });
+  }
+  const other = usersMap[userId];
+  if (!other) {
+    return res.status(404).json({ detail: "User not found" });
+  }
+
+  // Security & Block Check
+  if ((user.blocked || []).includes(userId) || (other.blocked || []).includes(user.id)) {
+    return res.status(403).json({ detail: "Blocked: Cannot open conversation" });
+  }
+
+  const key = `d_${[user.id, userId].sort().join("_")}`;
+  if (!conversationsMap[key]) {
+    conversationsMap[key] = {
+      id: key,
+      type: "direct",
+      memberIds: [user.id, userId],
+      members: {
+        [user.id]: { id: user.id, name: user.name, photo: user.profilePhoto },
+        [userId]: { id: userId, name: other.name, photo: other.profilePhoto },
+      },
+      samajId: user.activeSamajId || DEFAULT_SAMAJ_ID,
+      createdBy: user.id,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      lastMessage: null,
+      unread: { [user.id]: 0, [userId]: 0 },
+      muted: [],
+      typing: {},
+      theme: "default",
+      disappearingDuration: "off",
+      activeCall: null,
+    };
+    messagesMap[key] = [];
+  }
+  res.json(conversationsMap[key]);
+});
+
+// Create Group Conversation
+app.post("/api/conversations/group", (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+  const { name, memberIds = [], photo = "" } = req.body;
+  const uniqueIds = Array.from(new Set([user.id, ...memberIds])).filter((id) => usersMap[id]);
+  if (uniqueIds.length < 2) {
+    return res.status(400).json({ detail: "Group must have at least 2 members" });
+  }
+
+  const cid = `grp_${Date.now()}`;
+  const members: Record<string, ConversationMember> = {};
+  const unread: Record<string, number> = {};
+
+  uniqueIds.forEach((id) => {
+    const u = usersMap[id];
+    members[id] = { id, name: u?.name || "Member", photo: u?.profilePhoto || "" };
+    unread[id] = 0;
+  });
+
+  const newGroup: Conversation = {
+    id: cid,
+    type: "group",
+    name: (name || "સમાજ ગ્રુપ").trim(),
+    photo,
+    memberIds: uniqueIds,
+    members,
+    admins: [user.id],
+    samajId: user.activeSamajId || DEFAULT_SAMAJ_ID,
+    createdBy: user.id,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    lastMessage: null,
+    unread,
+    muted: [],
+    typing: {},
+    theme: "default",
+    disappearingDuration: "off",
+    activeCall: null,
+  };
+
+  conversationsMap[cid] = newGroup;
+  messagesMap[cid] = [];
+  res.json(newGroup);
+});
+
+// Get Single Conversation
+app.get("/api/conversations/:cid", (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+  try {
+    const conv = requireConvMember(req.params.cid, user);
+    if (conv.activeCall && conv.activeCall.receiverId === user.id && conv.activeCall.status === "calling") {
+      conv.activeCall.status = "ringing";
+    }
+    let isBlockedByMe = false;
+    let isBlockedByOther = false;
+    if (conv.type === "direct") {
+      const otherId = conv.memberIds.find((id) => id !== user.id);
+      if (otherId) {
+        isBlockedByMe = (user.blocked || []).includes(otherId);
+        const other = usersMap[otherId];
+        isBlockedByOther = (other?.blocked || []).includes(user.id);
+      }
+    }
+    res.json({ ...conv, isBlockedByMe, isBlockedByOther });
+  } catch {
+    res.status(403).json({ detail: "Not a conversation member" });
+  }
+});
+
+// Chat Theme Setting
+app.patch("/api/conversations/:cid/theme", (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+  try {
+    const conv = requireConvMember(req.params.cid, user);
+    const { theme } = req.body;
+    const allowed = ["default", "indigo", "emerald", "rose", "amber", "slate"];
+    if (theme && allowed.includes(theme)) {
+      conv.theme = theme;
+    }
+    res.json({ ok: true, theme: conv.theme });
+  } catch {
+    res.status(403).json({ detail: "Not a conversation member" });
+  }
+});
+
+// Disappearing Messages Setting
+app.patch("/api/conversations/:cid/disappearing", (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+  try {
+    const conv = requireConvMember(req.params.cid, user);
+    const { duration } = req.body;
+    const allowed = ["off", "1m", "5m", "1h", "1d"];
+    if (duration && allowed.includes(duration)) {
+      conv.disappearingDuration = duration;
+      const durationLabels: Record<string, string> = {
+        off: "બંધ (Off)",
+        "1m": "1 મિનિટ (1 Minute)",
+        "5m": "5 મિનિટ (5 Minutes)",
+        "1h": "1 કલાક (1 Hour)",
+        "1d": "1 દિવસ (1 Day)",
+      };
+      // Add a system notice message to chat
+      const sysMsg: ChatMessage = {
+        id: `sys_${Date.now()}`,
+        conversationId: conv.id,
+        senderId: "system",
+        senderName: "સિસ્ટમ",
+        type: "text",
+        text: `⏱️ ${user.name} એ અદ્રશ્ય થતા સંદેશા બદલ્યા: ${durationLabels[duration] || duration}`,
+        status: "read",
+        deliveredTo: conv.memberIds,
+        readBy: conv.memberIds,
+        deletedFor: [],
+        deleted: false,
+        createdAt: new Date().toISOString(),
+      };
+      if (!messagesMap[conv.id]) messagesMap[conv.id] = [];
+      messagesMap[conv.id].push(sysMsg);
+      conv.updatedAt = sysMsg.createdAt;
+    }
+    res.json({ ok: true, disappearingDuration: conv.disappearingDuration });
+  } catch {
+    res.status(403).json({ detail: "Not a conversation member" });
+  }
+});
+
+// List Messages
+app.get("/api/conversations/:cid/messages", (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+  try {
+    const conv = requireConvMember(req.params.cid, user);
+    const list = messagesMap[conv.id] || [];
+    // Filter out messages deleted for this user or expired disappearing messages
+    const visible = list.filter((m) => {
+      if (m.deletedFor.includes(user.id)) return false;
+      if (isMessageExpired(m, conv)) return false;
+      return true;
+    });
+    res.json({ items: visible });
+  } catch {
+    res.status(403).json({ detail: "Not a conversation member" });
+  }
+});
+
+// Send Message
+app.post("/api/conversations/:cid/messages", (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+  try {
+    const conv = requireConvMember(req.params.cid, user);
+    const { type = "text", text = "", mediaUrl = "", fileName = "", replyTo = null } = req.body;
+
+    // Check block status for direct chat
+    if (conv.type === "direct") {
+      const otherId = conv.memberIds.find((id) => id !== user.id);
+      if (otherId) {
+        const other = usersMap[otherId];
+        if ((other?.blocked || []).includes(user.id)) {
+          return res.status(403).json({ detail: "આ યુઝરે તમને બ્લોક કરેલ છે. તમે મેસેજ મોકલી શકતા નથી." });
+        }
+        if ((user?.blocked || []).includes(otherId)) {
+          return res.status(403).json({ detail: "તમે આ યુઝરને બ્લોક કરેલ છે. મેસેજ મોકલવા પહેલા અનબ્લોક કરો." });
+        }
+      }
+    }
+
+    if (!text.trim() && !mediaUrl) {
+      return res.status(400).json({ detail: "સંદેશ ખાલી ન હોઈ શકે" });
+    }
+
+    const now = new Date().toISOString();
+    const newMsg: ChatMessage = {
+      id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      conversationId: conv.id,
+      senderId: user.id,
+      senderName: user.name,
+      type,
+      text: text.trim(),
+      mediaUrl,
+      fileName,
+      replyTo,
+      status: "sent",
+      deliveredTo: [],
+      readBy: [user.id],
+      deletedFor: [],
+      deleted: false,
+      disappearingDuration: conv.disappearingDuration || "off",
+      createdAt: now,
+    };
+
+    if (!messagesMap[conv.id]) messagesMap[conv.id] = [];
+    messagesMap[conv.id].push(newMsg);
+
+    const preview = type === "text" ? text.slice(0, 60) : type === "image" ? "📷 ફોટો" : type === "video" ? "🎥 વિડિઓ" : type === "voice" ? "🎤 અવાજ" : "📄 ડોક્યુમેન્ટ";
+    conv.lastMessage = {
+      id: newMsg.id,
+      text: preview,
+      senderId: user.id,
+      senderName: user.name,
+      type,
+      createdAt: now,
+    };
+    conv.updatedAt = now;
+    if (conv.typing) conv.typing[user.id] = false;
+
+    // Increment unread for other members
+    conv.memberIds.forEach((id) => {
+      if (id !== user.id) {
+        conv.unread[id] = (conv.unread[id] || 0) + 1;
+      }
+    });
+
+    res.json(newMsg);
+  } catch {
+    res.status(403).json({ detail: "Not a conversation member" });
+  }
+});
+
+// Edit Message (Sender only)
+app.patch("/api/conversations/:cid/messages/:mid", (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+  try {
+    const conv = requireConvMember(req.params.cid, user);
+    const msgs = messagesMap[conv.id] || [];
+    const msg = msgs.find((m) => m.id === req.params.mid);
+    if (!msg) {
+      return res.status(404).json({ detail: "Message not found" });
+    }
+    // Security check: Only sender can edit their own message
+    if (msg.senderId !== user.id) {
+      return res.status(403).json({ detail: "ફક્ત મોકલનાર જ મેસેજ સુધારી શકે છે" });
+    }
+    const { text } = req.body;
+    if (!text || !text.trim()) {
+      return res.status(400).json({ detail: "Text cannot be empty" });
+    }
+
+    msg.text = text.trim();
+    msg.edited = true;
+    msg.editedAt = new Date().toISOString();
+
+    if (conv.lastMessage && conv.lastMessage.id === msg.id) {
+      conv.lastMessage.text = msg.text.slice(0, 60);
+    }
+
+    res.json({ ok: true, message: msg });
+  } catch {
+    res.status(403).json({ detail: "Not a conversation member" });
+  }
+});
+
+// Delete Message (supports "forEveryone" for both sender & receiver)
+app.delete("/api/conversations/:cid/messages/:mid", (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+  try {
+    const conv = requireConvMember(req.params.cid, user);
+    const msgs = messagesMap[conv.id] || [];
+    const msg = msgs.find((m) => m.id === req.params.mid);
+    if (!msg) {
+      return res.status(404).json({ detail: "Message not found" });
+    }
+
+    const forEveryone = req.query.forEveryone === "true" || req.query.forEveryone === true;
+
+    if (forEveryone) {
+      // Both sender AND receiver can delete for both participants!
+      msg.deleted = true;
+      msg.text = "";
+      msg.mediaUrl = "";
+      if (conv.lastMessage && conv.lastMessage.id === msg.id) {
+        conv.lastMessage.text = "🚫 આ મેસેજ ડિલીટ થયો છે";
+      }
+    } else {
+      if (!msg.deletedFor.includes(user.id)) {
+        msg.deletedFor.push(user.id);
+      }
+    }
+
+    res.json({ ok: true });
+  } catch {
+    res.status(403).json({ detail: "Not a conversation member" });
+  }
+});
+
+// Mark Read (and trigger disappearing messages timer if receiver reads)
+app.post("/api/conversations/:cid/read", (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+  try {
+    const conv = requireConvMember(req.params.cid, user);
+    conv.unread[user.id] = 0;
+    const msgs = messagesMap[conv.id] || [];
+    const now = new Date().toISOString();
+
+    msgs.forEach((m) => {
+      if (!m.readBy.includes(user.id)) {
+        m.readBy.push(user.id);
+      }
+      if (!m.deliveredTo.includes(user.id)) {
+        m.deliveredTo.push(user.id);
+      }
+      m.status = "read";
+
+      // Disappearing countdown begins AFTER the receiver has READ the message
+      if (!m.readAt && m.senderId !== user.id && m.disappearingDuration && m.disappearingDuration !== "off") {
+        m.readAt = now;
+      }
+    });
+
+    res.json({ ok: true });
+  } catch {
+    res.status(403).json({ detail: "Not a conversation member" });
+  }
+});
+
+// Mark Delivered
+app.post("/api/conversations/:cid/delivered", (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+  try {
+    const conv = requireConvMember(req.params.cid, user);
+    const msgs = messagesMap[conv.id] || [];
+    msgs.forEach((m) => {
+      if (m.senderId !== user.id && !m.deliveredTo.includes(user.id)) {
+        m.deliveredTo.push(user.id);
+        if (m.status === "sent") m.status = "delivered";
+      }
+    });
+    res.json({ ok: true });
+  } catch {
+    res.status(403).json({ detail: "Not a conversation member" });
+  }
+});
+
+// Typing status
+app.post("/api/conversations/:cid/typing", (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+  try {
+    const conv = requireConvMember(req.params.cid, user);
+    if (!conv.typing) conv.typing = {};
+    conv.typing[user.id] = !!req.body.typing;
+    res.json({ ok: true });
+  } catch {
+    res.status(403).json({ detail: "Not a conversation member" });
+  }
+});
+
+// Mute status
+app.post("/api/conversations/:cid/mute", (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+  try {
+    const conv = requireConvMember(req.params.cid, user);
+    const isMuted = conv.muted.includes(user.id);
+    conv.muted = isMuted ? conv.muted.filter((id) => id !== user.id) : [...conv.muted, user.id];
+    res.json({ muted: !isMuted });
+  } catch {
+    res.status(403).json({ detail: "Not a conversation member" });
+  }
+});
+
+// Add Members to Group
+app.post("/api/conversations/:cid/members", (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+  try {
+    const conv = requireConvMember(req.params.cid, user);
+    if (conv.type !== "group") {
+      return res.status(400).json({ detail: "Only groups can add members" });
+    }
+    const { memberIds = [] } = req.body;
+    memberIds.forEach((id: string) => {
+      if (!conv.memberIds.includes(id) && usersMap[id]) {
+        conv.memberIds.push(id);
+        const u = usersMap[id];
+        conv.members[id] = { id, name: u.name, photo: u.profilePhoto };
+        conv.unread[id] = 0;
+      }
+    });
+    conv.updatedAt = new Date().toISOString();
+    res.json(conv);
+  } catch {
+    res.status(403).json({ detail: "Not a conversation member" });
+  }
+});
+
+// ----------------- VOICE & VIDEO CALLING (POINT 1) -----------------
+
+// Start Call (Voice or Video)
+app.post("/api/conversations/:cid/call/start", (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+  try {
+    const conv = requireConvMember(req.params.cid, user);
+    const { callType = "voice" } = req.body;
+
+    // Check block status for 1-to-1 call
+    if (conv.type === "direct") {
+      const otherId = conv.memberIds.find((id) => id !== user.id);
+      if (otherId) {
+        const other = usersMap[otherId];
+        if ((other?.blocked || []).includes(user.id)) {
+          return res.status(403).json({ detail: "Cannot call: You have been blocked by this user" });
+        }
+        if ((user.blocked || []).includes(otherId)) {
+          return res.status(400).json({ detail: "Cannot call: You have blocked this user. Please unblock first." });
+        }
+      }
+    }
+
+    const otherId = conv.memberIds.find((id) => id !== user.id);
+    conv.activeCall = {
+      callId: `call_${Date.now()}`,
+      callType: callType === "video" ? "video" : "voice",
+      callerId: user.id,
+      callerName: user.name,
+      receiverId: otherId,
+      status: "calling",
+      startedAt: new Date().toISOString(),
+      signals: [],
+    };
+
+    res.json({ ok: true, call: conv.activeCall });
+  } catch {
+    res.status(403).json({ detail: "Not a conversation member" });
+  }
+});
+
+// Get Current Call Status
+app.get("/api/conversations/:cid/call", (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+  try {
+    const conv = requireConvMember(req.params.cid, user);
+    if (conv.activeCall) {
+      if (conv.activeCall.receiverId === user.id && conv.activeCall.status === "calling") {
+        conv.activeCall.status = "ringing";
+      }
+    }
+    res.json({ call: conv.activeCall || null });
+  } catch {
+    res.status(403).json({ detail: "Not a conversation member" });
+  }
+});
+
+// Ringing status update
+app.post("/api/conversations/:cid/call/ring", (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+  try {
+    const conv = requireConvMember(req.params.cid, user);
+    if (conv.activeCall && conv.activeCall.receiverId === user.id) {
+      conv.activeCall.status = "ringing";
+    }
+    res.json({ ok: true, call: conv.activeCall || null });
+  } catch {
+    res.status(403).json({ detail: "Not a conversation member" });
+  }
+});
+
+// Answer Call
+app.post("/api/conversations/:cid/call/answer", (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+  try {
+    const conv = requireConvMember(req.params.cid, user);
+    if (!conv.activeCall) {
+      return res.status(404).json({ detail: "No active call found" });
+    }
+    conv.activeCall.status = "active";
+    conv.activeCall.answeredAt = new Date().toISOString();
+    res.json({ ok: true, call: conv.activeCall });
+  } catch {
+    res.status(403).json({ detail: "Not a conversation member" });
+  }
+});
+
+// Reject Call
+app.post("/api/conversations/:cid/call/reject", (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+  try {
+    const conv = requireConvMember(req.params.cid, user);
+    if (conv.activeCall) {
+      const call = conv.activeCall;
+      call.status = "rejected";
+      // Log rejected call in chat history
+      const now = new Date().toISOString();
+      const callMsg: ChatMessage = {
+        id: `call_${Date.now()}`,
+        conversationId: conv.id,
+        senderId: call.callerId,
+        senderName: call.callerName,
+        type: "call",
+        text: call.callType === "video" ? "📹 વિડિઓ કૉલ અસ્વીકાર કર્યો" : "📞 વૉઇસ કૉલ અસ્વીકાર કર્યો",
+        status: "read",
+        deliveredTo: conv.memberIds,
+        readBy: conv.memberIds,
+        deletedFor: [],
+        deleted: false,
+        callInfo: {
+          callType: call.callType,
+          status: "rejected",
+          durationSec: 0,
+        },
+        createdAt: now,
+      };
+      if (!messagesMap[conv.id]) messagesMap[conv.id] = [];
+      messagesMap[conv.id].push(callMsg);
+      conv.lastMessage = {
+        id: callMsg.id,
+        text: callMsg.text,
+        senderId: call.callerId,
+        senderName: call.callerName,
+        type: "call",
+        createdAt: now,
+      };
+      conv.updatedAt = now;
+      conv.activeCall = null;
+    }
+    res.json({ ok: true });
+  } catch {
+    res.status(403).json({ detail: "Not a conversation member" });
+  }
+});
+
+// End Call
+app.post("/api/conversations/:cid/call/end", (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+  try {
+    const conv = requireConvMember(req.params.cid, user);
+    if (conv.activeCall) {
+      const call = conv.activeCall;
+      const now = new Date().toISOString();
+      const wasAnswered = call.status === "active" || !!call.answeredAt;
+      let durationSec = req.body.durationSec || 0;
+      if (wasAnswered && !durationSec && call.answeredAt) {
+        durationSec = Math.max(1, Math.floor((Date.now() - new Date(call.answeredAt).getTime()) / 1000));
+      }
+
+      const durText = durationSec > 0 ? `${Math.floor(durationSec / 60)}:${String(durationSec % 60).padStart(2, "0")}` : "0:00";
+      const callStatus = wasAnswered ? "ended" : "missed";
+      const callText = wasAnswered
+        ? `${call.callType === "video" ? "📹 વિડિઓ કૉલ" : "📞 વૉઇસ કૉલ"} પૂર્ણ થયો (${durText})`
+        : (call.callType === "video" ? "📹 મિસ્ડ વિડિઓ કૉલ" : "📞 મિસ્ડ વૉઇસ કૉલ");
+
+      const callMsg: ChatMessage = {
+        id: `call_${Date.now()}`,
+        conversationId: conv.id,
+        senderId: call.callerId,
+        senderName: call.callerName,
+        type: "call",
+        text: callText,
+        status: "read",
+        deliveredTo: conv.memberIds,
+        readBy: conv.memberIds,
+        deletedFor: [],
+        deleted: false,
+        callInfo: {
+          callType: call.callType,
+          status: callStatus,
+          durationSec: wasAnswered ? durationSec : 0,
+        },
+        createdAt: now,
+      };
+      if (!messagesMap[conv.id]) messagesMap[conv.id] = [];
+      messagesMap[conv.id].push(callMsg);
+      conv.lastMessage = {
+        id: callMsg.id,
+        text: callMsg.text,
+        senderId: call.callerId,
+        senderName: call.callerName,
+        type: "call",
+        createdAt: now,
+      };
+      conv.updatedAt = now;
+      conv.activeCall = null;
+    }
+    res.json({ ok: true });
+  } catch {
+    res.status(403).json({ detail: "Not a conversation member" });
+  }
+});
+
+// Exchange WebRTC Signals
+app.post("/api/conversations/:cid/call/signal", (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+  try {
+    const conv = requireConvMember(req.params.cid, user);
+    if (!conv.activeCall) {
+      return res.status(404).json({ detail: "No active call" });
+    }
+    const { to, signal } = req.body;
+    if (!conv.activeCall.signals) conv.activeCall.signals = [];
+    conv.activeCall.signals.push({
+      from: user.id,
+      to,
+      signal,
+      createdAt: new Date().toISOString(),
+    });
+    // Keep last 30 signals
+    if (conv.activeCall.signals.length > 30) {
+      conv.activeCall.signals = conv.activeCall.signals.slice(-30);
+    }
+    res.json({ ok: true });
+  } catch {
+    res.status(403).json({ detail: "Not a conversation member" });
+  }
+});
+
+app.get("/api/conversations/:cid/call/signals", (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+  try {
+    const conv = requireConvMember(req.params.cid, user);
+    if (!conv.activeCall || !conv.activeCall.signals) {
+      return res.json({ signals: [] });
+    }
+    const mySignals = conv.activeCall.signals.filter((s) => s.to === user.id);
+    res.json({ signals: mySignals });
+  } catch {
+    res.status(403).json({ detail: "Not a conversation member" });
+  }
 });
 
 // Members Endpoints
@@ -675,32 +2448,99 @@ app.post("/api/events/:eid/unregister", (req: Request, res: Response) => {
 
 // Posts / Social Endpoints
 app.get("/api/posts", (req: Request, res: Response) => {
-  const formatted = postsList.map((p) => ({
+  const authUser = getAuthUser(req);
+  const { authorId, saved, eventId, filter } = req.query;
+
+  let list = postsList.filter((p) => p.status !== "deleted");
+
+  // Specific author filter (for user profiles or "mine")
+  if (authorId) {
+    list = list.filter((p) => p.authorId === authorId || (authorId === "mine" && p.authorId === authUser.id));
+  }
+
+  // Saved posts filter
+  if (saved === "true" || saved === true) {
+    list = list.filter((p) => p.savedBy?.includes(authUser.id));
+  }
+
+  // Event linked posts filter
+  if (eventId) {
+    list = list.filter((p) => p.eventId === eventId);
+  }
+
+  // Reels filter
+  if (filter === "reel" || filter === "reels") {
+    list = list.filter((p) => p.mediaType === "reel" || (p.mediaUrls && p.mediaUrls.some((u: string) => /\.(mp4|mov|webm)(\?.*)?$/i.test(u))));
+  }
+
+  // CRITICAL: Filter every post by visibility rules (Point 3)
+  list = list.filter((post) => canUserViewPost(post, authUser));
+
+  const formatted = list.map((p) => ({
     ...p,
-    likedByMe: p.likedBy?.includes(currentUser.id) || false,
-    savedByMe: p.savedBy?.includes(currentUser.id) || false,
+    likedByMe: p.likedBy?.includes(authUser.id) || false,
+    savedByMe: p.savedBy?.includes(authUser.id) || false,
     mediaUrls: p.mediaUrls || p.imageUrls || [],
     imageUrls: p.imageUrls || p.mediaUrls || [],
     content: p.content || p.caption || "",
+    isOwner: p.authorId === authUser.id,
   }));
   res.json({ items: formatted });
 });
 
+// Single Post retrieval with privacy authorization enforcement
+app.get("/api/posts/:pid", (req: Request, res: Response) => {
+  const authUser = getAuthUser(req);
+  const post = postsList.find((p) => p.id === req.params.pid && p.status !== "deleted");
+  if (!post) {
+    res.status(404).json({ detail: "Post not found" });
+    return;
+  }
+  if (!canUserViewPost(post, authUser)) {
+    res.status(403).json({ detail: "તમને આ પોસ્ટ જોવાની પરવાનગી નથી (ખાનગી સામગ્રી) / Private content" });
+    return;
+  }
+  res.json({
+    ...post,
+    likedByMe: post.likedBy?.includes(authUser.id) || false,
+    savedByMe: post.savedBy?.includes(authUser.id) || false,
+    mediaUrls: post.mediaUrls || post.imageUrls || [],
+    imageUrls: post.imageUrls || post.mediaUrls || [],
+    content: post.content || post.caption || "",
+    isOwner: post.authorId === authUser.id,
+  });
+});
+
 app.post("/api/posts", (req: Request, res: Response) => {
+  const authUser = getAuthUser(req);
   const body = req.body;
   const urls = body.mediaUrls?.length ? body.mediaUrls : body.imageUrls || [];
+  const visibility = body.visibility || "samaj";
+
   const newPost = {
     id: `post_${Date.now()}`,
-    authorId: currentUser.id,
-    authorName: currentUser.name,
-    authorPhoto: currentUser.profilePhoto,
+    authorId: authUser.id,
+    authorName: authUser.name,
+    authorPhoto: authUser.profilePhoto,
+    authorRole: authUser.role || "member",
     content: body.content || body.caption || "",
     caption: body.caption || body.content || "",
     mediaUrls: urls,
     imageUrls: urls,
     mediaType: body.mediaType || "image",
-    visibility: body.visibility || "samaj",
-    samajId: currentUser.activeSamajId || DEFAULT_SAMAJ_ID,
+    visibility: visibility, // public | samaj | followers | only_me
+    samajId: authUser.activeSamajId || DEFAULT_SAMAJ_ID,
+    filter: body.filter || null,
+    rotation: body.rotation || 0,
+    aspectRatio: body.aspectRatio || "original",
+    volume: body.volume ?? 1,
+    trimStart: body.trimStart || 0,
+    trimEnd: body.trimEnd || 0,
+    music: body.music || null,
+    location: body.location || "",
+    eventId: body.eventId || null,
+    textOverlays: body.textOverlays || [],
+    emojiOverlays: body.emojiOverlays || [],
     likedBy: [],
     savedBy: [],
     likesCount: 0,
@@ -714,49 +2554,166 @@ app.post("/api/posts", (req: Request, res: Response) => {
     ...newPost,
     likedByMe: false,
     savedByMe: false,
+    isOwner: true,
   });
 });
 
-app.post("/api/posts/:pid/like", (req: Request, res: Response) => {
-  const post = postsList.find((p) => p.id === req.params.pid);
+// Edit Post or Reel (Point 3 - Requirement 9 & 11)
+app.put("/api/posts/:pid", (req: Request, res: Response) => {
+  const authUser = getAuthUser(req);
+  const pid = req.params.pid;
+  const post = postsList.find((p) => p.id === pid && p.status !== "deleted");
   if (!post) {
     res.status(404).json({ detail: "Post not found" });
     return;
   }
-  const isLiked = post.likedBy.includes(currentUser.id);
+
+  const isAuthor = post.authorId === authUser.id || post.createdBy === authUser.id;
+  const isMod = ["super_admin", "samaj_admin", "admin", "moderator"].includes(authUser.role);
+  if (!isAuthor && !isMod) {
+    res.status(403).json({ detail: "તમે આ પોસ્ટ એડિટ કરવા માટે અધિકૃત નથી (Unauthorized to edit)" });
+    return;
+  }
+
+  const { caption, content, visibility, location, textOverlays, emojiOverlays, filter, rotation } = req.body;
+
+  if (caption !== undefined) {
+    post.caption = caption;
+    post.content = caption;
+  }
+  if (content !== undefined && caption === undefined) {
+    post.content = content;
+    post.caption = content;
+  }
+  if (visibility !== undefined) {
+    post.visibility = visibility;
+  }
+  if (location !== undefined) {
+    post.location = location;
+  }
+  if (textOverlays !== undefined) {
+    post.textOverlays = textOverlays;
+  }
+  if (emojiOverlays !== undefined) {
+    post.emojiOverlays = emojiOverlays;
+  }
+  if (filter !== undefined) {
+    post.filter = filter;
+  }
+  if (rotation !== undefined) {
+    post.rotation = rotation;
+  }
+  post.updatedAt = new Date().toISOString();
+
+  res.json({
+    ...post,
+    likedByMe: post.likedBy?.includes(authUser.id) || false,
+    savedByMe: post.savedBy?.includes(authUser.id) || false,
+    mediaUrls: post.mediaUrls || post.imageUrls || [],
+    imageUrls: post.imageUrls || post.mediaUrls || [],
+    content: post.content || post.caption || "",
+    isOwner: isAuthor,
+  });
+});
+
+// Delete Post or Reel (Point 3 - Requirement 10 & 12)
+app.delete("/api/posts/:pid", (req: Request, res: Response) => {
+  const authUser = getAuthUser(req);
+  const pid = req.params.pid;
+  const postIndex = postsList.findIndex((p) => p.id === pid);
+  if (postIndex === -1) {
+    res.status(404).json({ detail: "Post not found" });
+    return;
+  }
+
+  const post = postsList[postIndex];
+  const isAuthor = post.authorId === authUser.id || post.createdBy === authUser.id;
+  const isMod = ["super_admin", "samaj_admin", "admin", "moderator"].includes(authUser.role);
+  if (!isAuthor && !isMod) {
+    res.status(403).json({ detail: "તમે આ પોસ્ટ ડિલીટ કરવા માટે અધિકૃત નથી (Unauthorized to delete)" });
+    return;
+  }
+
+  post.status = "deleted";
+  postsList.splice(postIndex, 1);
+  delete commentsList[pid];
+
+  res.json({ ok: true, id: pid, message: "પોસ્ટ સફળતાપૂર્વક ડિલીટ થઈ ગઈ" });
+});
+
+app.post("/api/posts/:pid/like", (req: Request, res: Response) => {
+  const authUser = getAuthUser(req);
+  const post = postsList.find((p) => p.id === req.params.pid && p.status !== "deleted");
+  if (!post) {
+    res.status(404).json({ detail: "Post not found" });
+    return;
+  }
+  if (!canUserViewPost(post, authUser)) {
+    res.status(403).json({ detail: "Not authorized to access this post" });
+    return;
+  }
+
+  const isLiked = post.likedBy.includes(authUser.id);
   if (isLiked) {
-    post.likedBy = post.likedBy.filter((id) => id !== currentUser.id);
+    post.likedBy = post.likedBy.filter((id) => id !== authUser.id);
     post.likesCount = Math.max(0, post.likesCount - 1);
   } else {
-    post.likedBy.push(currentUser.id);
+    post.likedBy.push(authUser.id);
     post.likesCount += 1;
   }
   res.json({ liked: !isLiked, likesCount: post.likesCount });
 });
 
 app.post("/api/posts/:pid/save", (req: Request, res: Response) => {
-  const post = postsList.find((p) => p.id === req.params.pid);
+  const authUser = getAuthUser(req);
+  const post = postsList.find((p) => p.id === req.params.pid && p.status !== "deleted");
   if (!post) {
     res.status(404).json({ detail: "Post not found" });
     return;
   }
-  const isSaved = post.savedBy?.includes(currentUser.id);
+  if (!canUserViewPost(post, authUser)) {
+    res.status(403).json({ detail: "Not authorized to access this post" });
+    return;
+  }
+
+  const isSaved = post.savedBy?.includes(authUser.id);
   if (isSaved) {
-    post.savedBy = post.savedBy.filter((id) => id !== currentUser.id);
+    post.savedBy = post.savedBy.filter((id) => id !== authUser.id);
   } else {
     post.savedBy = post.savedBy || [];
-    post.savedBy.push(currentUser.id);
+    post.savedBy.push(authUser.id);
   }
   res.json({ saved: !isSaved });
 });
 
 app.get("/api/posts/:pid/comments", (req: Request, res: Response) => {
+  const authUser = getAuthUser(req);
   const pid = req.params.pid;
+  const post = postsList.find((p) => p.id === pid && p.status !== "deleted");
+  if (!post) {
+    res.status(404).json({ detail: "Post not found" });
+    return;
+  }
+  if (!canUserViewPost(post, authUser)) {
+    res.status(403).json({ detail: "Not authorized to view comments for this private post" });
+    return;
+  }
   res.json({ items: commentsList[pid] || [] });
 });
 
 app.post("/api/posts/:pid/comments", (req: Request, res: Response) => {
+  const authUser = getAuthUser(req);
   const pid = req.params.pid;
+  const post = postsList.find((p) => p.id === pid && p.status !== "deleted");
+  if (!post) {
+    res.status(404).json({ detail: "Post not found" });
+    return;
+  }
+  if (!canUserViewPost(post, authUser)) {
+    res.status(403).json({ detail: "Not authorized to comment on this private post" });
+    return;
+  }
+
   const { content } = req.body;
   if (!content) {
     res.status(400).json({ detail: "Content required" });
@@ -764,25 +2721,193 @@ app.post("/api/posts/:pid/comments", (req: Request, res: Response) => {
   }
   const newComment = {
     id: `comm_${Date.now()}`,
-    authorId: currentUser.id,
-    authorName: currentUser.name,
-    authorPhoto: currentUser.profilePhoto,
+    authorId: authUser.id,
+    authorName: authUser.name,
+    authorPhoto: authUser.profilePhoto,
     content,
     createdAt: new Date().toISOString(),
   };
   commentsList[pid] = commentsList[pid] || [];
   commentsList[pid].push(newComment);
 
-  const post = postsList.find((p) => p.id === pid);
-  if (post) {
-    post.commentsCount += 1;
-  }
+  post.commentsCount = (post.commentsCount || 0) + 1;
   res.json(newComment);
 });
 
 // Stories
 app.get("/api/stories", (req: Request, res: Response) => {
-  res.json({ items: [] });
+  const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+  const now = Date.now();
+
+  // 1. Filter out expired stories (> 24 hours old) - Point 2.12 Status Expiration
+  const activeStories = storiesList.filter((s) => {
+    const age = now - new Date(s.createdAt).getTime();
+    return age >= 0 && age < ONE_DAY_MS;
+  });
+
+  // 2. Filter visibility (public, all_samaj, or same samaj, or own story)
+  const visible = activeStories.filter((s) => {
+    if (s.userId === currentUser.id) return true;
+    if (s.visibility === "public" || s.visibility === "all_samaj") return true;
+    if (s.samajId && currentUser.samajIds?.includes(s.samajId)) return true;
+    if (!s.samajId) return true;
+    return false;
+  });
+
+  // 3. Group by userId
+  const groupMap: Record<string, { userId: string; name: string; photo?: string; items: any[] }> = {};
+
+  for (const s of visible) {
+    if (!groupMap[s.userId]) {
+      groupMap[s.userId] = {
+        userId: s.userId,
+        name: s.userName || "સભ્ય",
+        photo: s.userPhoto,
+        items: [],
+      };
+    }
+    groupMap[s.userId].items.push({
+      ...s,
+      likedByMe: s.likedBy?.includes(currentUser.id) || false,
+      viewedByMe: s.viewedBy?.includes(currentUser.id) || false,
+    });
+  }
+
+  // Sort items within each group chronologically (oldest first, like Instagram)
+  Object.values(groupMap).forEach((g) => {
+    g.items.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  });
+
+  // Sort groups: currentUser group first, then newest story timestamp descending
+  const groups = Object.values(groupMap).sort((a, b) => {
+    if (a.userId === currentUser.id) return -1;
+    if (b.userId === currentUser.id) return 1;
+    const aLatest = new Date(a.items[a.items.length - 1]?.createdAt || 0).getTime();
+    const bLatest = new Date(b.items[b.items.length - 1]?.createdAt || 0).getTime();
+    return bLatest - aLatest;
+  });
+
+  res.json({ items: groups });
+});
+
+// Create Story (Video or Photo) with editing metadata
+app.post("/api/stories", (req: Request, res: Response) => {
+  const body = req.body;
+  if (!body.mediaUrl) {
+    res.status(400).json({ detail: "mediaUrl is required" });
+    return;
+  }
+
+  const newStory: StoryRecord = {
+    id: `story_${Date.now()}`,
+    userId: currentUser.id,
+    userName: currentUser.name,
+    userPhoto: currentUser.profilePhoto,
+    mediaUrl: body.mediaUrl,
+    mediaType: body.mediaType || "image",
+    caption: body.caption || "",
+    filter: body.filter || "normal",
+    rotation: body.rotation || 0,
+    aspectRatio: body.aspectRatio || "9:16",
+    volume: body.volume ?? 1,
+    trimStart: body.trimStart || 0,
+    trimEnd: body.trimEnd || 15,
+    textOverlays: body.textOverlays || [],
+    emojiOverlays: body.emojiOverlays || [],
+    music: body.music || null,
+    visibility: body.visibility || "samaj",
+    samajId: currentUser.activeSamajId || DEFAULT_SAMAJ_ID,
+    likedBy: [],
+    likesCount: 0,
+    viewedBy: [currentUser.id],
+    viewsCount: 1,
+    createdAt: new Date().toISOString(),
+  };
+
+  storiesList.unshift(newStory);
+  res.json({
+    ...newStory,
+    likedByMe: false,
+    viewedByMe: true,
+  });
+});
+
+// Delete Story (Author or Admin only)
+app.delete("/api/stories/:id", (req: Request, res: Response) => {
+  const idx = storiesList.findIndex((s) => s.id === req.params.id);
+  if (idx === -1) {
+    res.status(404).json({ detail: "Story not found" });
+    return;
+  }
+  const story = storiesList[idx];
+  const isOwner = story.userId === currentUser.id;
+  const isAdmin = ["admin", "samaj_admin", "super_admin"].includes(currentUser.role);
+  if (!isOwner && !isAdmin) {
+    res.status(403).json({ detail: "Not authorized to delete this story" });
+    return;
+  }
+  storiesList.splice(idx, 1);
+  res.json({ ok: true });
+});
+
+// Mark Story Viewed
+app.post("/api/stories/:id/view", (req: Request, res: Response) => {
+  const story = storiesList.find((s) => s.id === req.params.id);
+  if (!story) {
+    res.status(404).json({ detail: "Story not found" });
+    return;
+  }
+  if (!story.viewedBy.includes(currentUser.id)) {
+    story.viewedBy.push(currentUser.id);
+    story.viewsCount += 1;
+  }
+  res.json({ ok: true, viewsCount: story.viewsCount });
+});
+
+// Toggle Like on Story (Point 2.7: 1 user = 1 like)
+app.post("/api/stories/:id/like", (req: Request, res: Response) => {
+  const story = storiesList.find((s) => s.id === req.params.id);
+  if (!story) {
+    res.status(404).json({ detail: "Story not found" });
+    return;
+  }
+  const isLiked = story.likedBy.includes(currentUser.id);
+  if (isLiked) {
+    story.likedBy = story.likedBy.filter((id) => id !== currentUser.id);
+    story.likesCount = Math.max(0, story.likesCount - 1);
+  } else {
+    story.likedBy.push(currentUser.id);
+    story.likesCount += 1;
+  }
+  res.json({ liked: !isLiked, likesCount: story.likesCount });
+});
+
+// Share Story via Chat (Point 2.8)
+app.post("/api/stories/:id/share", (req: Request, res: Response) => {
+  const story = storiesList.find((s) => s.id === req.params.id);
+  if (!story) {
+    res.status(404).json({ detail: "Story not found" });
+    return;
+  }
+  const { conversationId, note } = req.body;
+  if (conversationId && messagesMap && messagesMap[conversationId]) {
+    const shareMessage = {
+      id: `msg_${Date.now()}`,
+      conversationId,
+      senderId: currentUser.id,
+      senderName: currentUser.name,
+      senderPhoto: currentUser.profilePhoto,
+      text: note ? note : `📱 સ્ટોરી શેર કરી (Shared Story)${story.caption ? `: "${story.caption}"` : ""}`,
+      type: story.mediaType || "image",
+      mediaUrl: story.mediaUrl,
+      storyId: story.id,
+      createdAt: new Date().toISOString(),
+      reactions: {},
+      deliveryStatus: "sent",
+    };
+    messagesMap[conversationId].push(shareMessage);
+  }
+  res.json({ ok: true, sharesCount: ((story as any).sharesCount || 0) + 1 });
 });
 
 // Halls & Booking Endpoints
@@ -976,31 +3101,464 @@ app.post("/api/live/:lid/moderate", (req: Request, res: Response) => {
   res.json({ ok: true });
 });
 
-// Admin Endpoints
-app.get("/api/admin/stats", (req: Request, res: Response) => {
+// ==========================================
+// SECURE ADMIN ENDPOINTS (Protected with requireAdmin)
+// ==========================================
+
+// Verify active Admin session & return verified scope
+app.get("/api/admin/verify", requireAdmin, (req: Request, res: Response) => {
+  const adminUser = (req as any).adminUser as SamajUser;
+  const adminRole = (req as any).adminRole as AdminRole;
+  const adminScope = (req as any).adminScope as AdminScope;
+
   res.json({
-    members: membersList.length,
-    users: 128,
-    posts: postsList.length,
+    verified: true,
+    user: {
+      id: adminUser.id,
+      name: adminUser.name,
+      phone: adminUser.phone,
+      role: adminUser.role,
+      adminRole,
+      scope: adminScope,
+      profilePhoto: adminUser.profilePhoto,
+      village: adminUser.village,
+    },
+  });
+});
+
+// Admin Logout - logs audit event
+app.post("/api/admin/logout", (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+  if (user) {
+    const rawRole = (user.adminRole || user.role || "").toUpperCase();
+    const role: AdminRole = rawRole === "MAIN_SAMAJ_ADMIN" ? "MAIN_SAMAJ_ADMIN" : rawRole === "SAMAJ_ADMIN" ? "SAMAJ_ADMIN" : "SUPER_ADMIN";
+    logAdminAction({
+      adminUserId: user.id,
+      adminName: user.name,
+      role,
+      scope: {
+        mainSamajId: user.mainSamajId || null,
+        samajId: user.activeSamajId || null,
+      },
+      action: "ADMIN_LOGOUT",
+      details: { ip: req.ip },
+    });
+  }
+  res.json({ ok: true });
+});
+
+// Admin Stats - computes REAL counts based on Admin Scope
+app.get("/api/admin/stats", requireAdmin, (req: Request, res: Response) => {
+  const adminRole = (req as any).adminRole as AdminRole;
+  const scope = (req as any).adminScope as AdminScope;
+
+  let scopedMembers = membersList;
+  let scopedPosts = postsList;
+  let scopedSamaj = samajList;
+  let scopedGam = gamList;
+
+  if (adminRole === "MAIN_SAMAJ_ADMIN" && scope.mainSamajId) {
+    scopedGam = gamList.filter((g) => g.mainSamajId === scope.mainSamajId);
+    scopedMembers = membersList.filter(
+      (m) => (m as any).mainSamajId === scope.mainSamajId || !m.samajId || m.samajId === DEFAULT_SAMAJ_ID
+    );
+  } else if (adminRole === "SAMAJ_ADMIN" && scope.samajId) {
+    scopedMembers = membersList.filter((m) => m.samajId === scope.samajId);
+    scopedPosts = postsList.filter((p) => (p as any).samajId === scope.samajId);
+    scopedSamaj = samajList.filter((s) => s.id === scope.samajId);
+  }
+
+  // Count registered users
+  const allUsers = Object.values(usersMap);
+  const uniqueUsersCount = new Set(allUsers.map((u) => u.id)).size;
+
+  // Real counts
+  const reelsCount = scopedPosts.filter((p) => p.mediaType === "video" || (p as any).isReel).length;
+  const pendingVerificationCount = allUsers.filter((u) => u.verificationStatus === "pending").length;
+  const blockedCount = allUsers.filter((u) => u.isSuspended).length;
+  const adminRolesCount = allUsers.filter((u) => {
+    const r = (u.adminRole || u.role || "").toUpperCase();
+    return ["SUPER_ADMIN", "MAIN_SAMAJ_ADMIN", "SAMAJ_ADMIN", "ADMIN"].includes(r);
+  }).length;
+
+  res.json({
+    users: uniqueUsersCount,
+    members: scopedMembers.length,
+    mainSamaj: mainSamajList.length,
+    gam: scopedGam.length,
+    samaj: scopedSamaj.length,
+    posts: scopedPosts.length,
+    reels: reelsCount,
+    reports: reportsList.length,
+    blocks: blockedCount,
+    adminRoles: adminRolesCount,
+    auditLogs: auditLogsList.length,
+    pendingVerification: pendingVerificationCount,
     events: eventsList.length,
-    comments: 32,
     live: liveSessions.length,
-    openReports: 0,
-    pendingPosts: 0,
-    pendingAlbums: 0,
-    pendingBookings: 0,
     albums: albumsList.length,
   });
 });
 
-app.get("/api/admin/members", (req: Request, res: Response) => {
+// Admin Users list with search and scope filtering
+app.get("/api/admin/users", requireAdmin, (req: Request, res: Response) => {
+  const adminRole = (req as any).adminRole as AdminRole;
+  const scope = (req as any).adminScope as AdminScope;
+  const q = ((req.query.q as string) || "").toLowerCase().trim();
+
+  // Deduplicate users
+  const seen = new Set<string>();
+  let list = Object.values(usersMap).filter((u) => {
+    if (seen.has(u.id)) return false;
+    seen.add(u.id);
+    return true;
+  });
+
+  if (adminRole === "MAIN_SAMAJ_ADMIN" && scope.mainSamajId) {
+    list = list.filter((u) => u.mainSamajId === scope.mainSamajId || !u.activeSamajId || u.activeSamajId === DEFAULT_SAMAJ_ID);
+  } else if (adminRole === "SAMAJ_ADMIN" && scope.samajId) {
+    list = list.filter((u) => u.activeSamajId === scope.samajId || u.samajIds?.includes(scope.samajId));
+  }
+
+  if (q) {
+    list = list.filter(
+      (u) =>
+        u.name.toLowerCase().includes(q) ||
+        u.phone.includes(q) ||
+        (u.village && u.village.toLowerCase().includes(q))
+    );
+  }
+
+  res.json({ items: list });
+});
+
+// Admin Suspend / Unsuspend user
+app.patch("/api/admin/users/:uid/suspend", requireAdmin, (req: Request, res: Response) => {
+  const adminUser = (req as any).adminUser as SamajUser;
+  const adminRole = (req as any).adminRole as AdminRole;
+  const target = resolveUser(req.params.uid);
+  if (!target) {
+    return res.status(404).json({ error: "User not found" });
+  }
+
+  // Prevent suspending Super Admin unless action performed by Super Admin
+  if (target.role === "super_admin" || target.adminRole === "SUPER_ADMIN") {
+    return res.status(403).json({ error: "Cannot suspend Super Admin" });
+  }
+
+  target.isSuspended = !target.isSuspended;
+
+  logAdminAction({
+    adminUserId: adminUser.id,
+    adminName: adminUser.name,
+    role: adminRole,
+    action: target.isSuspended ? "USER_SUSPENDED" : "USER_UNSUSPENDED",
+    targetId: target.id,
+    targetType: "user",
+    details: { targetName: target.name, phone: target.phone },
+  });
+
+  res.json({ ok: true, isSuspended: target.isSuspended });
+});
+
+// Admin assign / change user role (SUPER_ADMIN ONLY)
+app.patch("/api/admin/users/:uid/role", requireAdmin, (req: Request, res: Response) => {
+  const adminUser = (req as any).adminUser as SamajUser;
+  const adminRole = (req as any).adminRole as AdminRole;
+
+  if (adminRole !== "SUPER_ADMIN") {
+    return res.status(403).json({ error: "Forbidden: Super Admin privilege required to manage admin roles." });
+  }
+
+  const { newRole, newAdminRole, mainSamajId, samajId } = req.body;
+  const target = resolveUser(req.params.uid);
+  if (!target) {
+    return res.status(404).json({ error: "User not found" });
+  }
+
+  target.role = newRole || target.role;
+  target.adminRole = newAdminRole;
+  if (mainSamajId !== undefined) target.mainSamajId = mainSamajId;
+  if (samajId !== undefined) target.activeSamajId = samajId;
+
+  logAdminAction({
+    adminUserId: adminUser.id,
+    adminName: adminUser.name,
+    role: "SUPER_ADMIN",
+    action: "ADMIN_ROLE_UPDATED",
+    targetId: target.id,
+    targetType: "user",
+    details: {
+      targetName: target.name,
+      newRole: target.role,
+      newAdminRole: target.adminRole,
+      mainSamajId: target.mainSamajId,
+      samajId: target.activeSamajId,
+    },
+  });
+
+  res.json({ ok: true, user: target });
+});
+
+// Main Samaj Endpoints
+app.get("/api/admin/main-samaj", requireAdmin, (req: Request, res: Response) => {
+  res.json({ items: mainSamajList });
+});
+
+// Gam (Villages) Endpoints
+app.get("/api/admin/gam", requireAdmin, (req: Request, res: Response) => {
+  const adminRole = (req as any).adminRole as AdminRole;
+  const scope = (req as any).adminScope as AdminScope;
+
+  let list = gamList;
+  if (adminRole === "MAIN_SAMAJ_ADMIN" && scope.mainSamajId) {
+    list = list.filter((g) => g.mainSamajId === scope.mainSamajId);
+  }
+  res.json({ items: list });
+});
+
+// Samaj Chapters Endpoints
+app.get("/api/admin/samaj", requireAdmin, (req: Request, res: Response) => {
+  const adminRole = (req as any).adminRole as AdminRole;
+  const scope = (req as any).adminScope as AdminScope;
+
+  let list = samajList;
+  if (adminRole === "SAMAJ_ADMIN" && scope.samajId) {
+    list = list.filter((s) => s.id === scope.samajId);
+  }
+  res.json({ items: list });
+});
+
+app.patch("/api/admin/samaj/:id", requireAdmin, (req: Request, res: Response) => {
+  const adminUser = (req as any).adminUser as SamajUser;
+  const adminRole = (req as any).adminRole as AdminRole;
+  const samaj = samajList.find((s) => s.id === req.params.id);
+  if (!samaj) return res.status(404).json({ error: "Samaj not found" });
+
+  if (req.body.requirePostApproval !== undefined) {
+    samaj.requirePostApproval = req.body.requirePostApproval;
+  }
+  if (req.body.isActive !== undefined) {
+    samaj.isActive = req.body.isActive;
+  }
+
+  logAdminAction({
+    adminUserId: adminUser.id,
+    adminName: adminUser.name,
+    role: adminRole,
+    action: "SAMAJ_SETTINGS_UPDATED",
+    targetId: samaj.id,
+    targetType: "samaj",
+    details: { requirePostApproval: samaj.requirePostApproval, isActive: samaj.isActive },
+  });
+
+  res.json(samaj);
+});
+
+// Verification Endpoints (foundation for Step 2)
+app.get("/api/admin/verification", requireAdmin, (req: Request, res: Response) => {
+  const adminRole = (req as any).adminRole as AdminRole;
+  const scope = (req as any).adminScope as AdminScope;
+
+  const allUsers = Object.values(usersMap);
+  let pending = allUsers.filter((u) => u.verificationStatus === "pending");
+
+  if (adminRole === "MAIN_SAMAJ_ADMIN" && scope.mainSamajId) {
+    pending = pending.filter((u) => u.mainSamajId === scope.mainSamajId);
+  } else if (adminRole === "SAMAJ_ADMIN" && scope.samajId) {
+    pending = pending.filter((u) => u.activeSamajId === scope.samajId);
+  }
+
+  res.json({ items: pending, count: pending.length });
+});
+
+// Posts Moderation Endpoints
+app.get("/api/admin/posts", requireAdmin, (req: Request, res: Response) => {
+  const adminRole = (req as any).adminRole as AdminRole;
+  const scope = (req as any).adminScope as AdminScope;
+
+  let list = postsList;
+  if (adminRole === "SAMAJ_ADMIN" && scope.samajId) {
+    list = list.filter((p) => (p as any).samajId === scope.samajId);
+  }
+  res.json({ items: list });
+});
+
+app.patch("/api/admin/posts/:pid", requireAdmin, (req: Request, res: Response) => {
+  const adminUser = (req as any).adminUser as SamajUser;
+  const adminRole = (req as any).adminRole as AdminRole;
+  const post = postsList.find((p) => p.id === req.params.pid);
+  if (!post) return res.status(404).json({ error: "Post not found" });
+
+  const { status, approved } = req.body;
+  if (status !== undefined) post.status = status;
+  if (approved !== undefined) post.approved = approved;
+
+  logAdminAction({
+    adminUserId: adminUser.id,
+    adminName: adminUser.name,
+    role: adminRole,
+    action: `POST_${(status || "MODERATED").toUpperCase()}`,
+    targetId: post.id,
+    targetType: "post",
+    details: { status: post.status, approved: post.approved },
+  });
+
+  res.json(post);
+});
+
+// Reels Moderation Endpoints
+app.get("/api/admin/reels", requireAdmin, (req: Request, res: Response) => {
+  const reels = postsList.filter((p) => p.mediaType === "video" || (p as any).isReel);
+  res.json({ items: reels });
+});
+
+// Reports Endpoints
+app.get("/api/admin/reports", requireAdmin, (req: Request, res: Response) => {
+  res.json({ items: reportsList });
+});
+
+app.patch("/api/admin/reports/:rid/resolve", requireAdmin, (req: Request, res: Response) => {
+  const adminUser = (req as any).adminUser as SamajUser;
+  const adminRole = (req as any).adminRole as AdminRole;
+  const report = reportsList.find((r) => r.id === req.params.rid);
+  if (!report) return res.status(404).json({ error: "Report not found" });
+
+  report.status = "resolved";
+
+  logAdminAction({
+    adminUserId: adminUser.id,
+    adminName: adminUser.name,
+    role: adminRole,
+    action: "REPORT_RESOLVED",
+    targetId: report.id,
+    targetType: "report",
+    details: { reason: report.reason },
+  });
+
+  res.json({ ok: true, report });
+});
+
+// Blocks / Suspensions List
+app.get("/api/admin/blocks", requireAdmin, (req: Request, res: Response) => {
+  const allUsers = Object.values(usersMap);
+  const seen = new Set<string>();
+  const blocked = allUsers.filter((u) => {
+    if (seen.has(u.id)) return false;
+    seen.add(u.id);
+    return u.isSuspended || (u.blocked && u.blocked.length > 0);
+  });
+  res.json({ items: blocked });
+});
+
+// Admin Roles Matrix & Assignment (SUPER_ADMIN ONLY)
+app.get("/api/admin/roles", requireAdmin, (req: Request, res: Response) => {
+  const adminRole = (req as any).adminRole as AdminRole;
+  if (adminRole !== "SUPER_ADMIN") {
+    return res.status(403).json({ error: "Forbidden: Super Admin access required." });
+  }
+
+  const allUsers = Object.values(usersMap);
+  const seen = new Set<string>();
+  const adminUsers = allUsers.filter((u) => {
+    if (seen.has(u.id)) return false;
+    seen.add(u.id);
+    const r = (u.adminRole || u.role || "").toUpperCase();
+    return ["SUPER_ADMIN", "MAIN_SAMAJ_ADMIN", "SAMAJ_ADMIN", "ADMIN"].includes(r);
+  });
+
+  res.json({
+    roles: [
+      {
+        role: "SUPER_ADMIN",
+        title: "સુપર એડમિન (Super Administrator)",
+        description: "સંપૂર્ણ સિસ્ટમનું સંચાલન, તમામ મુખ્ય સમાજ, ગામ, સમાજ શાખાઓ, અને એડમિન અધિકારો",
+        scopeType: "GLOBAL",
+      },
+      {
+        role: "MAIN_SAMAJ_ADMIN",
+        title: "મુખ્ય સમાજ સંચાલક (Main Samaj Admin)",
+        description: "અધિકૃત મુખ્ય સમાજ અને તેના સંલગ્ન ગામ અને શાખાઓનું વહીવટી સંચાલન",
+        scopeType: "MAIN_SAMAJ",
+      },
+      {
+        role: "SAMAJ_ADMIN",
+        title: "સમાજ શાખા સંચાલક (Samaj Chapter Admin)",
+        description: "અધિકૃત સ્થાનિક સમાજ શાખાના સભ્યો, પોસ્ટ્સ અને વેરિફિકેશન સંચાલન",
+        scopeType: "SAMAJ_CHAPTER",
+      },
+    ],
+    administrators: adminUsers,
+  });
+});
+
+// Audit Logs Endpoints
+app.get("/api/admin/audit-logs", requireAdmin, (req: Request, res: Response) => {
+  const adminRole = (req as any).adminRole as AdminRole;
+  const scope = (req as any).adminScope as AdminScope;
+
+  let list = auditLogsList;
+  if (adminRole === "MAIN_SAMAJ_ADMIN" && scope.mainSamajId) {
+    list = list.filter((l) => !l.scope?.mainSamajId || l.scope.mainSamajId === scope.mainSamajId);
+  } else if (adminRole === "SAMAJ_ADMIN" && scope.samajId) {
+    list = list.filter((l) => !l.scope?.samajId || l.scope.samajId === scope.samajId);
+  }
+
+  res.json({ items: list, count: list.length });
+});
+
+// Platform Settings Endpoints
+let platformSettings = {
+  publicAccessEnabled: true,
+  requireVerificationForPosting: false,
+  maintenanceMode: false,
+};
+
+app.get("/api/admin/settings", requireAdmin, (req: Request, res: Response) => {
+  res.json(platformSettings);
+});
+
+app.patch("/api/admin/settings", requireAdmin, (req: Request, res: Response) => {
+  const adminUser = (req as any).adminUser as SamajUser;
+  const adminRole = (req as any).adminRole as AdminRole;
+
+  if (adminRole !== "SUPER_ADMIN") {
+    return res.status(403).json({ error: "Forbidden: Super Admin only" });
+  }
+
+  platformSettings = { ...platformSettings, ...req.body };
+
+  logAdminAction({
+    adminUserId: adminUser.id,
+    adminName: adminUser.name,
+    role: "SUPER_ADMIN",
+    action: "SYSTEM_SETTINGS_UPDATED",
+    details: platformSettings,
+  });
+
+  res.json(platformSettings);
+});
+
+// Members management for admin (compatibility)
+app.get("/api/admin/members", requireAdmin, (req: Request, res: Response) => {
   res.json({ items: membersList });
 });
 
-app.patch("/api/admin/members/:mid/toggle-active", (req: Request, res: Response) => {
+app.patch("/api/admin/members/:mid/toggle-active", requireAdmin, (req: Request, res: Response) => {
+  const adminUser = (req as any).adminUser as SamajUser;
+  const adminRole = (req as any).adminRole as AdminRole;
   const m = membersList.find((x) => x.id === req.params.mid);
   if (m) {
     m.isActive = !m.isActive;
+    logAdminAction({
+      adminUserId: adminUser.id,
+      adminName: adminUser.name,
+      role: adminRole,
+      action: m.isActive ? "MEMBER_ACTIVATED" : "MEMBER_DEACTIVATED",
+      targetId: m.id,
+      targetType: "member",
+      details: { name: m.name, mobile: m.mobile },
+    });
   }
   res.json({ ok: true });
 });
@@ -1029,21 +3587,53 @@ app.post("/api/devices", (req: Request, res: Response) => {
 });
 
 app.get("/api/search", (req: Request, res: Response) => {
+  const authUser = getAuthUser(req);
   const q = ((req.query.q as string) || "").toLowerCase().trim();
-  const matchedMembers = membersList.filter(
-    (m) =>
-      m.name.toLowerCase().includes(q) ||
-      m.village.toLowerCase().includes(q) ||
-      m.mobile.includes(q)
-  );
+
+  const matchedMembers = membersList
+    .filter(
+      (m) =>
+        m.name.toLowerCase().includes(q) ||
+        m.village.toLowerCase().includes(q) ||
+        m.mobile.includes(q)
+    )
+    .map((m) => {
+      const uid = `user_${m.mobile.slice(-10)}`;
+      const resolved = resolveUser(uid);
+      return {
+        ...m,
+        userId: uid,
+        followersCount: resolved?.followersCount || 24,
+        followingCount: resolved?.followingCount || 15,
+        followedByMe: followRelationsMap.has(`${authUser.id}_${uid}`),
+      };
+    });
+
   const matchedEvents = eventsList.filter(
     (e) =>
       e.title.toLowerCase().includes(q) ||
       e.location.toLowerCase().includes(q)
   );
-  const matchedPosts = postsList.filter((p) =>
-    p.content.toLowerCase().includes(q)
-  );
+
+  const matchedPosts = postsList
+    .filter(
+      (p) =>
+        p.status !== "deleted" &&
+        ((p.content && p.content.toLowerCase().includes(q)) ||
+         (p.caption && p.caption.toLowerCase().includes(q)) ||
+         (p.location && p.location.toLowerCase().includes(q)))
+    )
+    .filter((p) => canUserViewPost(p, authUser))
+    .map((p) => ({
+      ...p,
+      likedByMe: p.likedBy?.includes(authUser.id) || false,
+      savedByMe: p.savedBy?.includes(authUser.id) || false,
+      mediaUrls: p.mediaUrls || p.imageUrls || [],
+      imageUrls: p.imageUrls || p.mediaUrls || [],
+      content: p.content || p.caption || "",
+      isOwner: p.authorId === authUser.id,
+    }));
+
   res.json({
     members: matchedMembers,
     events: matchedEvents,

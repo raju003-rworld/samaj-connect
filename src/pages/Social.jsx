@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { Search as SearchIcon, Film, Bookmark, LayoutGrid, MapPin, Calendar, X, Loader2, TrendingUp } from "lucide-react";
+import { Search as SearchIcon, Film, Bookmark, LayoutGrid, MapPin, Calendar, X, Loader2, TrendingUp, Music, Smile, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { useApp } from "@/context/AppContext";
@@ -9,6 +9,8 @@ import { MediaUploader, MediaPreview, isVideoUrl } from "@/components/MediaUploa
 import { VisibilitySelect } from "@/components/Visibility";
 import { Stories } from "@/components/social/Stories";
 import { PostCard } from "@/components/social/PostCard";
+import { MusicPickerModal } from "@/components/social/MusicPickerModal";
+import { PostEditorModal } from "@/components/social/PostEditorModal";
 
 function EventPicker({ value, onChange }) {
   const [list, setList] = useState([]);
@@ -42,16 +44,69 @@ function Composer({ onCreated }) {
   const [showLoc, setShowLoc] = useState(false);
   const [busy, setBusy] = useState(false);
 
+  // Music & Post Editing
+  const [selectedMusic, setSelectedMusic] = useState(null);
+  const [musicPickerOpen, setMusicPickerOpen] = useState(false);
+  const [postEditorOpen, setPostEditorOpen] = useState(false);
+  const [editingMedia, setEditingMedia] = useState(null);
+  const [postConfig, setPostConfig] = useState({
+    filter: "normal",
+    rotation: 0,
+    aspectRatio: "original",
+    volume: 1,
+    trimStart: 0,
+    trimEnd: 0,
+    textOverlays: [],
+    emojiOverlays: [],
+  });
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
   const submit = async () => {
     if (!content.trim() && !media.length) return toast.error("કંઈક લખો અથવા ફોટો ઉમેરો");
     setBusy(true);
     try {
       const mediaType = media.length ? (media.every(isVideoUrl) ? "reel" : media.some(isVideoUrl) ? "video" : "image") : "text";
-      const { data } = await api.post("/posts", { caption: content, mediaUrls: media, mediaType, visibility: vis, eventId: event?.id || null, location });
-      onCreated(data); setContent(""); setMedia([]); setEvent(null); setLocation(""); setShowLoc(false);
+      const { data } = await api.post("/posts", {
+        caption: content,
+        mediaUrls: media,
+        imageUrls: media,
+        mediaType,
+        visibility: vis,
+        eventId: event?.id || null,
+        location,
+        filter: postConfig.filter,
+        rotation: postConfig.rotation,
+        aspectRatio: postConfig.aspectRatio,
+        volume: postConfig.volume,
+        trimStart: postConfig.trimStart,
+        trimEnd: postConfig.trimEnd,
+        music: selectedMusic,
+        textOverlays: postConfig.textOverlays,
+        emojiOverlays: postConfig.emojiOverlays,
+      });
+      onCreated(data);
+      setContent("");
+      setMedia([]);
+      setSelectedMusic(null);
+      setPostConfig({
+        filter: "normal",
+        rotation: 0,
+        aspectRatio: "original",
+        volume: 1,
+        trimStart: 0,
+        trimEnd: 0,
+        textOverlays: [],
+        emojiOverlays: [],
+      });
+      setEvent(null);
+      setLocation("");
+      setShowLoc(false);
       toast.success(data.approved ? "પોસ્ટ થયું" : "પોસ્ટ મંજૂરી માટે મોકલાઈ");
-    } catch (e) { toast.error(e?.response?.data?.detail || t("saved_fail")); }
-    finally { setBusy(false); }
+    } catch (e) {
+      toast.error(e?.response?.data?.detail || t("saved_fail"));
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -63,10 +118,71 @@ function Composer({ onCreated }) {
         <div className="flex-1 min-w-0">
           <textarea data-testid={IDS.postCreateInput} value={content} onChange={(e) => setContent(e.target.value)} placeholder={t("whats_on_mind") + " #hashtag"} rows={2}
             className="w-full resize-none outline-none placeholder:text-slate-400 text-sm" />
-          <MediaPreview urls={media} onRemove={(i) => setMedia(media.filter((_, k) => k !== i))} />
+          <MediaPreview
+            urls={media}
+            onRemove={(i) => setMedia(media.filter((_, k) => k !== i))}
+            onEdit={(u, i) => {
+              setEditingMedia({ url: u, index: i, type: isVideoUrl(u) ? "video" : "image" });
+              setPostEditorOpen(true);
+            }}
+          />
+          {selectedMusic && (
+            <div className="flex items-center gap-2 mt-2 bg-purple-50 border border-purple-200 rounded-xl px-3 py-1.5 text-xs text-purple-900">
+              <span className="text-base">{selectedMusic.cover || "🎵"}</span>
+              <div className="min-w-0 flex-1">
+                <div className="font-semibold truncate">{selectedMusic.title}</div>
+                <div className="text-[10px] text-purple-700 truncate">{selectedMusic.artist || "સમાજ સંગીત"}</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedMusic(null)}
+                className="p-1 text-purple-600 hover:text-purple-900"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
           {showLoc && <input data-testid="post-location" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="સ્થળ (વૈકલ્પિક)" className="mt-2 w-full text-sm border border-slate-200 rounded-full px-3 py-1.5 outline-none focus:ring-2 focus:ring-purple-300" />}
           <div className="flex items-center gap-2 mt-2 border-t border-slate-100 pt-2 flex-wrap">
             <MediaUploader kind="posts" onDone={(urls) => setMedia([...media, ...urls])} testId="post-media-upload" />
+            <button
+              type="button"
+              data-testid="post-music-btn"
+              onClick={() => setMusicPickerOpen(true)}
+              className={`inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full border transition ${
+                selectedMusic ? "bg-purple-900 text-white border-purple-900" : "bg-purple-50 text-purple-800 border-purple-200 hover:bg-purple-100"
+              }`}
+            >
+              <Music className="w-3.5 h-3.5" />
+              {selectedMusic ? <span className="max-w-[80px] truncate">{selectedMusic.title}</span> : "સંગીત"}
+            </button>
+            <div className="relative">
+              <button
+                type="button"
+                data-testid="post-emoji-btn"
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-full transition"
+              >
+                <Smile className="w-3.5 h-3.5 text-amber-500" /> ઇમોજી
+              </button>
+              {showEmojiPicker && (
+                <div className="absolute left-0 bottom-full mb-1 p-2 bg-white border border-slate-200 rounded-2xl shadow-xl flex items-center gap-1.5 z-30">
+                  {["🙏", "🪔", "💐", "🎉", "🚩", "✨", "🌺", "❤️", "👍", "🎂"].map((emoji) => (
+                    <button
+                      key={emoji}
+                      type="button"
+                      onClick={() => {
+                        setContent((prev) => prev + " " + emoji);
+                        setShowEmojiPicker(false);
+                      }}
+                      className="text-lg hover:scale-125 transition-transform p-1"
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <EventPicker value={event} onChange={setEvent} />
             <button type="button" data-testid="post-toggle-location" onClick={() => setShowLoc(!showLoc)} className={`inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full border ${showLoc ? "bg-emerald-50 text-emerald-800 border-emerald-200" : "bg-slate-50 text-slate-600 border-slate-200"}`}><MapPin className="w-3.5 h-3.5" /> સ્થળ</button>
             <VisibilitySelect testId="post-visibility" value={vis} onChange={setVis} />
@@ -74,11 +190,68 @@ function Composer({ onCreated }) {
           </div>
         </div>
       </div>
+
+      {musicPickerOpen && (
+        <MusicPickerModal
+          open={musicPickerOpen}
+          onOpenChange={setMusicPickerOpen}
+          selectedTrack={selectedMusic}
+          onSelectTrack={(track) => {
+            setSelectedMusic(track);
+            setMusicPickerOpen(false);
+            toast.success("સંગીત પસંદ થયું");
+          }}
+        />
+      )}
+
+      {postEditorOpen && editingMedia && (
+        <PostEditorModal
+          open={postEditorOpen}
+          onOpenChange={setPostEditorOpen}
+          mediaUrl={editingMedia.url}
+          mediaType={editingMedia.type}
+          initialConfig={postConfig}
+          onSave={(edited) => {
+            if (edited.mediaUrl && editingMedia.index !== undefined) {
+              setMedia((prev) => {
+                const updated = [...prev];
+                updated[editingMedia.index] = edited.mediaUrl;
+                return updated;
+              });
+            }
+            setPostConfig({
+              filter: edited.filter || "normal",
+              rotation: edited.rotation || 0,
+              aspectRatio: edited.aspectRatio || "original",
+              volume: edited.volume ?? 1,
+              trimStart: edited.trimStart || 0,
+              trimEnd: edited.trimEnd || 0,
+              textOverlays: edited.textOverlays || [],
+              emojiOverlays: edited.emojiOverlays || [],
+            });
+            if (edited.music) {
+              setSelectedMusic(edited.music);
+            }
+            setPostEditorOpen(false);
+            setEditingMedia(null);
+            toast.success("ફેરફારો સેવ થયા");
+          }}
+        />
+      )}
     </div>
   );
 }
 
 const PAGE = 10;
+
+const dedupePosts = (list) => {
+  const seen = new Set();
+  return (list || []).filter((p) => {
+    if (!p?.id || seen.has(p.id)) return false;
+    seen.add(p.id);
+    return true;
+  });
+};
 
 function Trending() {
   const nav = useNavigate();
@@ -116,7 +289,7 @@ export default function Social() {
   useEffect(() => {
     let alive = true;
     setLoading(true); setPosts([]); setCursor(null);
-    fetchPage(null).then((d) => { if (!alive) return; setPosts(d.items); setCursor(d.nextCursor); setMore(!!d.nextCursor); }).finally(() => alive && setLoading(false));
+    fetchPage(null).then((d) => { if (!alive) return; setPosts(dedupePosts(d.items)); setCursor(d.nextCursor); setMore(!!d.nextCursor); }).finally(() => alive && setLoading(false));
     return () => { alive = false; };
   }, [fetchPage]);
 
@@ -131,7 +304,7 @@ export default function Social() {
       if (!e.isIntersecting || !cursor) return;
       io.disconnect();
       const d = await fetchPage(cursor);
-      setPosts((x) => [...x, ...d.items.filter((n) => !x.some((o) => o.id === n.id))]);
+      setPosts((x) => dedupePosts([...x, ...(d.items || [])]));
       setCursor(d.nextCursor); setMore(!!d.nextCursor);
     }, { rootMargin: "400px" });
     io.observe(sentinel.current);
@@ -142,7 +315,7 @@ export default function Social() {
 
   const onChange = (np) => { setPosts((arr) => arr.map((x) => (x.id === np.id ? { ...x, ...np } : x))); if (focused?.id === np.id) setFocused({ ...focused, ...np }); };
   const onRemove = (id) => { setPosts((arr) => arr.filter((x) => x.id !== id)); if (focused?.id === id) setParams({}); };
-  const onCreated = (p) => setPosts((x) => [p, ...x]);
+  const onCreated = (p) => setPosts((x) => dedupePosts([p, ...x]));
 
   return (
     <div className="max-w-2xl mx-auto space-y-4">
@@ -176,7 +349,7 @@ export default function Social() {
       {loading && <div className="space-y-3"><div className="skeleton h-40 rounded-3xl" /><div className="skeleton h-40 rounded-3xl" /></div>}
       {!loading && posts.length === 0 && <div className="text-center text-sm text-slate-500 py-10 bg-white rounded-2xl border border-slate-100">{t("no_data")}</div>}
       <div className="space-y-4" data-testid="social-feed">
-        {posts.map((p) => <PostCard key={p.id} p={p} onChange={onChange} onRemove={onRemove} onCreated={onCreated} />)}
+        {dedupePosts(posts).map((p) => <PostCard key={p.id} p={p} onChange={onChange} onRemove={onRemove} onCreated={onCreated} />)}
       </div>
       <div ref={sentinel} className="h-8 grid place-items-center text-slate-400" data-testid="feed-sentinel">{more && <Loader2 className="w-4 h-4 animate-spin" />}</div>
     </div>

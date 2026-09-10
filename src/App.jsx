@@ -25,6 +25,8 @@ import Photos from "@/pages/Photos";
 import Album from "@/pages/Album";
 import HallBooking from "@/pages/HallBooking";
 import Reels from "@/pages/Reels";
+import AdminLogin from "@/pages/AdminLogin";
+import AdminProtected from "@/components/admin/AdminProtected";
 
 const Protected = ({ children }) => {
   const { user, booting } = useApp();
@@ -38,6 +40,9 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<Splash />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/admin-login" element={<AdminLogin />} />
+      <Route path="/admin" element={<AdminProtected><Admin /></AdminProtected>} />
+      <Route path="/admin/*" element={<AdminProtected><Admin /></AdminProtected>} />
       <Route path="/home" element={<Protected><Home /></Protected>} />
       <Route path="/reels" element={<Protected><Reels /></Protected>} />
       <Route path="/members" element={<Protected><Members /></Protected>} />
@@ -46,7 +51,6 @@ function AppRoutes() {
       <Route path="/social" element={<Protected><Social /></Protected>} />
       <Route path="/events" element={<Protected><Events /></Protected>} />
       <Route path="/profile" element={<Protected><Profile /></Protected>} />
-      <Route path="/admin" element={<Protected><Admin /></Protected>} />
       <Route path="/messages" element={<Protected><Messages /></Protected>} />
       <Route path="/messages/:cid" element={<Protected><Messages /></Protected>} />
       <Route path="/live" element={<Protected><Live /></Protected>} />

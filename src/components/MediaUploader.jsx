@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import { Paperclip, X, Loader2 } from "lucide-react";
+import { Paperclip, X, Loader2, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { uploadFile } from "@/lib/firebase";
 
@@ -31,12 +31,22 @@ export const MediaUploader = ({ onDone, accept = "image/*,video/*", multiple = t
   );
 };
 
-export const MediaPreview = ({ urls, onRemove }) => urls.length ? (
+export const MediaPreview = ({ urls, onRemove, onEdit }) => urls.length ? (
   <div className="flex gap-2 flex-wrap mt-2">
     {urls.map((u, i) => (
-      <div key={u} className="relative w-20 h-20 rounded-xl overflow-hidden border border-slate-200 bg-slate-100">
+      <div key={i} className="relative w-24 h-24 rounded-xl overflow-hidden border border-slate-200 bg-black group">
         {/\.(mp4|webm|mov)(\?|$)/i.test(u) || u.includes("video") ? <video src={u} className="w-full h-full object-cover" /> : <img src={u} alt="" className="w-full h-full object-cover" />}
-        {onRemove && <button onClick={() => onRemove(i)} className="absolute top-0.5 right-0.5 bg-black/60 text-white rounded-full p-0.5"><X className="w-3 h-3" /></button>}
+        {onRemove && <button onClick={() => onRemove(i)} className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 hover:bg-black transition"><X className="w-3 h-3" /></button>}
+        {onEdit && (
+          <button
+            type="button"
+            data-testid={`post-media-edit-${i}`}
+            onClick={() => onEdit(u, i)}
+            className="absolute bottom-1 left-1 px-2 py-0.5 rounded-md bg-purple-900/90 text-white hover:bg-purple-950 text-[10px] font-semibold flex items-center gap-1 shadow"
+          >
+            <Wand2 className="w-2.5 h-2.5" /> એડિટ
+          </button>
+        )}
       </div>
     ))}
   </div>

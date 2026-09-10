@@ -6,9 +6,12 @@ service cloud.firestore {
     function isMod() { return me().role in ['super_admin', 'samaj_admin', 'admin', 'moderator']; }
     function canSee(d) {
       return d.createdBy == request.auth.uid
+        || d.authorId == request.auth.uid
         || d.visibility in ['all_samaj', 'public']
         || (d.visibility == 'samaj' && d.samajId == me().activeSamajId)
-        || (d.visibility == 'private' && request.auth.uid in d.allowedUserIds)
+        || (d.visibility == 'followers' && exists(/databases/$(database)/documents/follows/$(request.auth.uid + '_' + (d.authorId != null ? d.authorId : d.createdBy))))
+        || (d.visibility == 'private' && (d.createdBy == request.auth.uid || (d.allowedUserIds != null && request.auth.uid in d.allowedUserIds)))
+        || (d.visibility == 'only_me' && (d.createdBy == request.auth.uid || d.authorId == request.auth.uid))
         || isMod();
     }
 
@@ -57,7 +60,15 @@ service cloud.firestore {
       allow read: if signedIn();
       allow write: if false;
     }
-    // persons, comments, stories, follows, reports, groups, settings, albums, photos, halls, bookings: backend only
+    match /follows/{fid} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+    match /auditLogs/{lid} {
+      allow read: if signedIn() && isMod();
+      allow write: if false;
+    }
+    // persons, comments, stories, reports, groups, settings, albums, photos, halls, bookings: backend only
     match /{document=**} {
       allow read, write: if false;
     }

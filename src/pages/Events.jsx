@@ -51,6 +51,15 @@ const fmtDate = (d) => {
   }
 };
 
+const dedupeById = (items) => {
+  const seen = new Set();
+  return (items || []).filter((it) => {
+    if (!it?.id || seen.has(it.id)) return false;
+    seen.add(it.id);
+    return true;
+  });
+};
+
 export default function Events() {
   const { t, activeSamaj } = useApp();
   const [tab, setTab] = useState("upcoming");
@@ -66,7 +75,7 @@ export default function Events() {
   const load = async () => {
     try {
       const { data } = await api.get("/events", { params: { filter: tab } });
-      setItems(data.items || []);
+      setItems(dedupeById(data.items));
     } catch {
       toast.error("ઈવેન્ટ્સ લોડ કરવામાં ક્ષતિ આવી");
     }
@@ -85,7 +94,7 @@ export default function Events() {
     } else {
       api
         .get(`/events/${focusEvent}`)
-        .then(({ data }) => setItems((x) => (x.some((e) => e.id === data.id) ? x : [data, ...x])))
+        .then(({ data }) => setItems((x) => dedupeById(x.some((e) => e.id === data.id) ? x : [data, ...x])))
         .catch(() => {});
     }
   }, [focusEvent, items.length]);
@@ -357,7 +366,7 @@ export default function Events() {
             </p>
           </div>
         ) : (
-          items.map((e) => {
+          dedupeById(items).map((e) => {
             const dt = fmtDate(e.date);
             return (
               <article

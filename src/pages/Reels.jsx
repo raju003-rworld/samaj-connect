@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Heart, MessageCircle, Share2, Bookmark, Volume2, VolumeX, Plus, Play, Pause, ChevronUp, ChevronDown, Music2, UserCheck, UserPlus, Sparkles, X } from "lucide-react";
+import { Heart, MessageCircle, Share2, Bookmark, Volume2, VolumeX, Plus, Play, Pause, ChevronUp, ChevronDown, Music2, UserCheck, UserPlus, Sparkles, X, Edit3, Trash2, MoreVertical } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { useApp } from "@/context/AppContext";
 import { MediaUploader, isVideoUrl } from "@/components/MediaUploader";
-import { VisibilitySelect } from "@/components/Visibility";
+import { VisibilitySelect, VisibilityBadge, PrivacySelector } from "@/components/Visibility";
 import { Comments } from "@/components/social/Comments";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
@@ -89,9 +89,13 @@ function CreateReelDialog({ open, onOpenChange, onCreated }) {
             )}
           </div>
 
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-600 font-medium">કોણ જોઈ શકે:</span>
-            <VisibilitySelect testId="reel-visibility" value={vis} onChange={setVis} />
+          {/* Privacy Selector - Point 3 Requirement */}
+          <div className="pt-1">
+            <PrivacySelector
+              value={vis}
+              onChange={setVis}
+              testIdPrefix="create-reel-privacy"
+            />
           </div>
 
           <button
@@ -108,6 +112,110 @@ function CreateReelDialog({ open, onOpenChange, onCreated }) {
   );
 }
 
+function EditReelDialog({ open, onOpenChange, reel, onSaved }) {
+  const { lang } = useApp();
+  const [caption, setCaption] = useState(reel?.caption || reel?.content || "");
+  const [vis, setVis] = useState(reel?.visibility || "samaj");
+  const [location, setLocation] = useState(reel?.location || "");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (reel) {
+      setCaption(reel.caption || reel.content || "");
+      setVis(reel.visibility || "samaj");
+      setLocation(reel.location || "");
+    }
+  }, [reel]);
+
+  const submit = async (e) => {
+    e?.preventDefault();
+    if (busy || !reel?.id) return;
+    setBusy(true);
+    try {
+      const { data } = await api.put(`/posts/${reel.id}`, {
+        caption: caption.trim(),
+        visibility: vis,
+        location: location.trim(),
+      });
+      toast.success(lang === "en" ? "Reel updated" : "રીલ સુધારી લીધી");
+      onSaved(data);
+      onOpenChange(false);
+    } catch (err) {
+      toast.error(err?.response?.data?.detail || "રીલ સુધારવામાં ક્ષતિ આવી");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md rounded-3xl" data-testid="edit-reel-dialog">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-purple-900 font-bold">
+            <Edit3 className="w-5 h-5 text-purple-700" />
+            {lang === "en" ? "Edit Reel" : "રીલ સુધારો"}
+          </DialogTitle>
+          <DialogDescription className="text-xs text-slate-500">
+            {lang === "en"
+              ? "Update caption, privacy visibility or location"
+              : "કેપ્શન, પ્રાઈવસી (કોણ જોઈ શકે) અથવા સ્થળ બદલો"}
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={submit} className="space-y-4 pt-2">
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">કેપ્શન (Caption)</label>
+            <textarea
+              data-testid="edit-reel-caption-input"
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+              rows={3}
+              className="w-full resize-none rounded-2xl border border-slate-200 p-3 text-sm outline-none focus:ring-2 focus:ring-purple-400 bg-slate-50"
+              placeholder="રીલ વિશે લખો..."
+            />
+          </div>
+
+          <PrivacySelector
+            value={vis}
+            onChange={setVis}
+            testIdPrefix="edit-reel-privacy"
+          />
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">સ્થળ / લોકેશન</label>
+            <input
+              type="text"
+              data-testid="edit-reel-location-input"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="દા.ત. અમદાવાદ"
+              className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-purple-400 bg-slate-50"
+            />
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+            <button
+              type="button"
+              data-testid="edit-reel-cancel-btn"
+              onClick={() => onOpenChange(false)}
+              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
+            >
+              રદ કરો
+            </button>
+            <button
+              type="submit"
+              data-testid="edit-reel-save-btn"
+              disabled={busy}
+              className="px-5 py-2 text-xs font-bold bg-purple-900 hover:bg-purple-950 text-white rounded-xl shadow-xs disabled:opacity-50"
+            >
+              {busy ? "સાચવી રહ્યું છે..." : "સાચવો"}
+            </button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function Reels() {
   const { user, t, activeSamaj } = useApp();
   const nav = useNavigate();
@@ -118,6 +226,7 @@ export default function Reels() {
   const [playing, setPlaying] = useState(true);
   const [showComments, setShowComments] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const [editReelOpen, setEditReelOpen] = useState(false);
   const videoRef = useRef(null);
 
   const loadReels = async () => {
@@ -148,6 +257,30 @@ export default function Reels() {
   }, [activeSamaj?.id]);
 
   const activeReel = reels[currentIdx];
+
+  const isAuthorOrAdmin =
+    activeReel &&
+    (activeReel.authorId === user?.id ||
+      activeReel.createdBy === user?.id ||
+      ["super_admin", "samaj_admin", "admin"].includes(user?.role));
+
+  const handleDeleteReel = async () => {
+    if (!activeReel?.id) return;
+    if (!window.confirm("શું તમે આ રીલ ડિલીટ કરવા માંગો છો? આ ક્રિયા પાછી નહીં ફરે.")) return;
+    try {
+      await api.delete(`/posts/${activeReel.id}`);
+      toast.success("રીલ સફળતાપૂર્વક ડિલીટ થઈ ગઈ");
+      setReels((prev) => {
+        const nextList = prev.filter((r) => r.id !== activeReel.id);
+        if (currentIdx >= nextList.length) {
+          setCurrentIdx(Math.max(0, nextList.length - 1));
+        }
+        return nextList;
+      });
+    } catch (err) {
+      toast.error(err?.response?.data?.detail || "રીલ ડિલીટ કરવામાં ક્ષતિ આવી");
+    }
+  };
 
   const handleLike = async (e) => {
     e.stopPropagation();
@@ -319,16 +452,51 @@ export default function Reels() {
 
           {/* Top Info Bar inside Reel */}
           <div className="absolute top-4 left-4 right-4 flex items-center justify-between text-white z-10">
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md">
-              {currentIdx + 1} / {reels.length}
-            </span>
-            <button
-              onClick={() => setMuted(!muted)}
-              className="p-2 rounded-full bg-black/40 backdrop-blur-md text-white hover:bg-black/60 transition"
-              data-testid="reel-sound-toggle"
-            >
-              {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-            </button>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md">
+                {currentIdx + 1} / {reels.length}
+              </span>
+              <VisibilityBadge value={activeReel.visibility} />
+            </div>
+
+            <div className="flex items-center gap-2">
+              {isAuthorOrAdmin && (
+                <>
+                  <button
+                    type="button"
+                    data-testid="reel-edit-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditReelOpen(true);
+                    }}
+                    className="p-2 rounded-full bg-black/40 backdrop-blur-md text-white hover:bg-black/60 transition"
+                    title="Edit Reel"
+                  >
+                    <Edit3 className="w-4 h-4 text-purple-300" />
+                  </button>
+                  <button
+                    type="button"
+                    data-testid="reel-delete-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteReel();
+                    }}
+                    className="p-2 rounded-full bg-black/40 backdrop-blur-md text-white hover:bg-rose-900/60 transition text-rose-300"
+                    title="Delete Reel"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </>
+              )}
+
+              <button
+                onClick={() => setMuted(!muted)}
+                className="p-2 rounded-full bg-black/40 backdrop-blur-md text-white hover:bg-black/60 transition"
+                data-testid="reel-sound-toggle"
+              >
+                {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
 
           {/* Right Floating Interaction Bar */}
@@ -499,6 +667,19 @@ export default function Reels() {
           setCurrentIdx(0);
         }}
       />
+
+      {editReelOpen && activeReel && (
+        <EditReelDialog
+          open={editReelOpen}
+          onOpenChange={setEditReelOpen}
+          reel={activeReel}
+          onSaved={(updated) => {
+            setReels((prev) =>
+              prev.map((r, idx) => (idx === currentIdx ? { ...r, ...updated } : r))
+            );
+          }}
+        />
+      )}
     </div>
   );
 }

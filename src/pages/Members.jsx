@@ -8,6 +8,15 @@ import { IDS } from "@/constants/testIds";
 const openWhatsApp = (m) => window.open(`https://wa.me/${m.replace(/\D/g, "")}`, "_blank");
 const callNumber = (m) => (window.location.href = `tel:${m}`);
 
+const dedupeById = (items) => {
+  const seen = new Set();
+  return (items || []).filter((it) => {
+    if (!it?.id || seen.has(it.id)) return false;
+    seen.add(it.id);
+    return true;
+  });
+};
+
 export default function Members() {
   const { t } = useApp();
   const nav = useNavigate();
@@ -22,7 +31,7 @@ export default function Members() {
       const params = {};
       if (q) params.q = q;
       const { data } = await api.get("/members", { params });
-      setItems(data.items);
+      setItems(dedupeById(data.items));
     } finally { setLoading(false); }
   }, [q]);
 
@@ -78,7 +87,7 @@ export default function Members() {
             {t("no_data")}
           </div>
         )}
-        {!loading && items.map((m) => (
+        {!loading && dedupeById(items).map((m) => (
           <div key={m.id} data-testid={`member-card-${m.id}`} className="bg-white rounded-2xl p-3 sm:p-4 border border-slate-100 shadow-sm flex items-center gap-3">
             <button onClick={() => nav(`/members/${m.id}`)} className="w-14 h-14 rounded-full bg-purple-100 border-2 border-purple-200 grid place-items-center text-purple-800 font-extrabold overflow-hidden">
               {m.profilePhoto ? <img src={m.profilePhoto} alt="" className="w-full h-full object-cover" /> : (m.name?.[0] || "?").toUpperCase()}

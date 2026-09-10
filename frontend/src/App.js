@@ -24,6 +24,8 @@ import PublicPost from "@/pages/PublicPost";
 import Photos from "@/pages/Photos";
 import Album from "@/pages/Album";
 import HallBooking from "@/pages/HallBooking";
+import AdminLogin from "@/pages/AdminLogin";
+import AdminProtected from "@/components/admin/AdminProtected";
 
 const Protected = ({ children }) => {
   const { user, booting } = useApp();
@@ -37,6 +39,9 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<Splash />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/admin-login" element={<AdminLogin />} />
+      <Route path="/admin" element={<AdminProtected><Admin /></AdminProtected>} />
+      <Route path="/admin/*" element={<AdminProtected><Admin /></AdminProtected>} />
       <Route path="/home" element={<Protected><Home /></Protected>} />
       <Route path="/members" element={<Protected><Members /></Protected>} />
       <Route path="/members/add" element={<Protected><AddMember /></Protected>} />

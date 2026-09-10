@@ -31,6 +31,7 @@ import { useApp } from "@/context/AppContext";
 import { IDS } from "@/constants/testIds";
 import { MediaUploader, isVideoUrl } from "@/components/MediaUploader";
 import { PostCard } from "@/components/social/PostCard";
+import { UserListModal } from "@/components/social/UserListModal";
 
 export default function Profile() {
   const { user, updateUser, logout, t, isMod, activeSamaj } = useApp();
@@ -51,6 +52,8 @@ export default function Profile() {
   const [savedPosts, setSavedPosts] = useState([]);
   const [myEvents, setMyEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [userListOpen, setUserListOpen] = useState(false);
+  const [userListType, setUserListType] = useState("followers");
 
   // Sync profile data
   useEffect(() => {
@@ -70,14 +73,18 @@ export default function Profile() {
     if (!user?.id) return;
     setLoading(true);
     try {
-      const [postsRes, savedRes, eventsRes] = await Promise.all([
+      const [postsRes, savedRes, eventsRes, userRes] = await Promise.all([
         api.get("/posts", { params: { authorId: user.id } }).catch(() => ({ data: { items: [] } })),
         api.get("/posts", { params: { saved: true } }).catch(() => ({ data: { items: [] } })),
         api.get("/events", { params: { filter: "mine" } }).catch(() => ({ data: { items: [] } })),
+        api.get(`/users/${user.id}`).catch(() => null),
       ]);
       setMyPosts(postsRes.data.items || []);
       setSavedPosts(savedRes.data.items || []);
       setMyEvents(eventsRes.data.items || []);
+      if (userRes?.data) {
+        updateUser(userRes.data);
+      }
     } catch {
       // silent catch
     } finally {
@@ -182,18 +189,38 @@ export default function Profile() {
                 </span>
                 <span className="text-[11px] text-slate-500 mt-0.5 block">{t("my_posts")}</span>
               </div>
-              <div className="text-center sm:text-left">
-                <span className="block font-heading font-extrabold text-base text-slate-900 leading-none">
+              <button
+                type="button"
+                data-testid="my-followers-btn"
+                onClick={() => {
+                  setUserListType("followers");
+                  setUserListOpen(true);
+                }}
+                className="text-center sm:text-left group cursor-pointer"
+              >
+                <span className="block font-heading font-extrabold text-base text-slate-900 leading-none group-hover:text-purple-700 transition">
                   {user?.followersCount || 0}
                 </span>
-                <span className="text-[11px] text-slate-500 mt-0.5 block">{t("followers")}</span>
-              </div>
-              <div className="text-center sm:text-left">
-                <span className="block font-heading font-extrabold text-base text-slate-900 leading-none">
+                <span className="text-[11px] text-slate-500 mt-0.5 block group-hover:text-purple-700 transition">
+                  {t("followers")}
+                </span>
+              </button>
+              <button
+                type="button"
+                data-testid="my-following-btn"
+                onClick={() => {
+                  setUserListType("following");
+                  setUserListOpen(true);
+                }}
+                className="text-center sm:text-left group cursor-pointer"
+              >
+                <span className="block font-heading font-extrabold text-base text-slate-900 leading-none group-hover:text-purple-700 transition">
                   {user?.followingCount || 0}
                 </span>
-                <span className="text-[11px] text-slate-500 mt-0.5 block">{t("following")}</span>
-              </div>
+                <span className="text-[11px] text-slate-500 mt-0.5 block group-hover:text-purple-700 transition">
+                  {t("following")}
+                </span>
+              </button>
             </div>
 
             {/* Action Buttons: Edit Profile & Share */}
@@ -579,6 +606,15 @@ export default function Profile() {
             <ChevronRight className="w-4 h-4 text-rose-400" />
           </button>
         </div>
+      )}
+
+      {userListOpen && (
+        <UserListModal
+          open={userListOpen}
+          onOpenChange={setUserListOpen}
+          userId={user?.id}
+          type={userListType}
+        />
       )}
     </div>
   );

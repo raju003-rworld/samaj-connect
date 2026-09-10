@@ -15,6 +15,9 @@ import {
   Building2,
   RefreshCw,
   Plus,
+  Music,
+  Smile,
+  Wand2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
@@ -24,6 +27,17 @@ import { Stories } from "@/components/social/Stories";
 import { PostCard } from "@/components/social/PostCard";
 import { MediaUploader, isVideoUrl } from "@/components/MediaUploader";
 import { VisibilitySelect } from "@/components/Visibility";
+import { MusicPickerModal } from "@/components/social/MusicPickerModal";
+import { PostEditorModal } from "@/components/social/PostEditorModal";
+
+const dedupePosts = (list) => {
+  const seen = new Set();
+  return (list || []).filter((p) => {
+    if (!p?.id || seen.has(p.id)) return false;
+    seen.add(p.id);
+    return true;
+  });
+};
 
 export default function Home() {
   const { user, t, activeSamaj, lang } = useApp();
@@ -36,7 +50,7 @@ export default function Home() {
   const [cursor, setCursor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
+  const [hasMore, setHasMore] = useState(false);
 
   // Post Composer State
   const [composeOpen, setComposeOpen] = useState(params.get("compose") === "1");
@@ -48,6 +62,23 @@ export default function Home() {
   const [events, setEvents] = useState([]);
   const [visibility, setVisibility] = useState("samaj");
   const [posting, setPosting] = useState(false);
+
+  // Post Creator State & Media Editing (Point 2.9 - 2.11)
+  const [selectedMusic, setSelectedMusic] = useState(null);
+  const [musicPickerOpen, setMusicPickerOpen] = useState(false);
+  const [postEditorOpen, setPostEditorOpen] = useState(false);
+  const [editingMedia, setEditingMedia] = useState(null);
+  const [postConfig, setPostConfig] = useState({
+    filter: "normal",
+    rotation: 0,
+    aspectRatio: "original",
+    volume: 1,
+    trimStart: 0,
+    trimEnd: 0,
+    textOverlays: [],
+    emojiOverlays: [],
+  });
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   // Official Announcements
   const [announcements, setAnnouncements] = useState([]);
@@ -87,9 +118,9 @@ export default function Home() {
       }
 
       if (reset) {
-        setItems(loaded);
+        setItems(dedupePosts(loaded));
       } else {
-        setItems((prev) => [...prev, ...loaded]);
+        setItems((prev) => dedupePosts([...prev, ...loaded]));
       }
       setCursor(data.nextCursor || null);
       setHasMore(Boolean(data.nextCursor));
@@ -144,11 +175,31 @@ export default function Home() {
         visibility,
         location,
         eventId: eventId || null,
+        filter: postConfig.filter,
+        rotation: postConfig.rotation,
+        aspectRatio: postConfig.aspectRatio,
+        volume: postConfig.volume,
+        trimStart: postConfig.trimStart,
+        trimEnd: postConfig.trimEnd,
+        music: selectedMusic,
+        textOverlays: postConfig.textOverlays,
+        emojiOverlays: postConfig.emojiOverlays,
       });
 
-      setItems((prev) => [data, ...prev]);
+      setItems((prev) => dedupePosts([data, ...prev]));
       setCaption("");
       setMediaUrls([]);
+      setSelectedMusic(null);
+      setPostConfig({
+        filter: "normal",
+        rotation: 0,
+        aspectRatio: "original",
+        volume: 1,
+        trimStart: 0,
+        trimEnd: 0,
+        textOverlays: [],
+        emojiOverlays: [],
+      });
       setLocation("");
       setShowLocation(false);
       setEventId("");
@@ -169,10 +220,10 @@ export default function Home() {
   // Intersection Observer for Infinite Scroll
   const sentinelRef = useRef(null);
   useEffect(() => {
-    if (!sentinelRef.current || !hasMore || loading) return;
+    if (!sentinelRef.current || !hasMore || loading || !cursor) return;
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && !loading && hasMore) {
+        if (entry.isIntersecting && !loading && hasMore && cursor) {
           loadFeed(false);
         }
       },
@@ -229,7 +280,7 @@ export default function Home() {
             {mediaUrls.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
                 {mediaUrls.map((u, i) => (
-                  <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden border border-slate-200 bg-black">
+                  <div key={i} className="relative w-24 h-24 rounded-xl overflow-hidden border border-slate-200 bg-black group">
                     {isVideoUrl(u) ? (
                       <video src={u} className="w-full h-full object-cover" />
                     ) : (
@@ -238,12 +289,41 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={() => setMediaUrls((prev) => prev.filter((_, idx) => idx !== i))}
-                      className="absolute top-1 right-1 p-0.5 rounded-full bg-black/70 text-white hover:bg-black"
+                      className="absolute top-1 right-1 p-1 rounded-full bg-black/70 text-white hover:bg-black transition"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
+                    <button
+                      type="button"
+                      data-testid={`post-media-edit-${i}`}
+                      onClick={() => {
+                        setEditingMedia({ url: u, index: i, type: isVideoUrl(u) ? "video" : "image" });
+                        setPostEditorOpen(true);
+                      }}
+                      className="absolute bottom-1 left-1 px-2 py-0.5 rounded-md bg-purple-900/90 text-white hover:bg-purple-950 text-[10px] font-semibold flex items-center gap-1 shadow"
+                    >
+                      <Wand2 className="w-2.5 h-2.5" /> એડિટ
+                    </button>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* Selected Music Banner */}
+            {selectedMusic && (
+              <div className="flex items-center gap-2 mt-2 bg-purple-50 border border-purple-200 rounded-xl px-3 py-1.5 text-xs text-purple-900">
+                <span className="text-base">{selectedMusic.cover || "🎵"}</span>
+                <div className="min-w-0 flex-1">
+                  <div className="font-semibold truncate">{selectedMusic.title}</div>
+                  <div className="text-[10px] text-purple-700 truncate">{selectedMusic.artist || "સમાજ સંગીત"}</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedMusic(null)}
+                  className="p-1 text-purple-600 hover:text-purple-900"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
               </div>
             )}
 
@@ -288,6 +368,48 @@ export default function Home() {
                     }
                     testId="post-media-upload"
                   />
+
+                  {/* Music Picker Button */}
+                  <button
+                    type="button"
+                    data-testid="post-music-btn"
+                    onClick={() => setMusicPickerOpen(true)}
+                    className={`flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full transition ${
+                      selectedMusic ? "bg-purple-900 text-white" : "text-purple-800 bg-purple-50 hover:bg-purple-100"
+                    }`}
+                  >
+                    <Music className="w-3.5 h-3.5" />
+                    {selectedMusic ? <span className="max-w-[90px] truncate">{selectedMusic.title}</span> : "સંગીત"}
+                  </button>
+
+                  {/* Quick Gujarati Emojis Picker Button */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      data-testid="post-emoji-btn"
+                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                      className="flex items-center gap-1 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-full transition"
+                    >
+                      <Smile className="w-3.5 h-3.5 text-amber-500" /> ઇમોજી
+                    </button>
+                    {showEmojiPicker && (
+                      <div className="absolute left-0 bottom-full mb-1 p-2 bg-white border border-slate-200 rounded-2xl shadow-xl flex items-center gap-1.5 z-30">
+                        {["🙏", "🪔", "💐", "🎉", "🚩", "✨", "🌺", "❤️", "👍", "🎂"].map((emoji) => (
+                          <button
+                            key={emoji}
+                            type="button"
+                            onClick={() => {
+                              setCaption((prev) => prev + " " + emoji);
+                              setShowEmojiPicker(false);
+                            }}
+                            className="text-lg hover:scale-125 transition-transform p-1"
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
 
                   {/* Location Toggle */}
                   <button
@@ -336,6 +458,56 @@ export default function Home() {
             )}
           </div>
         </div>
+
+        {/* Music Picker Modal */}
+        {musicPickerOpen && (
+          <MusicPickerModal
+            open={musicPickerOpen}
+            onOpenChange={setMusicPickerOpen}
+            selectedTrack={selectedMusic}
+            onSelectTrack={(track) => {
+              setSelectedMusic(track);
+              setMusicPickerOpen(false);
+              toast.success("સંગીત પસંદ થયું");
+            }}
+          />
+        )}
+
+        {/* Post Editor Modal for Photo/Video Enhancement */}
+        {postEditorOpen && editingMedia && (
+          <PostEditorModal
+            open={postEditorOpen}
+            onOpenChange={setPostEditorOpen}
+            mediaUrl={editingMedia.url}
+            mediaType={editingMedia.type}
+            initialConfig={postConfig}
+            onSave={(edited) => {
+              if (edited.mediaUrl && editingMedia.index !== undefined) {
+                setMediaUrls((prev) => {
+                  const updated = [...prev];
+                  updated[editingMedia.index] = edited.mediaUrl;
+                  return updated;
+                });
+              }
+              setPostConfig({
+                filter: edited.filter || "normal",
+                rotation: edited.rotation || 0,
+                aspectRatio: edited.aspectRatio || "original",
+                volume: edited.volume ?? 1,
+                trimStart: edited.trimStart || 0,
+                trimEnd: edited.trimEnd || 0,
+                textOverlays: edited.textOverlays || [],
+                emojiOverlays: edited.emojiOverlays || [],
+              });
+              if (edited.music) {
+                setSelectedMusic(edited.music);
+              }
+              setPostEditorOpen(false);
+              setEditingMedia(null);
+              toast.success("ફેરફારો સેવ થયા");
+            }}
+          />
+        )}
       </section>
 
       {/* 3. PINNED OFFICIAL SAMAJ ANNOUNCEMENT BANNER */}
@@ -423,13 +595,13 @@ export default function Home() {
             </button>
           </div>
         ) : (
-          items.map((post) => (
+          dedupePosts(items).map((post) => (
             <PostCard
               key={post.id}
               p={post}
               onChange={(np) => setItems((prev) => prev.map((x) => (x.id === np.id ? { ...x, ...np } : x)))}
               onRemove={(id) => setItems((prev) => prev.filter((x) => x.id !== id))}
-              onCreated={(newPost) => setItems((prev) => [newPost, ...prev])}
+              onCreated={(newPost) => setItems((prev) => dedupePosts([newPost, ...prev]))}
             />
           ))
         )}

@@ -20,6 +20,25 @@ import { VisibilitySelect, VisibilityBadge } from "@/components/Visibility";
 import { MediaUploader, isVideoUrl } from "@/components/MediaUploader";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
+const dedupeById = (items) => {
+  const seen = new Set();
+  return (items || []).filter((it) => {
+    if (!it?.id || seen.has(it.id)) return false;
+    seen.add(it.id);
+    return true;
+  });
+};
+
+const dedupePhotos = (photos) => {
+  const seen = new Set();
+  return (photos || []).filter((p) => {
+    const key = p.url || p.id;
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+};
+
 export function AlbumDialog({ open, onOpenChange, onSaved, album }) {
   const { t } = useApp();
   const [f, setF] = useState({
@@ -46,7 +65,7 @@ export function AlbumDialog({ open, onOpenChange, onSaved, album }) {
       );
       api
         .get("/events", { params: { filter: "upcoming" } })
-        .then(({ data }) => setEvents(data.items || []))
+        .then(({ data }) => setEvents(dedupeById(data.items || [])))
         .catch(() => {});
     }
   }, [open, album]);
@@ -312,7 +331,7 @@ export default function Photos() {
       ) : tab === "albums" ? (
         /* Albums Grid View */
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5" data-testid="albums-grid">
-          {albums.map((a) => (
+          {dedupeById(albums).map((a) => (
             <button
               key={a.id}
               data-testid={`album-card-${a.id}`}
@@ -370,9 +389,9 @@ export default function Photos() {
         <div>
           {displayedPhotos.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5" data-testid="photos-grid">
-              {displayedPhotos.map((p, idx) => (
+              {dedupePhotos(displayedPhotos).map((p, idx) => (
                 <div
-                  key={p.id || p.url + idx}
+                  key={`${p.id || p.url || "photo"}-${idx}`}
                   onClick={() => setViewPhoto(p)}
                   className="aspect-square rounded-2xl overflow-hidden bg-slate-100 border border-slate-100 relative group cursor-pointer shadow-2xs hover:shadow-md transition"
                 >

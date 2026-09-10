@@ -26,18 +26,27 @@ function CommentRow({ c, ctx, depth = 0 }) {
   );
 }
 
+const dedupeById = (items) => {
+  const seen = new Set();
+  return (items || []).filter((it) => {
+    if (!it?.id || seen.has(it.id)) return false;
+    seen.add(it.id);
+    return true;
+  });
+};
+
 export function Comments({ postId, onCount }) {
   const [items, setItems] = useState([]);
   const [text, setText] = useState("");
   const [replyTo, setReplyTo] = useState(null);
   const { user, t, isMod } = useApp();
 
-  useEffect(() => { api.get(`/posts/${postId}/comments`).then(({ data }) => setItems(data.items)); }, [postId]);
+  useEffect(() => { api.get(`/posts/${postId}/comments`).then(({ data }) => setItems(dedupeById(data.items))); }, [postId]);
 
   const add = async () => {
     if (!text.trim()) return;
     const { data } = await api.post(`/posts/${postId}/comments`, { content: text, parentId: replyTo?.id || null });
-    setItems((x) => [...x, data]);
+    setItems((x) => dedupeById([...x, data]));
     setText(""); setReplyTo(null); onCount?.(1);
   };
   const del = async (c) => {
@@ -50,7 +59,7 @@ export function Comments({ postId, onCount }) {
     await api.post("/reports", { targetType: "comment", targetId: c.id, reason }); toast.success("રિપોર્ટ મોકલાયો");
   };
 
-  const roots = items.filter((c) => !c.parentId);
+  const roots = dedupeById(items).filter((c) => !c.parentId);
   const ctx = { items, user, isMod, t, setReplyTo, del, report };
 
   return (
@@ -58,7 +67,7 @@ export function Comments({ postId, onCount }) {
       {roots.map((c) => (
         <React.Fragment key={c.id}>
           <CommentRow c={c} ctx={ctx} />
-          {items.filter((x) => x.parentId === c.id).map((r) => <CommentRow key={r.id} c={r} ctx={ctx} depth={1} />)}
+          {dedupeById(items.filter((x) => x.parentId === c.id)).map((r) => <CommentRow key={r.id} c={r} ctx={ctx} depth={1} />)}
         </React.Fragment>
       ))}
       {replyTo && <div className="text-[11px] text-purple-800 bg-purple-50 rounded-full px-3 py-1 inline-flex items-center gap-2">↩ {replyTo.authorName} <button onClick={() => setReplyTo(null)} className="font-bold">×</button></div>}
