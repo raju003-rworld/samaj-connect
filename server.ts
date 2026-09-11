@@ -82,7 +82,11 @@ interface SamajUser {
   blocked?: string[];
   followers?: string[];
   following?: string[];
-  verificationStatus?: "pending" | "verified" | "rejected";
+  verificationStatus?: "none" | "pending" | "verified" | "rejected";
+  rejectionReason?: string | null;
+  verificationSubmittedAt?: string;
+  verifiedAt?: string;
+  verifiedBy?: string;
   mainSamajId?: string;
   gam?: string;
 }
@@ -891,6 +895,40 @@ function canUserViewPost(post: any, authUser: SamajUser): boolean {
   return false;
 }
 
+// ---- Profile Verification helpers (Task 4) ----
+const REQUIRED_PROFILE_FIELDS: { key: string; label: string }[] = [
+  { key: "name", label: "Name" },
+  { key: "village", label: "Village/Gam" },
+  { key: "district", label: "District" },
+];
+
+function checkProfileComplete(u: SamajUser): { complete: boolean; missing: string[] } {
+  const missing = REQUIRED_PROFILE_FIELDS
+    .filter((f) => !((u as any)[f.key] && String((u as any)[f.key]).trim()))
+    .map((f) => f.label);
+  return { complete: missing.length === 0, missing };
+}
+
+function getVerificationState(u: SamajUser) {
+  const { complete, missing } = checkProfileComplete(u);
+  const s = u.verificationStatus;
+  let state: "PROFILE_INCOMPLETE" | "VERIFICATION_PENDING" | "VERIFIED" | "REJECTED";
+  if (s === "verified") state = "VERIFIED";
+  else if (s === "pending") state = "VERIFICATION_PENDING";
+  else if (s === "rejected") state = "REJECTED";
+  else state = "PROFILE_INCOMPLETE";
+  const canSubmit = complete && (state === "PROFILE_INCOMPLETE" || state === "REJECTED");
+  return {
+    verificationState: state,
+    profileComplete: complete,
+    missingFields: missing,
+    rejectionReason: u.rejectionReason || null,
+    canSubmit,
+    verifiedAt: u.verifiedAt || null,
+    submittedAt: u.verificationSubmittedAt || null,
+  };
+}
+
 interface ConversationMember {
   id: string;
   name: string;
@@ -1083,7 +1121,8 @@ function buildUser(uid: string, phone: string, name: string, member?: any): Sama
     blocked: [],
     followers: [],
     following: [],
-    verificationStatus: "verified",
+    verificationStatus: "none",
+    rejectionReason: null,
     mainSamajId: "main_patidar",
     gam: member?.village || "અમદાવાદ",
   };
@@ -1334,6 +1373,40 @@ app.patch("/api/auth/me", (req: Request, res: Response) => {
     }
   }
   res.json(user);
+});
+
+// ---- Profile Verification: user endpoints (Task 4) ----
+app.get("/api/verification/status", (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+  if (!user) return res.status(401).json({ error: "Unauthorized" });
+  res.json(getVerificationState(user));
+});
+
+app.post("/api/verification/submit", (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+  if (!user) return res.status(401).json({ error: "Unauthorized" });
+
+  // Cannot submit if already verified or already pending review
+  if (user.verificationStatus === "verified") {
+    return res.status(400).json({ detail: "તમારી પ્રોફાઇલ પહેલેથી જ ચકાસાયેલ છે (Already verified)", ...getVerificationState(user) });
+  }
+  if (user.verificationStatus === "pending") {
+    return res.status(400).json({ detail: "ચકાસણી પહેલેથી જ સમીક્ષા હેઠળ છે (Already pending review)", ...getVerificationState(user) });
+  }
+
+  const { complete, missing } = checkProfileComplete(user);
+  if (!complete) {
+    return res.status(400).json({
+      detail: "કૃપા કરીને જરૂરી પ્રોફાઇલ માહિતી પૂર્ણ કરો (Profile incomplete)",
+      missingFields: missing,
+      ...getVerificationState(user),
+    });
+  }
+
+  user.verificationStatus = "pending";
+  user.verificationSubmittedAt = new Date().toISOString();
+  user.rejectionReason = null;
+  res.json(getVerificationState(user));
 });
 
 // Samaj Endpoints
@@ -2499,6 +2572,14 @@ app.get("/api/posts/:pid", (req: Request, res: Response) => {
 
 app.post("/api/posts", (req: Request, res: Response) => {
   const authUser = getAuthUser(req);
+  if (!authUser) return res.status(401).json({ detail: "Authentication required" });
+  // Verified-only publishing guard (server-side; only enforced when platform setting is enabled)
+  if (platformSettings.requireVerificationForPosting && authUser.verificationStatus !== "verified") {
+    return res.status(403).json({
+      detail: "પ્રકાશિત કરવા માટે તમારી પ્રોફાઇલ ચકાસાયેલ હોવી જરૂરી છે (Verification required to publish)",
+      verificationState: getVerificationState(authUser).verificationState,
+    });
+  }
   const body = req.body;
   const urls = body.mediaUrls?.length ? body.mediaUrls : body.imageUrls || [];
   const visibility = body.visibility || "samaj";
@@ -3356,6 +3437,60 @@ app.get("/api/admin/verification", requireAdmin, (req: Request, res: Response) =
   }
 
   res.json({ items: pending, count: pending.length });
+});
+
+// ---- Profile Verification: admin approve/reject (Task 4) ----
+function adminCanManageUser(targetUser: SamajUser, adminRole: AdminRole, scope: AdminScope): boolean {
+  if (adminRole === "SUPER_ADMIN") return true;
+  if (adminRole === "MAIN_SAMAJ_ADMIN") return Boolean(scope.mainSamajId) && targetUser.mainSamajId === scope.mainSamajId;
+  if (adminRole === "SAMAJ_ADMIN") return Boolean(scope.samajId) && targetUser.activeSamajId === scope.samajId;
+  return false;
+}
+
+app.post("/api/admin/verification/:uid/approve", requireAdmin, (req: Request, res: Response) => {
+  const adminUser = (req as any).adminUser as SamajUser;
+  const adminRole = (req as any).adminRole as AdminRole;
+  const scope = (req as any).adminScope as AdminScope;
+  const target = resolveUser(req.params.uid);
+  if (!target) return res.status(404).json({ detail: "User not found" });
+  if (!adminCanManageUser(target, adminRole, scope)) {
+    return res.status(403).json({ detail: "Forbidden: outside your Samaj scope" });
+  }
+  target.verificationStatus = "verified";
+  target.verifiedAt = new Date().toISOString();
+  target.verifiedBy = adminUser.id;
+  target.rejectionReason = null;
+  logAdminAction({
+    adminUserId: adminUser.id,
+    adminName: adminUser.name,
+    role: adminRole,
+    action: "VERIFICATION_APPROVED",
+    details: { targetUserId: target.id, targetName: target.name },
+  });
+  res.json({ success: true, user: { id: target.id, name: target.name, ...getVerificationState(target) } });
+});
+
+app.post("/api/admin/verification/:uid/reject", requireAdmin, (req: Request, res: Response) => {
+  const adminUser = (req as any).adminUser as SamajUser;
+  const adminRole = (req as any).adminRole as AdminRole;
+  const scope = (req as any).adminScope as AdminScope;
+  const reason = (req.body?.reason || "").toString().trim();
+  if (!reason) return res.status(400).json({ detail: "Rejection reason is required" });
+  const target = resolveUser(req.params.uid);
+  if (!target) return res.status(404).json({ detail: "User not found" });
+  if (!adminCanManageUser(target, adminRole, scope)) {
+    return res.status(403).json({ detail: "Forbidden: outside your Samaj scope" });
+  }
+  target.verificationStatus = "rejected";
+  target.rejectionReason = reason;
+  logAdminAction({
+    adminUserId: adminUser.id,
+    adminName: adminUser.name,
+    role: adminRole,
+    action: "VERIFICATION_REJECTED",
+    details: { targetUserId: target.id, targetName: target.name, reason },
+  });
+  res.json({ success: true, user: { id: target.id, name: target.name, ...getVerificationState(target) } });
 });
 
 // Posts Moderation Endpoints

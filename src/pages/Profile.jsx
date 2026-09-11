@@ -102,8 +102,39 @@ export default function Profile() {
       updateUser(data);
       toast.success(t("saved_ok"));
       setEdit(false);
+      loadVerif();
     } catch {
       toast.error(t("saved_fail"));
+    }
+  };
+
+  // ---- Profile Verification (Task 4) ----
+  const [verif, setVerif] = useState(null);
+  const loadVerif = async () => {
+    try {
+      const { data } = await api.get("/verification/status");
+      setVerif(data);
+    } catch {
+      /* ignore */
+    }
+  };
+  useEffect(() => {
+    loadVerif();
+  }, [user?.id]);
+  const submitVerification = async () => {
+    try {
+      const { data } = await api.post("/verification/submit");
+      setVerif(data);
+      toast.success("વેરિફિકેશન માટે સબમિટ થયું (Submitted for review)");
+    } catch (e) {
+      const d = e?.response?.data;
+      if (d?.missingFields?.length) {
+        toast.error("અધૂરી પ્રોફાઇલ: " + d.missingFields.join(", "));
+        setEdit(true);
+      } else {
+        toast.error(d?.detail || "Submit failed");
+      }
+      if (d?.verificationState) setVerif(d);
     }
   };
 
@@ -242,6 +273,61 @@ export default function Profile() {
             </div>
           </div>
         </div>
+
+        {/* Profile Verification (Task 4) */}
+        {verif && (
+          <div data-testid="verification-card" className="mt-4 rounded-2xl border border-slate-200 p-3.5">
+            {verif.verificationState === "VERIFIED" && (
+              <div className="flex items-center gap-2 text-emerald-600 text-sm font-semibold">
+                <Sparkles className="w-4 h-4" />
+                <span>ચકાસાયેલ પ્રોફાઇલ (Verified)</span>
+              </div>
+            )}
+            {verif.verificationState === "VERIFICATION_PENDING" && (
+              <div className="flex items-center gap-2 text-amber-600 text-sm font-semibold">
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                <span>વેરિફિકેશન સમીક્ષા હેઠળ છે (Pending review)</span>
+              </div>
+            )}
+            {verif.verificationState === "REJECTED" && (
+              <div className="space-y-2">
+                <div className="text-red-600 text-sm font-semibold">વેરિફિકેશન નકારાયું (Rejected)</div>
+                {verif.rejectionReason && (
+                  <div data-testid="rejection-reason" className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg p-2">
+                    કારણ: {verif.rejectionReason}
+                  </div>
+                )}
+                <button
+                  data-testid="resubmit-verification-btn"
+                  onClick={submitVerification}
+                  className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white"
+                >
+                  પ્રોફાઇલ સુધારીને ફરી સબમિટ કરો (Resubmit)
+                </button>
+              </div>
+            )}
+            {verif.verificationState === "PROFILE_INCOMPLETE" && (
+              <div className="space-y-2">
+                <div className="text-slate-700 text-sm font-semibold">પ્રોફાઇલ ચકાસણી (Not verified)</div>
+                {verif.profileComplete ? (
+                  <button
+                    data-testid="submit-verification-btn"
+                    onClick={submitVerification}
+                    className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white"
+                  >
+                    વેરિફિકેશન માટે સબમિટ કરો (Submit for verification)
+                  </button>
+                ) : (
+                  <div className="text-xs text-slate-500">
+                    સબમિટ કરતાં પહેલાં જરૂરી માહિતી પૂર્ણ કરો{verif.missingFields?.length ? `: ${verif.missingFields.join(", ")}` : ""}.{" "}
+                    <button onClick={() => setEdit(true)} className="text-purple-600 font-semibold underline">પ્રોફાઇલ સુધારો</button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
 
         {/* Edit Profile Drawer / Form */}
         {edit && (

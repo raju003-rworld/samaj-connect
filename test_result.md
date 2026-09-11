@@ -121,13 +121,12 @@ backend:
 
 metadata:
   created_by: "main_agent"
-  version: "1.2"
-  test_sequence: 2
+  version: "1.3"
+  test_sequence: 3
   run_ui: false
 
 test_plan:
-  current_focus:
-    - "Post/Reel privacy enforcement (PUBLIC / MY_SAMAJ / FOLLOWERS / ONLY_ME)"
+  current_focus: []
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -141,3 +140,26 @@ agent_communication:
     -message: "Phase 4 privacy: 13/13 tests PASSED. No private content leaked to unauthorized users. PUBLIC/MY_SAMAJ/FOLLOWERS/ONLY_ME all enforced server-side for posts AND reels; unfollow immediately revokes FOLLOWERS access; edit preserves visibility; list endpoint filters private items."
     -agent: "main"
     -message: "Post-verification hardening: unauthenticated GET /api/posts and GET /api/posts/:pid now return 401 (previously threw 500). Verified via curl (401 no-auth, 200 authenticated). Frontend production build PASS. Restored supervisor backend to original state."
+
+  - task: "Profile Verification workflow + verified-only publishing guard (Task 4)"
+    implemented: true
+    working: true
+    file: "server.ts, src/pages/Profile.jsx, src/pages/Admin.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        -working: "NA"
+        -agent: "main"
+        -comment: "Added user endpoints GET /api/verification/status, POST /api/verification/submit; admin endpoints POST /api/admin/verification/:uid/approve and /reject (requireAdmin + Samaj scope). Publish guard in POST /api/posts uses existing platformSettings.requireVerificationForPosting. New users default verificationStatus 'none' (PROFILE_INCOMPLETE). In-memory (durability pending Task 3). Needs independent verification."
+        -working: true
+        -agent: "testing"
+        -comment: "✅ ALL 14 VERIFICATION WORKFLOW TESTS PASSED (14/14). Verified: (1) INCOMPLETE profile cannot submit (400 with missingFields) ✅ (2) COMPLETE profile can submit (200) ✅ (3) Status becomes VERIFICATION_PENDING after submit ✅ (4) Normal user CANNOT self-verify (field ignored + admin endpoint 403) ✅ (5) Admin sees pending user in list ✅ (6) Admin APPROVE works (200, state=VERIFIED) ✅ (7) Admin REJECT requires reason (empty=400, with reason=200) ✅ (8) User sees rejection reason ✅ (9) Rejected can resubmit (200, state=VERIFICATION_PENDING, reason cleared) ✅ (10) VERIFIED can publish when setting ON ✅ (11) NON-verified cannot publish posts/reels when ON (403) ✅ (12) Direct API bypass blocked (self-approve=403, still cannot publish) ✅ (13) REGRESSION: setting OFF restores posting ✅ (14) REGRESSION: admin security intact (non-admin=403, admin=200) ✅. CRITICAL SECURITY: Normal/unverified users CANNOT self-verify, CANNOT publish when requireVerificationForPosting=true, and direct API bypass attempts are BLOCKED. Profile verification workflow is fully functional and secure."
+
+agent_communication:
+    -agent: "main"
+    -message: "TASK 4 backend testing. ACTIVE app = Node server.ts on port 8001 (DEV auth). Base URL: https://b5c99426-11b3-4b0f-8151-b911a4003d2b.preview.emergentagent.com + /api. Auth header 'Authorization: Bearer mock-token-<10digits>'. SUPER_ADMIN token = mock-token-9925514713. DO NOT restart supervisor/backend. Test the profile verification workflow + verified-only publish guard + confirm no regression to posting/admin."
+    -agent: "testing"
+    -message: "✅ TASK 4 VERIFICATION COMPLETE. All 14 test cases passed successfully. Tested: (1) Incomplete profile submission blocked, (2) Complete profile can submit, (3) Status transitions (PROFILE_INCOMPLETE → VERIFICATION_PENDING → VERIFIED/REJECTED), (4) Self-verification blocked, (5) Admin pending list, (6) Admin approval, (7) Admin rejection with reason validation, (8) Rejection reason visibility, (9) Resubmission after rejection, (10) Verified user publishing when guard ON, (11) Non-verified blocked when guard ON (posts + reels), (12) Direct API bypass blocked, (13) Guard OFF regression, (14) Admin security regression. CRITICAL SECURITY VERIFIED: No self-verification possible, no unauthorized publishing when guard enabled, no API bypass. Profile verification workflow is production-ready."
+    -agent: "testing"
+    -message: "TASK 4 verified: 14/14 PASS. Normal/unverified users cannot self-verify (field ignored + admin endpoint 403) and cannot publish posts or reels when requireVerificationForPosting=true. Approve/reject (reason required) work; rejection reason visible to user; resubmit clears reason. No regression to admin security or posting when setting off."

@@ -124,6 +124,29 @@ export default function Admin() {
     } catch {}
   };
 
+  const approveVerification = async (uid) => {
+    try {
+      await api.post(`/admin/verification/${uid}/approve`);
+      await loadVerification();
+      loadStats?.();
+    } catch (e) {
+      alert(e?.response?.data?.detail || "Approve failed");
+    }
+  };
+
+  const rejectVerification = async (uid) => {
+    const reason = window.prompt("Rejection reason (required):", "");
+    if (reason === null) return;
+    if (!reason.trim()) { alert("Rejection reason is required"); return; }
+    try {
+      await api.post(`/admin/verification/${uid}/reject`, { reason: reason.trim() });
+      await loadVerification();
+      loadStats?.();
+    } catch (e) {
+      alert(e?.response?.data?.detail || "Reject failed");
+    }
+  };
+
   const loadPosts = async () => {
     try {
       const res = await api.get("/admin/posts");
@@ -890,19 +913,49 @@ export default function Admin() {
                     <UserCheck className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-white">પ્રોફાઇલ વેરિફિકેશન સિસ્ટમ (Foundation Active)</h3>
+                    <h3 className="text-sm font-bold text-white">પ્રોફાઇલ વેરિફિકેશન સિસ્ટમ</h3>
                     <p className="text-xs text-slate-400 mt-0.5">
-                      સ્ટેપ ૧ ની સૂચના મુજબ વેરિફિકેશન ડેટાબેઝ માળખું તૈયાર છે. સંપૂર્ણ વેરિફિકેશન વર્કફ્લો આગામી સ્ટેપમાં સક્રિય થશે.
+                      પેન્ડિંગ વિનંતીઓની સમીક્ષા કરો — મંજૂર (Approve) અથવા નકારો (Reject with reason).
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center text-slate-400 text-xs">
+              <div className="space-y-3">
                 {verificationQueue.length === 0 ? (
-                  <div>હાલમાં કોઈ પેન્ડિંગ વેરિફિકેશન વિનંતીઓ નથી.</div>
+                  <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center text-slate-400 text-xs">
+                    હાલમાં કોઈ પેન્ડિંગ વેરિફિકેશન વિનંતીઓ નથી.
+                  </div>
                 ) : (
-                  <div>કુલ {verificationQueue.length} વેરિફિકેશન વિનંતીઓ કતારમાં છે.</div>
+                  verificationQueue.map((u) => (
+                    <div key={u.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <img
+                          src={u.profilePhoto || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80"}
+                          alt=""
+                          className="w-9 h-9 rounded-full object-cover shrink-0"
+                        />
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold text-white truncate">{u.name}</div>
+                          <div className="text-[10px] text-slate-400 truncate">{u.village || "-"} · {u.district || "-"} · {u.phone}</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={() => approveVerification(u.id)}
+                          className="text-[11px] font-semibold px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white"
+                        >
+                          મંજૂર (Approve)
+                        </button>
+                        <button
+                          onClick={() => rejectVerification(u.id)}
+                          className="text-[11px] font-semibold px-3 py-1.5 rounded-lg bg-red-600/90 hover:bg-red-500 text-white"
+                        >
+                          નકારો (Reject)
+                        </button>
+                      </div>
+                    </div>
+                  ))
                 )}
               </div>
             </div>
