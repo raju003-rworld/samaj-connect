@@ -11,7 +11,13 @@ const OPTIONS = [
 ];
 
 export function DisappearingModal({ open, onOpenChange, currentDuration = "off", onSelectDuration }) {
-  const [selected, setSelected] = useState(currentDuration);
+  const [selected, setSelected] = useState(currentDuration || "off");
+
+  React.useEffect(() => {
+    if (open) {
+      setSelected(currentDuration || "off");
+    }
+  }, [open, currentDuration]);
 
   const handleSave = () => {
     onSelectDuration(selected);

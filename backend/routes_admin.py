@@ -19,6 +19,27 @@ def _in_scope(doc: dict, sid: Optional[str]) -> bool:
     return sid is None or doc.get("samajId", DEFAULT_SAMAJ_ID) == sid
 
 
+@router.get("/verify")
+def verify_admin(admin=Depends(require_admin)):
+    r = admin.get("role", "admin")
+    return {
+        "verified": True,
+        "user": {
+            "id": admin["id"],
+            "name": admin.get("name", "Admin"),
+            "phone": admin.get("phone", ""),
+            "role": r,
+            "adminRole": r.upper(),
+            "scope": "all" if is_super(admin) else (admin.get("activeSamajId") or DEFAULT_SAMAJ_ID),
+        }
+    }
+
+
+@router.post("/logout")
+def logout_admin():
+    return {"ok": True}
+
+
 @router.get("/stats")
 def stats(samajId: Optional[str] = None, admin=Depends(require_moderator)):
     sid = _scope(admin, samajId)

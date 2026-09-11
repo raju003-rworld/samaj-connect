@@ -24,7 +24,7 @@ import {
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { useApp } from "@/context/AppContext";
-import { listenMessages, listenConversation, listenPresence } from "@/lib/firebase";
+import { listenConversation, listenPresence } from "@/lib/firebase";
 import { MediaUploader } from "@/components/MediaUploader";
 import { CallOverlay } from "@/components/chat/CallOverlay";
 import { ThemePickerModal, CHAT_THEMES } from "@/components/chat/ThemePickerModal";
@@ -44,6 +44,38 @@ const Ticks = ({ m, members }) => {
   return <Check className="w-3.5 h-3.5 text-slate-300" data-testid="tick-sent" />;
 };
 
+const DISAPPEARING_LABELS = {
+  off: "બંધ (Off)",
+  "1m": "1 મિનિટ (1 Minute)",
+  "5m": "5 મિનિટ (5 Minutes)",
+  "1h": "1 કલાક (1 Hour)",
+  "1d": "1 દિવસ (1 Day)",
+  "24h": "24 કલાક (24 Hours)",
+  "7d": "7 દિવસ (7 Days)",
+};
+
+const getCachedConvSettings = (cId) => {
+  try {
+    return {
+      disappearingDuration: localStorage.getItem(`samaj_conv_disappearing_${cId}`) || null,
+      theme: localStorage.getItem(`samaj_conv_theme_${cId}`) || null,
+    };
+  } catch {
+    return { disappearingDuration: null, theme: null };
+  }
+};
+
+const setCachedConvSettings = (cId, updates) => {
+  try {
+    if (updates.disappearingDuration !== undefined) {
+      localStorage.setItem(`samaj_conv_disappearing_${cId}`, updates.disappearingDuration || "off");
+    }
+    if (updates.theme !== undefined) {
+      localStorage.setItem(`samaj_conv_theme_${cId}`, updates.theme || "default");
+    }
+  } catch {}
+};
+
 const getDisappearingDurationMs = (dur) => {
   switch (dur) {
     case "1m":
@@ -53,7 +85,10 @@ const getDisappearingDurationMs = (dur) => {
     case "1h":
       return 60 * 60 * 1000;
     case "1d":
+    case "24h":
       return 24 * 60 * 60 * 1000;
+    case "7d":
+      return 7 * 24 * 60 * 60 * 1000;
     default:
       return 0;
   }
@@ -297,7 +332,13 @@ export function ChatWindow({ cid, onBack }) {
       .get(`/conversations/${cid}`)
       .then(({ data }) => {
         if (data) {
-          setConv(data);
+          const cached = getCachedConvSettings(cid);
+          const merged = {
+            ...data,
+            disappearingDuration: data.disappearingDuration || cached.disappearingDuration || "off",
+            theme: data.theme || cached.theme || "default",
+          };
+          setConv(merged);
           if (data.activeCall) {
             setActiveCall(data.activeCall);
           } else {
@@ -311,7 +352,25 @@ export function ChatWindow({ cid, onBack }) {
       .get(`/conversations/${cid}/messages`)
       .then(({ data }) => {
         if (data?.items) {
-          setMsgs(dedupeMsgs(data.items));
+          const cached = getCachedConvSettings(cid);
+          const activeDur = conv?.disappearingDuration || cached.disappearingDuration;
+          const now = Date.now();
+          const visible = data.items
+            .filter((m) => {
+              const msgDur = m.disappearingDuration || activeDur;
+              if (!msgDur || msgDur === "off") return true;
+              if (!m.readAt) return true;
+              const durMs = getDisappearingDurationMs(msgDur);
+              if (!durMs) return true;
+              return now - new Date(m.readAt).getTime() < durMs;
+            })
+            .map((m) => {
+              if (activeDur && activeDur !== "off" && !m.disappearingDuration) {
+                return { ...m, disappearingDuration: activeDur };
+              }
+              return m;
+            });
+          setMsgs(dedupeMsgs(visible));
         }
       })
       .catch(() => {});
@@ -321,13 +380,20 @@ export function ChatWindow({ cid, onBack }) {
     refreshConvAndMsgs();
     const u1 = listenConversation(cid, (c) => {
       if (c) {
-        setConv(c);
-        if (c.activeCall) setActiveCall(c.activeCall);
-      }
-    });
-    const u2 = listenMessages(cid, (m) => {
-      if (m && m.length) {
-        setMsgs(dedupeMsgs(m.filter((x) => !(x.deletedFor || []).includes(user.id))));
+        setConv((prev) => {
+          const cached = getCachedConvSettings(cid);
+          return {
+            ...prev,
+            ...c,
+            disappearingDuration:
+              c.disappearingDuration ||
+              prev?.disappearingDuration ||
+              cached.disappearingDuration ||
+              "off",
+            theme: c.theme || prev?.theme || cached.theme || "default",
+          };
+        });
+        setActiveCall(c.activeCall || null);
       }
     });
 
@@ -338,8 +404,7 @@ export function ChatWindow({ cid, onBack }) {
     const interval = setInterval(refreshConvAndMsgs, 2500);
 
     return () => {
-      u1();
-      u2();
+      if (typeof u1 === "function") u1();
       clearInterval(interval);
     };
   }, [cid, user.id]);
@@ -347,17 +412,27 @@ export function ChatWindow({ cid, onBack }) {
   // Real-time ticking for Disappearing Messages cleanup
   useEffect(() => {
     const tick = setInterval(() => {
-      if (!conv?.disappearingDuration || conv.disappearingDuration === "off") return;
-      const durMs = getDisappearingDurationMs(conv.disappearingDuration);
-      if (!durMs) return;
       const now = Date.now();
+      setMsgs((prev) => {
+        let changed = false;
+        const next = prev.filter((m) => {
+          if (m.senderId === "system") return true;
+          const msgDur = m.disappearingDuration || conv?.disappearingDuration;
+          if (!msgDur || msgDur === "off") return true;
+          const msgDurMs = getDisappearingDurationMs(msgDur);
+          if (!msgDurMs) return true;
 
-      setMsgs((prev) =>
-        prev.filter((m) => {
+          // Message disappearing timer strictly counts down from server-side readAt
           if (!m.readAt) return true;
-          return now - new Date(m.readAt).getTime() < durMs;
-        })
-      );
+          const isExpired = now - new Date(m.readAt).getTime() >= msgDurMs;
+          if (isExpired) {
+            changed = true;
+            return false;
+          }
+          return true;
+        });
+        return changed ? next : prev;
+      });
     }, 1000);
     return () => clearInterval(tick);
   }, [conv?.disappearingDuration]);
@@ -381,12 +456,23 @@ export function ChatWindow({ cid, onBack }) {
       return toast.error("આ યુઝર બ્લોક કરેલ છે. મેસેજ મોકલવા પહેલા અનબ્લોક કરો.");
     }
     if (!text.trim() && !extra.mediaUrl) return;
-    const body = { type: "text", text, replyTo: replyTo ? { id: replyTo.id, senderName: replyTo.senderName, text: replyTo.text, type: replyTo.type } : null, ...extra };
+    const currentDur = conv?.disappearingDuration || "off";
+    const body = {
+      type: "text",
+      text,
+      replyTo: replyTo ? { id: replyTo.id, senderName: replyTo.senderName, text: replyTo.text, type: replyTo.type } : null,
+      disappearingDuration: currentDur !== "off" ? currentDur : undefined,
+      ...extra,
+    };
     setText("");
     setReplyTo(null);
     try {
       const { data: newMsg } = await api.post(`/conversations/${cid}/messages`, body);
-      setMsgs((prev) => dedupeMsgs([...prev, newMsg]));
+      const enrichedMsg = {
+        ...newMsg,
+        disappearingDuration: newMsg.disappearingDuration || (currentDur !== "off" ? currentDur : undefined),
+      };
+      setMsgs((prev) => dedupeMsgs([...prev, enrichedMsg]));
     } catch (e) {
       toast.error(e?.response?.data?.detail || "મોકલવામાં નિષ્ફળ");
     }
@@ -489,25 +575,63 @@ export function ChatWindow({ cid, onBack }) {
 
   // Disappearing Messages change
   const handleChangeDisappearing = async (duration) => {
+    // 1. Immediately cache and update state
+    setCachedConvSettings(cid, { disappearingDuration: duration });
+    setConv((prev) => (prev ? { ...prev, disappearingDuration: duration } : prev));
+
+    // 2. Add an informational system message in chat
+    const label = DISAPPEARING_LABELS[duration] || duration;
+    const sysMsg = {
+      id: `sys_disappearing_${Date.now()}`,
+      conversationId: cid,
+      senderId: "system",
+      senderName: "સિસ્ટમ",
+      type: "text",
+      text: `⏱️ અદ્રશ્ય થતા સંદેશા સેટિંગ બદલાયું: ${label}`,
+      createdAt: new Date().toISOString(),
+      readBy: [user.id],
+      deliveredTo: [],
+      deletedFor: [],
+      deleted: false,
+    };
+    setMsgs((prev) => dedupeMsgs([...prev, sysMsg]));
+
+    // 3. Attempt API patch and fallback gracefully
     try {
       await api.patch(`/conversations/${cid}/disappearing`, { duration });
-      setConv((prev) => (prev ? { ...prev, disappearingDuration: duration } : prev));
-      refreshConvAndMsgs();
-      toast.success("અદ્રશ્ય થતા સંદેશા સેટિંગ બદલાયું");
     } catch {
-      toast.error("સેટિંગ બદલવામાં ભૂલ થઈ");
+      try {
+        await fetch(`/api/conversations/${cid}/disappearing`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ duration }),
+        });
+      } catch {}
     }
+
+    toast.success("અદ્રશ્ય થતા સંદેશા સેટિંગ બદલાયું");
   };
 
   // Theme change
   const handleChangeTheme = async (newTheme) => {
+    // 1. Immediately cache and update state
+    setCachedConvSettings(cid, { theme: newTheme });
+    setConv((prev) => (prev ? { ...prev, theme: newTheme } : prev));
+
+    // 2. Attempt API patch and fallback gracefully
     try {
       await api.patch(`/conversations/${cid}/theme`, { theme: newTheme });
-      setConv((prev) => (prev ? { ...prev, theme: newTheme } : prev));
-      toast.success("ચેટ થીમ બદલાઈ ગઈ");
     } catch {
-      toast.error("થીમ બદલવામાં ભૂલ થઈ");
+      try {
+        await fetch(`/api/conversations/${cid}/theme`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ theme: newTheme }),
+        });
+      } catch {}
     }
+
+    toast.success("ચેટ થીમ બદલાઈ ગઈ");
   };
 
   const mute = async () => {

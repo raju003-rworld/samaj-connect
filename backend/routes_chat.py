@@ -255,6 +255,28 @@ def update_group(cid: str, body: dict, user=Depends(get_current_user)):
     return get_doc("conversations", cid)
 
 
+@router.patch("/conversations/{cid}/disappearing")
+def update_disappearing(cid: str, body: dict, user=Depends(get_current_user)):
+    _load_member_conv(cid, user)
+    duration = body.get("duration", "off")
+    allowed = ["off", "1m", "5m", "1h", "1d", "24h", "7d"]
+    if duration not in allowed:
+        duration = "off"
+    _conv_ref(cid).update({"disappearingDuration": duration, "updatedAt": now_iso()})
+    return {"ok": True, "disappearingDuration": duration}
+
+
+@router.patch("/conversations/{cid}/theme")
+def update_theme(cid: str, body: dict, user=Depends(get_current_user)):
+    _load_member_conv(cid, user)
+    theme = body.get("theme", "default")
+    allowed = ["default", "indigo", "emerald", "rose", "amber", "slate"]
+    if theme not in allowed:
+        theme = "default"
+    _conv_ref(cid).update({"theme": theme, "updatedAt": now_iso()})
+    return {"ok": True, "theme": theme}
+
+
 @router.post("/presence")
 def presence(body: dict, user=Depends(get_current_user)):
     db.collection("presence").document(user["id"]).set({"online": bool(body.get("online", True)), "lastSeen": now_iso()}, merge=True)

@@ -38,66 +38,71 @@ import { SamajSwitcher } from "@/components/SamajSwitcher";
 import { IDS } from "@/constants/testIds";
 import { api } from "@/lib/api";
 
-const MobileNavItem = ({ to, icon: Icon, label, testId, activePrefix }) => {
+const MobileNavItem = ({ to, icon: Icon, label, testId, activePrefix, badge }) => {
   const location = useLocation();
   const isActive = activePrefix ? location.pathname.startsWith(activePrefix) : location.pathname === to;
   return (
     <NavLink
       to={to}
       data-testid={testId}
-      className={`flex flex-col items-center justify-center py-1 px-3 text-[10px] font-medium transition-all ${
-        isActive ? "text-purple-900 font-bold scale-105" : "text-slate-500 hover:text-purple-700"
+      className={`flex flex-col items-center justify-center py-1 px-2.5 text-[10px] font-medium transition-all relative ${
+        isActive ? "text-purple-950 font-bold scale-105" : "text-slate-600 hover:text-purple-800"
       }`}
     >
-      <div className={`p-1 rounded-xl transition-colors ${isActive ? "bg-purple-100 text-purple-900" : ""}`}>
+      <div className={`p-1 rounded-xl transition-colors relative ${isActive ? "bg-purple-100 text-purple-900" : ""}`}>
         <Icon className="w-5 h-5" />
+        {badge > 0 && (
+          <span className="absolute -top-1 -right-1 min-w-[15px] h-[15px] px-1 bg-rose-500 text-white text-[9px] font-bold rounded-full grid place-items-center">
+            {badge > 99 ? "99+" : badge}
+          </span>
+        )}
       </div>
-      <span className="mt-0.5 tracking-tight">{label}</span>
+      <span className="mt-0.5 tracking-tight whitespace-nowrap leading-none">{label}</span>
     </NavLink>
   );
 };
 
 // "More" Menu Drawer showcasing all secondary community modules
 const MoreMenuSheet = ({ open, onOpenChange }) => {
-  const { user, t, toggleLang, logout, lang, isMod, activeSamaj } = useApp();
+  const { user, t, toggleLang, logout, lang, isMod, activeSamaj, unread } = useApp();
   const nav = useNavigate();
 
   const sections = [
     {
-      title: "સમાજ સુવિધાઓ (Community Modules)",
+      title: "સમાજ મુખ્ય સેવાઓ (Community Modules)",
       items: [
         { to: "/members", icon: Users, label: "સભ્યો ડિરેક્ટરી (Members)", badge: "સંપર્ક" },
         { to: "/coming-soon?m=family", icon: TreeDeciduous, label: "ફેમિલી ટ્રી (Family Tree)", badge: "વંશાવલિ" },
+        { to: "/events", icon: Calendar, label: "સમાજ ઈવેન્ટ્સ (Events)", badge: "કાર્યક્રમ" },
         { to: "/hall", icon: Building2, label: "હોલ બુકિંગ (Hall Booking)", badge: "બુકિંગ" },
-        { to: "/coming-soon?m=finance", icon: HeartHandshake, label: "દાન & ફંડ (Finance & Donations)", badge: "દાન" },
+        { to: "/coming-soon?m=finance", icon: HeartHandshake, label: "દાન & ફંડ હિસાબ (Finance & Donations)", badge: "દાન" },
         { to: "/coming-soon?m=docs", icon: FileText, label: "સમાજ દસ્તાવેજો (Documents)", badge: "PDF" },
         { to: "/coming-soon?m=orders", icon: ShoppingBag, label: "મીઠાઈ & પ્રસાદ ઓર્ડર (Orders)", badge: "ઓર્ડર" },
-        { to: "/coming-soon?m=business", icon: Store, label: "બિઝનેસ & ક્લાસિફાઇડ્સ (Classifieds)", badge: "વેપાર" },
+        { to: "/coming-soon?m=business", icon: Store, label: "બિઝનેસ ડિરેક્ટરી (Business Directory)", badge: "વેપાર" },
       ],
     },
     {
-      title: "સંચાર & લાઈવ (Media & Communication)",
+      title: "સંચાર & સંપર્ક (Communication & Contacts)",
       items: [
-        { to: "/messages", icon: MessageCircle, label: "સંદેશા (Messages)", badge: "ચેટ" },
-        { to: "/live", icon: Radio, label: "લાઈવ પ્રસારણ (Live)", badge: "Live" },
-        { to: "/photos", icon: Images, label: "ક્લાઉડ ફોટો ગેલેરી (Photos)", badge: "યાદો" },
-        { to: "/notifications", icon: Bell, label: "સૂચનાઓ (Notifications)", badge: "" },
+        { to: "/coming-soon?m=contacts", icon: PhoneCall, label: "સમાજ હોદ્દેદારો & સંપર્ક (Contacts)", badge: "સંપર્ક" },
+        { to: "/notifications", icon: Bell, label: "સૂચનાઓ (Notifications)", badge: unread > 0 ? `${unread} નવી` : "" },
+        { to: "/live", icon: Radio, label: "લાઈવ પ્રસારણ (Live Streaming)", badge: "Live" },
+        { to: "/home", icon: Home, label: "હોમ ફીડ (Home Feed)", badge: "મુખ્ય" },
       ],
     },
     {
-      title: "મદદ & એકાઉન્ટ (Support & Settings)",
+      title: "સેટિંગ્સ & સહાય (Settings & Support)",
       items: [
-        { to: "/coming-soon?m=contacts", icon: PhoneCall, label: "સમાજ હોદ્દેદારો & સંપર્ક", badge: "" },
-        { to: "/coming-soon?m=help", icon: HelpCircle, label: "હેલ્પ & સપોર્ટ (Help & Support)", badge: "" },
-        { to: "/profile", icon: Settings, label: "પ્રોફાઇલ સેટિંગ્સ (Settings)", badge: "" },
+        { to: "/profile", icon: Settings, label: "સેટિંગ્સ & પ્રોફાઇલ (Settings)", badge: "" },
+        { to: "/coming-soon?m=help", icon: HelpCircle, label: "હેલ્પ & સપોર્ટ (Help & Support)", badge: "સહાય" },
       ],
     },
   ];
 
   if (isMod) {
     sections.push({
-      title: "એડમિન કંટ્રોલ (Management)",
-      items: [{ to: "/admin", icon: LayoutDashboard, label: "એડમિન પેનલ (Admin Panel)", badge: "Admin" }],
+      title: "સંચાલન (Administration)",
+      items: [{ to: "/admin", icon: LayoutDashboard, label: "એડમિન કંટ્રોલ પેનલ (Admin Panel)", badge: "Admin" }],
     });
   }
 
@@ -345,14 +350,24 @@ export default function AppShell({ children }) {
 
   // Desktop Left Nav Items
   const desktopNavItems = [
-    { to: "/home", icon: Home, label: t("home"), matchExact: true },
-    { to: "/reels", icon: Film, label: t("reels") },
-    { to: "/photos", icon: Images, label: t("cloud_photos") },
-    { to: "/events", icon: Calendar, label: t("events") },
-    { to: "/messages", icon: MessageCircle, label: t("messages") },
-    { to: "/live", icon: Radio, label: t("live") },
-    { to: "/profile", icon: User, label: t("profile") },
+    { to: "/home", icon: Home, label: "હોમ (Home)", matchExact: true },
+    { to: "/reels", icon: Film, label: "રીલ્સ (Reels)" },
+    { to: "/messages", icon: MessageCircle, label: "સંદેશા (Messages)" },
+    { to: "/photos", icon: Images, label: "ફોટોઝ (Photos)" },
+    { to: "/events", icon: Calendar, label: "ઈવેન્ટ્સ (Events)" },
+    { to: "/members", icon: Users, label: "સભ્યો (Members)" },
+    { to: "/profile", icon: User, label: "પ્રોફાઇલ (Profile)" },
   ];
+
+  // Open existing post composer
+  const handleAddPost = () => {
+    if (location.pathname === "/home") {
+      window.dispatchEvent(new CustomEvent("samaj-open-compose"));
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      nav("/home?compose=1");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50/80">
@@ -485,8 +500,8 @@ export default function AppShell({ children }) {
 
           {/* Quick Post Action Card */}
           <button
-            onClick={() => nav("/home?compose=1")}
-            className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-purple-800 to-indigo-700 hover:from-purple-900 hover:to-indigo-800 text-white font-semibold text-sm shadow-md shadow-purple-900/25 flex items-center justify-center gap-2 transition active:scale-98"
+            onClick={handleAddPost}
+            className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-purple-800 to-indigo-700 hover:from-purple-900 hover:to-indigo-800 text-white font-semibold text-sm shadow-md shadow-purple-900/25 flex items-center justify-center gap-2 transition active:scale-98 cursor-pointer"
           >
             <Plus className="w-5 h-5" />
             <span>નવી પોસ્ટ બનાવો</span>
@@ -522,14 +537,65 @@ export default function AppShell({ children }) {
         </div>
       </div>
 
-      {/* BOTTOM MOBILE NAVIGATION (EXACTLY: Home | Reels | Photos | Events | Profile) */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 md:hidden">
-        <div className="max-w-md mx-auto bg-white/95 backdrop-blur-xl border-t border-slate-200/80 px-2 py-1.5 flex items-center justify-around shadow-[0_-4px_25px_-5px_rgba(91,33,182,0.12)]">
-          <MobileNavItem to="/home" icon={Home} label={t("home")} testId={IDS.navHome} activePrefix="/home" />
-          <MobileNavItem to="/reels" icon={Film} label={t("reels")} testId="nav-item-reels" activePrefix="/reels" />
-          <MobileNavItem to="/photos" icon={Images} label="ફોટોઝ" testId="nav-item-photos" activePrefix="/photos" />
-          <MobileNavItem to="/events" icon={Calendar} label={t("events")} testId={IDS.navEvents} activePrefix="/events" />
-          <MobileNavItem to="/profile" icon={User} label={t("profile")} testId="nav-item-profile" activePrefix="/profile" />
+      {/* BOTTOM MOBILE NAVIGATION: Reels | Messages | + Add Post (Center) | Photos | More */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 md:hidden pointer-events-none">
+        <div className="max-w-md mx-auto pointer-events-auto bg-white/95 backdrop-blur-xl border-t border-purple-100/90 px-3 pt-1.5 pb-2 flex items-center justify-between shadow-[0_-6px_25px_-5px_rgba(91,33,182,0.14)] relative">
+          {/* 1. Reels */}
+          <MobileNavItem
+            to="/reels"
+            icon={Film}
+            label="રીલ્સ"
+            testId="nav-item-reels"
+            activePrefix="/reels"
+          />
+
+          {/* 2. Messages */}
+          <MobileNavItem
+            to="/messages"
+            icon={MessageCircle}
+            label="સંદેશા"
+            testId="nav-item-messages"
+            activePrefix="/messages"
+          />
+
+          {/* 4. Large prominent "+ Add Post" button in the center */}
+          <div className="relative -mt-6 flex flex-col items-center">
+            <button
+              type="button"
+              data-testid={IDS.navFab}
+              onClick={handleAddPost}
+              aria-label="નવી પોસ્ટ બનાવો (+ Add Post)"
+              className="w-14 h-14 rounded-full bg-gradient-to-tr from-purple-900 via-purple-700 to-indigo-600 text-white flex items-center justify-center shadow-xl shadow-purple-900/40 ring-4 ring-white hover:scale-105 active:scale-95 transition-all duration-150 group cursor-pointer"
+            >
+              <Plus className="w-7 h-7 stroke-[2.75] group-hover:rotate-90 transition-transform duration-200" />
+            </button>
+            <span className="mt-1 text-[10px] font-extrabold text-purple-950 tracking-tight leading-none">
+              + પોસ્ટ
+            </span>
+          </div>
+
+          {/* 3. Photos */}
+          <MobileNavItem
+            to="/photos"
+            icon={Images}
+            label="ફોટોઝ"
+            testId="nav-item-photos"
+            activePrefix="/photos"
+          />
+
+          {/* 5. More */}
+          <button
+            type="button"
+            data-testid={IDS.navMenu}
+            onClick={() => setMoreOpen(true)}
+            aria-label="વધુ સેવાઓ (More Menu)"
+            className="flex flex-col items-center justify-center py-1 px-2.5 text-[10px] font-medium text-slate-600 hover:text-purple-800 transition-all cursor-pointer"
+          >
+            <div className="p-1 rounded-xl hover:bg-purple-50 transition-colors">
+              <Grid className="w-5 h-5 text-slate-700" />
+            </div>
+            <span className="mt-0.5 tracking-tight font-medium leading-none">વધુ</span>
+          </button>
         </div>
       </nav>
 

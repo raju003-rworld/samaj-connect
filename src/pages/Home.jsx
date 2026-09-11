@@ -152,11 +152,23 @@ export default function Home() {
     loadFeed(true);
   }, [tab, activeSamaj?.id]);
 
-  // Handle URL compose trigger
+  // Handle URL compose trigger and custom event
   useEffect(() => {
-    if (params.get("compose") === "1") {
+    const triggerCompose = () => {
       setComposeOpen(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      setTimeout(() => {
+        const el = document.querySelector(`[data-testid="${IDS.postCreateInput}"]`);
+        if (el) el.focus();
+      }, 100);
+    };
+
+    if (params.get("compose") === "1") {
+      triggerCompose();
     }
+
+    window.addEventListener("samaj-open-compose", triggerCompose);
+    return () => window.removeEventListener("samaj-open-compose", triggerCompose);
   }, [params]);
 
   // Submit new post

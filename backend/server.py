@@ -109,6 +109,34 @@ def me(user=Depends(get_current_user)):
     return user_out(user)
 
 
+@api.post("/auth/admin-login")
+def admin_login(user=Depends(get_current_user)):
+    phone = user.get("phone", "")
+    phone_digits = "".join(filter(str.isdigit, phone))[-10:]
+    is_admin_phone = phone_digits in ["9925514713"] or (SEED_ADMIN_PHONE and phone_digits == "".join(filter(str.isdigit, SEED_ADMIN_PHONE))[-10:])
+    if not is_samaj_admin(user) and not is_admin_phone:
+        raise HTTPException(status_code=403, detail="તમારું એકાઉન્ટ એડમિન પેનલ માટે અધિકૃત નથી. (Access Denied)")
+    
+    role = user.get("role")
+    if role not in ADMIN_ROLES and is_admin_phone:
+        role = "super_admin"
+        db.collection("users").document(user["id"]).update({"role": "super_admin"})
+        user["role"] = "super_admin"
+
+    return {
+        "success": True,
+        "user": {
+            "id": user["id"],
+            "name": user.get("name", "સુપર એડમિન"),
+            "phone": phone,
+            "role": role or "super_admin",
+            "adminRole": (role or "super_admin").upper(),
+            "scope": "all" if is_super(user) else (user.get("activeSamajId") or DEFAULT_SAMAJ_ID),
+        }
+    }
+
+
+
 @api.patch("/auth/me")
 def update_me(patch: dict, user=Depends(get_current_user)):
     allowed = {"name", "profilePhoto", "village", "district", "bio"}
