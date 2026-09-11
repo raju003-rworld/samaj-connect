@@ -2,9 +2,10 @@ import express, { Request, Response } from "express";
 import cors from "cors";
 import path from "path";
 import { createServer as createViteServer } from "vite";
+import { jwtVerify, createRemoteJWKSet, type JWTPayload } from "jose";
 
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 app.use(cors());
 app.use(express.json());
@@ -640,6 +641,49 @@ function formatEvent(e: any, user: SamajUser) {
 // Flag for controlling development/demo OTP flow (false by default to enable real Firebase Phone Auth)
 const DEV_AUTH_ENABLED = process.env.DEV_AUTH_ENABLED === "true";
 
+// ---- Real Firebase ID-token verification (Google public keys; no service account needed) ----
+const FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID || "samaj-connect-6ad91";
+const FIREBASE_ISSUER = `https://securetoken.google.com/${FIREBASE_PROJECT_ID}`;
+const FIREBASE_JWKS = createRemoteJWKSet(
+  new URL("https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com")
+);
+
+async function verifyFirebaseIdToken(token: string): Promise<JWTPayload | null> {
+  try {
+    const { payload } = await jwtVerify(token, FIREBASE_JWKS, {
+      issuer: FIREBASE_ISSUER,
+      audience: FIREBASE_PROJECT_ID,
+    });
+    if (!payload || !payload.sub) return null;
+    return payload;
+  } catch {
+    return null; // fail closed on any signature / claim / expiry error
+  }
+}
+
+// Server-side admin allowlist: verified phone (last 10 digits) -> AdminRole. Source of truth.
+function parseAdminAllowlist(raw: string): Record<string, AdminRole> {
+  const map: Record<string, AdminRole> = {};
+  for (const entry of (raw || "").split(",")) {
+    const [phoneRaw, roleRaw] = entry.split(":").map((x) => (x || "").trim());
+    if (!phoneRaw || !roleRaw) continue;
+    const digits = phoneRaw.replace(/\D/g, "").slice(-10);
+    const role = roleRaw.toUpperCase();
+    if (!digits) continue;
+    if (role === "SUPER_ADMIN" || role === "MAIN_SAMAJ_ADMIN" || role === "SAMAJ_ADMIN") {
+      map[digits] = role as AdminRole;
+    }
+  }
+  return map;
+}
+const ADMIN_ALLOWLIST = parseAdminAllowlist(process.env.ADMIN_ALLOWLIST || "+919925514713:SUPER_ADMIN");
+
+function allowlistRole(phone: string | undefined | null): AdminRole | null {
+  if (!phone) return null;
+  const digits = phone.replace(/\D/g, "").slice(-10);
+  return ADMIN_ALLOWLIST[digits] || null;
+}
+
 const usersMap: Record<string, SamajUser> = {
   [currentUser.id]: currentUser,
   "user_9876543210": currentUser,
@@ -1016,127 +1060,94 @@ messagesMap[initialConvId] = [
 ];
 
 function getAuthUser(req: Request): SamajUser | null {
-  const authHeader = req.headers.authorization;
-  if (authHeader && authHeader.startsWith("Bearer ")) {
-    const token = authHeader.substring(7).trim();
-    if (!token) return null;
+  return ((req as any)._authUser as SamajUser) || null;
+}
 
-    if (token.startsWith("mock-token-")) {
-      const phoneDigits = token.replace("mock-token-", "").replace(/\D/g, "").slice(-10);
-      if (!phoneDigits || phoneDigits === "demo") return currentUser;
+function buildUser(uid: string, phone: string, name: string, member?: any): SamajUser {
+  return {
+    id: uid,
+    phone,
+    name,
+    role: "member",
+    adminRole: null,
+    profilePhoto: member?.profilePhoto || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+    village: member?.village || "અમદાવાદ",
+    district: member?.district || "અમદાવાદ",
+    bio: member ? `${member.education || "સભ્ય"} · ${member.village}` : "સમાજ સભ્ય",
+    samajIds: [member?.samajId || DEFAULT_SAMAJ_ID],
+    samajRoles: { [member?.samajId || DEFAULT_SAMAJ_ID]: "member" },
+    activeSamajId: member?.samajId || DEFAULT_SAMAJ_ID,
+    followersCount: member ? 24 : 0,
+    followingCount: member ? 15 : 0,
+    isSuspended: false,
+    blocked: [],
+    followers: [],
+    following: [],
+    verificationStatus: "verified",
+    mainSamajId: "main_patidar",
+    gam: member?.village || "અમદાવાદ",
+  };
+}
 
-      const uid = `user_${phoneDigits}`;
-      if (usersMap[uid]) {
-        return usersMap[uid];
-      }
-
-      for (const u of Object.values(usersMap)) {
-        if (u.phone.replace(/\D/g, "").slice(-10) === phoneDigits) {
-          return u;
-        }
-      }
-
-      // Check member list
-      const member = membersList.find((m) => m.mobile.replace(/\D/g, "").slice(-10) === phoneDigits);
-      if (member) {
-        usersMap[uid] = {
-          id: uid,
-          phone: `+91${member.mobile}`,
-          name: member.name,
-          role: "member",
-          adminRole: null,
-          profilePhoto: member.profilePhoto,
-          village: member.village,
-          district: member.district,
-          bio: `${member.education || "સભ્ય"} · ${member.village}`,
-          samajIds: [member.samajId || DEFAULT_SAMAJ_ID],
-          samajRoles: { [member.samajId || DEFAULT_SAMAJ_ID]: "member" },
-          activeSamajId: member.samajId || DEFAULT_SAMAJ_ID,
-          followersCount: 24,
-          followingCount: 15,
-          isSuspended: false,
-          blocked: [],
-          followers: [],
-          following: [],
-          verificationStatus: "verified",
-          mainSamajId: "main_patidar",
-          gam: member.village,
-        };
-        return usersMap[uid];
-      }
-
-      // New member default
-      usersMap[uid] = {
-        id: uid,
-        phone: `+91${phoneDigits}`,
-        name: `સભ્ય (${phoneDigits.slice(-4)})`,
-        role: "member",
-        adminRole: null,
-        profilePhoto: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
-        village: "અમદાવાદ",
-        district: "અમદાવાદ",
-        bio: "સમાજ સભ્ય",
-        samajIds: [DEFAULT_SAMAJ_ID],
-        samajRoles: { [DEFAULT_SAMAJ_ID]: "member" },
-        activeSamajId: DEFAULT_SAMAJ_ID,
-        followersCount: 0,
-        followingCount: 0,
-        isSuspended: false,
-        blocked: [],
-        followers: [],
-        following: [],
-        verificationStatus: "verified",
-        mainSamajId: "main_patidar",
-        gam: "અમદાવાદ",
-      };
-      return usersMap[uid];
-    }
-
-    try {
-      const parts = token.split(".");
-      if (parts.length === 3) {
-        const payload = JSON.parse(Buffer.from(parts[1], "base64").toString("utf-8"));
-        const rawPhone = payload.phone_number || payload.phone || "";
-        const phoneDigits = rawPhone.replace(/\D/g, "").slice(-10);
-        const uid = payload.user_id || payload.sub || (phoneDigits ? `user_${phoneDigits}` : null);
-        if (uid && usersMap[uid]) return usersMap[uid];
-        if (phoneDigits) {
-          for (const u of Object.values(usersMap)) {
-            if (u.phone.replace(/\D/g, "").slice(-10) === phoneDigits) return u;
-          }
-        }
-        if (uid) {
-          usersMap[uid] = {
-            id: uid,
-            phone: rawPhone || "+919999999999",
-            name: payload.name || `સભ્ય (${phoneDigits ? phoneDigits.slice(-4) : "નવા"})`,
-            role: "member",
-            adminRole: null,
-            profilePhoto: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
-            village: "અમદાવાદ",
-            district: "અમદાવાદ",
-            bio: "સમાજ સભ્ય",
-            samajIds: [DEFAULT_SAMAJ_ID],
-            samajRoles: { [DEFAULT_SAMAJ_ID]: "member" },
-            activeSamajId: DEFAULT_SAMAJ_ID,
-            followersCount: 0,
-            followingCount: 0,
-            isSuspended: false,
-            blocked: [],
-            followers: [],
-            following: [],
-            verificationStatus: "verified",
-            mainSamajId: "main_patidar",
-            gam: "અમદાવાદ",
-          };
-          return usersMap[uid];
-        }
-      }
-    } catch {
-      // ignore
-    }
+// DEV-ONLY: resolve a user from a mock-token (only reached when DEV_AUTH_ENABLED=true).
+function resolveMockUser(token: string): SamajUser | null {
+  const phoneDigits = token.replace("mock-token-", "").replace(/\D/g, "").slice(-10);
+  if (!phoneDigits || phoneDigits === "demo") return currentUser;
+  const uid = `user_${phoneDigits}`;
+  if (usersMap[uid]) return usersMap[uid];
+  for (const u of Object.values(usersMap)) {
+    if (u.phone.replace(/\D/g, "").slice(-10) === phoneDigits) return u;
   }
-  return null;
+  const member = membersList.find((m) => m.mobile.replace(/\D/g, "").slice(-10) === phoneDigits);
+  usersMap[uid] = buildUser(uid, member ? `+91${member.mobile}` : `+91${phoneDigits}`, member ? member.name : `સભ્ય (${phoneDigits.slice(-4)})`, member);
+  return usersMap[uid];
+}
+
+// Enforce admin role STRICTLY from the server-side allowlist (source of truth).
+function applyAdminRole(u: SamajUser | null): SamajUser | null {
+  if (!u) return u;
+  const r = allowlistRole(u.phone);
+  u.adminRole = r;
+  if (r) {
+    u.role = r === "SUPER_ADMIN" ? "super_admin" : r === "MAIN_SAMAJ_ADMIN" ? "main_samaj_admin" : "samaj_admin";
+  } else if (["super_admin", "main_samaj_admin", "samaj_admin", "admin"].includes(u.role)) {
+    u.role = "member"; // downgrade any legacy/seeded admin role for non-allowlisted users
+  }
+  return u;
+}
+
+// Async identity resolution: real Firebase ID token (prod) or mock token (dev only).
+async function resolveAuthUser(req: Request): Promise<SamajUser | null> {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) return null;
+  const token = authHeader.substring(7).trim();
+  if (!token) return null;
+
+  if (DEV_AUTH_ENABLED && token.startsWith("mock-token-")) {
+    return applyAdminRole(resolveMockUser(token));
+  }
+
+  // PRODUCTION: only cryptographically verified Firebase ID tokens are accepted.
+  const payload = await verifyFirebaseIdToken(token);
+  if (!payload) return null;
+  const uid = String((payload as any).user_id || payload.sub || "");
+  if (!uid) return null;
+  const rawPhone = String((payload as any).phone_number || (payload as any).phone || "");
+  const phoneDigits = rawPhone.replace(/\D/g, "").slice(-10);
+  const name = (payload as any).name ? String((payload as any).name) : "";
+
+  let u: SamajUser | undefined = usersMap[uid];
+  if (!u && phoneDigits) {
+    u = Object.values(usersMap).find((x) => x.phone.replace(/\D/g, "").slice(-10) === phoneDigits);
+  }
+  if (!u) {
+    const member = membersList.find((m) => m.mobile.replace(/\D/g, "").slice(-10) === phoneDigits);
+    u = buildUser(uid, rawPhone || `+91${phoneDigits}`, name || (member ? member.name : `સભ્ય`), member);
+    usersMap[uid] = u;
+  } else if (name && (!u.name || u.name.startsWith("સભ્ય") || u.name.startsWith("Member"))) {
+    u.name = name;
+  }
+  return applyAdminRole(u);
 }
 
 function getAuthUserOrDefault(req: Request): SamajUser {
@@ -1192,6 +1203,16 @@ function requireAdmin(req: Request, res: Response, next: () => void) {
   next();
 }
 
+// Resolve the authenticated user once per /api request (async Firebase token verification).
+app.use("/api", async (req: Request, _res: Response, next: () => void) => {
+  try {
+    (req as any)._authUser = await resolveAuthUser(req);
+  } catch {
+    (req as any)._authUser = null;
+  }
+  next();
+});
+
 // Auth Endpoints
 app.post("/api/log-client-error", (req: Request, res: Response) => {
   console.error("[CLIENT ERROR REPORT]", JSON.stringify(req.body, null, 2));
@@ -1206,6 +1227,9 @@ app.get("/api/auth/config", (req: Request, res: Response) => {
 });
 
 app.post("/api/auth/dev-login", (req: Request, res: Response) => {
+  if (!DEV_AUTH_ENABLED) {
+    return res.status(403).json({ error: "Forbidden", message: "Dev login disabled in production." });
+  }
   const { phone, name } = req.body;
   const targetPhone = phone || currentUser.phone;
   const phoneDigits = targetPhone.replace(/\D/g, "").slice(-10);
@@ -1244,100 +1268,47 @@ app.post("/api/auth/dev-login", (req: Request, res: Response) => {
   });
 });
 
-// Dedicated Admin Login Endpoint
+// Admin Login confirmation — requires an already-verified Firebase ID token
+// (admin signs in via real Firebase Phone OTP first). Authorization comes from the
+// server-side ADMIN_ALLOWLIST only. No passwords or OTP strings are accepted here.
 app.post("/api/auth/admin-login", (req: Request, res: Response) => {
-  const { phone, password, otp } = req.body;
-  if (!phone) {
-    return res.status(400).json({ error: "Mobile number required", message: "કૃપા કરીને એડમિન મોબાઈલ નંબર દાખલ કરો." });
+  const user = getAuthUser(req);
+  if (!user) {
+    return res.status(401).json({ error: "Unauthorized", message: "Please sign in with Firebase OTP first." });
   }
-
-  const digits = phone.replace(/\D/g, "").slice(-10);
-  const fullPhone = `+91${digits}`;
-
-  // Find user by phone in usersMap
-  let adminUser = Object.values(usersMap).find(
-    (u) => u.phone.replace(/\D/g, "").slice(-10) === digits
-  );
-
-  if (!adminUser) {
-    const member = membersList.find((m) => m.mobile.replace(/\D/g, "").slice(-10) === digits);
-    if (member && usersMap[`user_${digits}`]) {
-      adminUser = usersMap[`user_${digits}`];
-    }
-  }
-
-  if (!adminUser) {
-    return res.status(403).json({
-      error: "Forbidden",
-      message: "આ મોબાઈલ નંબર પાસે એડમિન અધિકાર નથી. (Access Denied: Not an admin account)",
-    });
-  }
-
-  const rawRole = (adminUser.adminRole || adminUser.role || "").toUpperCase();
-  let normalizedRole: AdminRole | null = null;
-  if (rawRole === "SUPER_ADMIN" || rawRole === "ADMIN") normalizedRole = "SUPER_ADMIN";
-  else if (rawRole === "MAIN_SAMAJ_ADMIN") normalizedRole = "MAIN_SAMAJ_ADMIN";
-  else if (rawRole === "SAMAJ_ADMIN") normalizedRole = "SAMAJ_ADMIN";
-
-  if (!normalizedRole) {
+  const role = user.adminRole || null;
+  if (!role || user.isSuspended) {
     logAdminAction({
-      adminUserId: adminUser.id,
-      adminName: adminUser.name,
+      adminUserId: user.id,
+      adminName: user.name,
       role: "SAMAJ_ADMIN",
       action: "UNAUTHORIZED_ADMIN_LOGIN_ATTEMPT",
-      details: { phone: fullPhone, ip: req.ip },
+      details: { phone: user.phone, ip: req.ip },
     });
     return res.status(403).json({
       error: "Forbidden",
-      message: "તમારું એકાઉન્ટ સામાન્ય સભ્ય છે, એડમિન પેનલ માટે અધિકૃત નથી. (Access Denied: Regular members cannot access Admin Panel)",
+      message: "Access Denied: not an authorized admin account.",
     });
   }
-
-  if (adminUser.isSuspended) {
-    return res.status(403).json({
-      error: "Forbidden",
-      message: "આ એડમિન એકાઉન્ટ સસ્પેન્ડ કરેલ છે. કૃપા કરીને સુપર એડમિનનો સંપર્ક કરો.",
-    });
-  }
-
-  // Validate server-side credentials
-  const expectedPassword = process.env.ADMIN_PASSWORD || "Admin@Samaj2026";
-  const isPasswordMatch = password && (password === expectedPassword || password === "Admin@2026" || password === "admin123");
-  const isOtpMatch = otp && (otp === "123456" || otp.length === 6);
-
-  if (!isPasswordMatch && !isOtpMatch) {
-    return res.status(401).json({
-      error: "Invalid credentials",
-      message: "માન્ય પાસવર્ડ અથવા 6-અંકનો સુરક્ષા OTP દાખલ કરો.",
-    });
-  }
-
   logAdminAction({
-    adminUserId: adminUser.id,
-    adminName: adminUser.name,
-    role: normalizedRole,
-    scope: {
-      mainSamajId: adminUser.mainSamajId || null,
-      samajId: adminUser.activeSamajId || adminUser.samajIds?.[0] || null,
-    },
+    adminUserId: user.id,
+    adminName: user.name,
+    role,
+    scope: { mainSamajId: user.mainSamajId || null, samajId: user.activeSamajId || user.samajIds?.[0] || null },
     action: "ADMIN_LOGIN_SUCCESS",
-    details: { ip: req.ip, authMethod: isPasswordMatch ? "password" : "otp" },
+    details: { ip: req.ip, authMethod: "firebase_otp" },
   });
-
-  const customToken = `mock-token-${digits}`;
-
   res.json({
     success: true,
-    customToken,
     user: {
-      id: adminUser.id,
-      phone: adminUser.phone,
-      name: adminUser.name,
-      role: adminUser.role,
-      adminRole: normalizedRole,
-      mainSamajId: adminUser.mainSamajId,
-      samajId: adminUser.activeSamajId,
-      profilePhoto: adminUser.profilePhoto,
+      id: user.id,
+      phone: user.phone,
+      name: user.name,
+      role: user.role,
+      adminRole: role,
+      mainSamajId: user.mainSamajId,
+      samajId: user.activeSamajId,
+      profilePhoto: user.profilePhoto,
     },
   });
 });

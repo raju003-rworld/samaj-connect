@@ -133,7 +133,7 @@ export const startPhoneSignIn = async (phone, containerId = "recaptcha-container
 };
 
 export const signInCustom = async (token, phone = "+919876543210") => {
-  if (token && typeof token === "string" && token.startsWith("mock-token-")) {
+  if (!hasRealFirebase && token && typeof token === "string" && token.startsWith("mock-token-")) {
     const extractedDigits = token.replace("mock-token-", "");
     const userPhone = phone || (extractedDigits ? `+${extractedDigits}` : "+919876543210");
     mockCurrentUser = createMockUser(userPhone);

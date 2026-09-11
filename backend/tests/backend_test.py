@@ -7,7 +7,7 @@ import os
 import pytest
 import requests
 
-BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://samaj-connect-repair.preview.emergentagent.com").rstrip("/")
+BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://samaj-connect-24.preview.emergentagent.com").rstrip("/")
 API = f"{BASE_URL}/api"
 FIREBASE_API_KEY = "AIzaSyAbtSfHuagL-N8p0Uw3-C5kXOCusb_59jA"
 SAMAJ_B_ID = "5a99297b87c14bf79b2c6bda6a524f1d"

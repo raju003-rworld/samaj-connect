@@ -12,11 +12,6 @@ api.interceptors.request.use(async (config) => {
   const u = auth.currentUser;
   if (u) {
     config.headers.Authorization = `Bearer ${await u.getIdToken(config._forceRefresh === true)}`;
-  } else {
-    const adminToken = typeof window !== "undefined" ? (sessionStorage.getItem("admin_token") || localStorage.getItem("admin_token")) : null;
-    if (adminToken && !config.headers.Authorization) {
-      config.headers.Authorization = `Bearer ${adminToken}`;
-    }
   }
   return config;
 });

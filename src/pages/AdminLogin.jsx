@@ -1,71 +1,109 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ShieldCheck, Lock, Phone, KeyRound, AlertCircle, CheckCircle2, ArrowRight, ArrowLeft } from "lucide-react";
+import { ShieldCheck, Lock, Phone, KeyRound, AlertCircle, ArrowRight, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
-import { signInCustom } from "@/lib/firebase";
+import { startPhoneSignIn, signInCustom } from "@/lib/firebase";
 import { useApp } from "@/context/AppContext";
 
 export default function AdminLogin() {
   const navigate = useNavigate();
   const { refreshUser } = useApp();
-  const [phone, setPhone] = useState("9876543210");
-  const [password, setPassword] = useState("Admin@Samaj2026");
+  const [step, setStep] = useState("phone");
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [confirm, setConfirm] = useState(null);
+  const [devAuth, setDevAuth] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const handleAdminLogin = async (e) => {
+  useEffect(() => {
+    api.get("/auth/config").then(({ data }) => setDevAuth(!!data.devAuth)).catch(() => {});
+  }, []);
+
+  const cleanPhone = phone.replace(/\D/g, "").slice(-10);
+  const fullPhone = `+91${cleanPhone}`;
+
+  const sendOtp = async (e) => {
     if (e) e.preventDefault();
+    if (cleanPhone.length !== 10) {
+      setErrorMsg("કૃપા કરીને 10 અંકનો સાચો મોબાઈલ નંબર દાખલ કરો.");
+      return;
+    }
     setErrorMsg("");
     setLoading(true);
-
     try {
-      const cleanPhone = phone.replace(/\D/g, "").slice(-10);
-      const res = await api.post("/auth/admin-login", {
-        phone: cleanPhone,
-        password: password,
-      });
-
-      if (res.data?.success && res.data?.customToken) {
-        // Store admin token in session
-        sessionStorage.setItem("admin_token", res.data.customToken);
-        localStorage.setItem("admin_token", res.data.customToken);
-
-        // Sign in custom to Firebase auth layer
-        try {
-          await signInCustom(res.data.customToken, `+91${cleanPhone}`);
-        } catch (authErr) {
-          console.warn("signInCustom warning:", authErr);
-        }
-
-        if (refreshUser) {
-          await refreshUser().catch(() => {});
-        }
-
-        toast.success(`સ્વાગત છે, ${res.data.user.name}`, {
-          description: `એડમિન રોલ: ${res.data.user.adminRole}`,
-        });
-
-        navigate("/admin", { replace: true });
+      if (devAuth) {
+        setConfirm(null);
+        toast.success("OTP મોકલાયો (Dev)");
+      } else {
+        const c = await startPhoneSignIn(fullPhone);
+        setConfirm(c);
+        toast.success("તમારા મોબાઈલ પર OTP મોકલાયો છે");
       }
+      setStep("otp");
     } catch (err) {
-      const serverMsg = err.response?.data?.message || err.response?.data?.error || "લોગિન નિષ્ફળ ગયું. કૃપા કરીને વિગતો તપાસો.";
-      setErrorMsg(serverMsg);
-      toast.error(serverMsg);
+      const code = err?.code || "auth/error";
+      setErrorMsg(`OTP મોકલવામાં ભૂલ: ${code}`);
+      toast.error(`OTP Error: ${code}`);
     } finally {
       setLoading(false);
     }
   };
 
-  const setDemoRole = (rolePhone, rolePass) => {
-    setPhone(rolePhone);
-    setPassword(rolePass);
+  const verifyOtp = async (e) => {
+    if (e) e.preventDefault();
+    if (otp.length !== 6) {
+      setErrorMsg("6 અંકનો OTP દાખલ કરો.");
+      return;
+    }
     setErrorMsg("");
+    setLoading(true);
+    try {
+      // 1) Real Firebase Phone OTP sign-in (produces a genuine Firebase ID token).
+      if (confirm) {
+        await confirm.confirm(otp);
+      } else {
+        // Dev-only fallback (server rejects unless DEV_AUTH_ENABLED=true).
+        const { data } = await api.post("/auth/dev-login", { phone: fullPhone, otp });
+        await signInCustom(data.customToken, fullPhone);
+      }
+
+      // 2) Load the verified profile.
+      await refreshUser().catch(() => {});
+
+      // 3) Server-side admin authorization check (role decided by ADMIN_ALLOWLIST).
+      const res = await api.post("/auth/admin-login", {});
+      if (res.data?.success) {
+        toast.success(`સ્વાગત છે, ${res.data.user.name}`, {
+          description: `એડમિન રોલ: ${res.data.user.adminRole}`,
+        });
+        navigate("/admin", { replace: true });
+      } else {
+        setErrorMsg("સર્વર દ્વારા એડમિન ચકાસણી અમાન્ય ઠરી.");
+      }
+    } catch (err) {
+      const status = err?.response?.status;
+      const code = err?.code;
+      if (status === 403) {
+        setErrorMsg(err.response?.data?.message || "તમારું એકાઉન્ટ એડમિન પેનલ માટે અધિકૃત નથી. (Access Denied)");
+        toast.error("Access Denied: not an authorized admin account");
+      } else if (status === 401) {
+        setErrorMsg("પ્રમાણીકરણ નિષ્ફળ. કૃપા કરીને ફરી OTP થી લોગિન કરો.");
+      } else if (code === "auth/invalid-verification-code") {
+        setErrorMsg("દાખલ કરેલ OTP ખોટો છે. SMS માં આવેલો સાચો 6 અંકનો કોડ દાખલ કરો.");
+      } else if (code === "auth/code-expired") {
+        setErrorMsg("OTP નો સમય સમાપ્ત થઈ ગયો. ફરી OTP મોકલો.");
+      } else {
+        setErrorMsg(err?.response?.data?.message || err?.message || "લોગિન નિષ્ફળ ગયું.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col justify-between selection:bg-purple-600 selection:text-white">
-      {/* Top Bar */}
       <header className="px-6 py-4 flex items-center justify-between border-b border-slate-800/80 bg-slate-950/60 backdrop-blur">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-700 flex items-center justify-center text-white shadow-lg shadow-purple-900/30">
@@ -81,7 +119,6 @@ export default function AdminLogin() {
             <p className="text-xs text-slate-400">સમાજ સંચાલન અને વહીવટી પોર્ટલ</p>
           </div>
         </div>
-
         <button
           onClick={() => navigate("/home")}
           className="text-xs font-medium text-slate-400 hover:text-white flex items-center gap-1.5 transition-colors px-3 py-1.5 rounded-lg hover:bg-slate-800"
@@ -91,10 +128,8 @@ export default function AdminLogin() {
         </button>
       </header>
 
-      {/* Main Form Container */}
       <main className="flex-1 flex items-center justify-center p-4 sm:p-6 my-6">
         <div className="w-full max-w-md bg-slate-950/90 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-purple-950/20 backdrop-blur-xl relative overflow-hidden">
-          {/* Subtle Glow */}
           <div className="absolute -top-24 -right-24 w-48 h-48 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -104,140 +139,115 @@ export default function AdminLogin() {
             </div>
             <h2 className="text-xl font-extrabold tracking-tight text-white">સુરક્ષિત એડમિન લોગિન</h2>
             <p className="text-xs text-slate-400 mt-1">
-              માત્ર અધિકૃત સુપર એડમિન અને સમાજ સંચાલકો માટે
+              માત્ર અધિકૃત એડમિન · Firebase OTP + સર્વર-વેરિફાઇડ રોલ
             </p>
           </div>
 
           {errorMsg && (
-            <div className="mb-5 p-3.5 rounded-xl bg-red-950/60 border border-red-800/80 text-red-200 text-xs flex items-start gap-2.5 animate-in fade-in duration-200">
+            <div className="mb-5 p-3.5 rounded-xl bg-red-950/60 border border-red-800/80 text-red-200 text-xs flex items-start gap-2.5">
               <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
               <div className="leading-relaxed">{errorMsg}</div>
             </div>
           )}
 
-          <form onSubmit={handleAdminLogin} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
-                એડમિન મોબાઈલ નંબર (Mobile Number)
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-                  <Phone className="w-4 h-4" />
+          {step === "phone" && (
+            <form onSubmit={sendOtp} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                  એડમિન મોબાઈલ નંબર (Mobile Number)
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                    <Phone className="w-4 h-4" />
+                  </div>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="98765 43210"
+                    required
+                    className="w-full bg-slate-900/90 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all font-mono"
+                  />
                 </div>
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="9876543210"
-                  required
-                  className="w-full bg-slate-900/90 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all font-mono"
-                />
+                <p className="text-[11px] text-slate-500 mt-1">
+                  સુરક્ષા નિયમ: OTP ચકાસણી પછી માત્ર સર્વર-માન્ય એડમિન એલાઉલિસ્ટ ધરાવતા નંબરને જ પ્રવેશ મળશે.
+                </p>
               </div>
-            </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold py-2.5 px-4 rounded-xl text-sm flex items-center justify-center gap-2 shadow-lg shadow-purple-900/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-2 cursor-pointer"
+              >
+                {loading ? (
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <span>OTP મોકલો</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            </form>
+          )}
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
-                એડમિન પાસવર્ડ અથવા સિક્યોરિટી પિન (Password / OTP)
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-                  <KeyRound className="w-4 h-4" />
+          {step === "otp" && (
+            <form onSubmit={verifyOtp} className="space-y-4">
+              <button
+                type="button"
+                onClick={() => { setStep("phone"); setOtp(""); setErrorMsg(""); }}
+                className="text-slate-400 hover:text-white flex items-center gap-1 text-xs mb-1"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" /> નંબર બદલો
+              </button>
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                  6-અંકનો OTP ({fullPhone})
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                    <KeyRound className="w-4 h-4" />
+                  </div>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                    placeholder="••••••"
+                    required
+                    className="w-full bg-slate-900/90 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all tracking-[0.5em] font-mono"
+                  />
                 </div>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••••••"
-                  required
-                  className="w-full bg-slate-900/90 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all"
-                />
               </div>
-              <p className="text-[11px] text-slate-500 mt-1">
-                સુરક્ષા નિયમ: માત્ર સર્વર-માન્ય એડમિન રોલ ધરાવતા યુઝર્સને જ મંજૂરી મળશે.
-              </p>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold py-2.5 px-4 rounded-xl text-sm flex items-center justify-center gap-2 shadow-lg shadow-purple-900/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-2 cursor-pointer"
-            >
-              {loading ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                <>
-                  <span>એડમિન પેનલમાં પ્રવેશ કરો</span>
-                  <ArrowRight className="w-4 h-4" />
-                </>
-              )}
-            </button>
-          </form>
-
-          {/* Role testing shortcuts */}
-          <div className="mt-6 pt-5 border-t border-slate-800/80">
-            <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2.5 text-center">
-              ઝડપી રોલ ટેસ્ટિંગ સ્વીચર (Dev / Test Roles)
-            </div>
-            <div className="grid grid-cols-1 gap-2">
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold py-2.5 px-4 rounded-xl text-sm flex items-center justify-center gap-2 shadow-lg shadow-purple-900/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-2 cursor-pointer"
+              >
+                {loading ? (
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <span>એડમિન પેનલમાં પ્રવેશ કરો</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
               <button
                 type="button"
-                onClick={() => setDemoRole("9876543210", "Admin@Samaj2026")}
-                className="text-left px-3 py-2 rounded-lg bg-purple-950/40 hover:bg-purple-950/70 border border-purple-800/40 text-xs flex items-center justify-between transition-colors"
+                onClick={sendOtp}
+                disabled={loading}
+                className="w-full text-xs text-slate-400 hover:text-purple-300 transition-colors"
               >
-                <div>
-                  <div className="font-semibold text-purple-300">૧. Super Admin</div>
-                  <div className="text-[10px] text-slate-400 font-mono">+91 98765 43210 (સર્વોચ્ચ નિયંત્રણ)</div>
-                </div>
-                <span className="text-[10px] font-semibold bg-purple-800/50 text-purple-200 px-2 py-0.5 rounded">
-                  Select
-                </span>
+                ફરી OTP મોકલો
               </button>
+            </form>
+          )}
 
-              <button
-                type="button"
-                onClick={() => setDemoRole("9825000001", "Admin@Samaj2026")}
-                className="text-left px-3 py-2 rounded-lg bg-indigo-950/40 hover:bg-indigo-950/70 border border-indigo-800/40 text-xs flex items-center justify-between transition-colors"
-              >
-                <div>
-                  <div className="font-semibold text-indigo-300">૨. Main Samaj Admin</div>
-                  <div className="text-[10px] text-slate-400 font-mono">+91 98250 00001 (મુખ્ય પાટીદાર સમાજ)</div>
-                </div>
-                <span className="text-[10px] font-semibold bg-indigo-800/50 text-indigo-200 px-2 py-0.5 rounded">
-                  Select
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setDemoRole("9825000002", "Admin@Samaj2026")}
-                className="text-left px-3 py-2 rounded-lg bg-sky-950/40 hover:bg-sky-950/70 border border-sky-800/40 text-xs flex items-center justify-between transition-colors"
-              >
-                <div>
-                  <div className="font-semibold text-sky-300">૩. Samaj Chapter Admin</div>
-                  <div className="text-[10px] text-slate-400 font-mono">+91 98250 00002 (અમદાવાદ સમાજ શાખા)</div>
-                </div>
-                <span className="text-[10px] font-semibold bg-sky-800/50 text-sky-200 px-2 py-0.5 rounded">
-                  Select
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setDemoRole("9825123456", "WrongPassword")}
-                className="text-left px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-850 border border-slate-800 text-xs flex items-center justify-between text-slate-400 transition-colors"
-              >
-                <div>
-                  <div className="font-medium text-slate-300">૪. Normal Member (Test Rejection)</div>
-                  <div className="text-[10px] text-slate-500 font-mono">+91 98251 23456 (પ્રોટેક્શન ટેસ્ટ)</div>
-                </div>
-                <span className="text-[10px] text-slate-500">Test Reject</span>
-              </button>
-            </div>
-          </div>
+          <div id="recaptcha-container" />
         </div>
       </main>
 
-      {/* Footer */}
       <footer className="px-6 py-4 text-center text-xs text-slate-500 border-t border-slate-800/60">
         સમાજ કનેક્ટ વહીવટી સિસ્ટમ © {new Date().getFullYear()} · સર્વ હક સુરક્ષિત · Server-Enforced RBAC
       </footer>
