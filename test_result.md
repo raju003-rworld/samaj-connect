@@ -101,3 +101,43 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+user_problem_statement: "Phase 4 - Post/Reel privacy must be enforced SERVER-SIDE in the active Vite + server.ts app. Modes: PUBLIC(public), MY_SAMAJ(samaj), FOLLOWERS(followers), ONLY_ME(only_me). Unfollow must immediately revoke FOLLOWERS access. Creator always sees own content. Same rules for Posts and Reels (reels are posts). No architecture migration."
+
+backend:
+  - task: "Post/Reel privacy enforcement (PUBLIC / MY_SAMAJ / FOLLOWERS / ONLY_ME)"
+    implemented: true
+    working: true
+    file: "server.ts"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        -working: "NA"
+        -agent: "main"
+        -comment: "Privacy enforced in canUserViewPost() and applied in GET /api/posts (list filter) and GET /api/posts/:pid (403 if not viewable). Reels use the same /api/posts endpoints (filter=reel). Fixed a real bug: Samaj create/join/activate + GET /api/samaj were mutating a hardcoded demo object 'currentUser' instead of the authenticated user (getAuthUser), which made MY_SAMAJ cross-samaj isolation impossible. Now they operate on the authenticated user. Needs independent verification."
+        -working: true
+        -agent: "testing"
+        -comment: "✅ ALL 13 PRIVACY TESTS PASSED (13/13). Verified: (1) PUBLIC posts/reels accessible to all users ✅ (2) MY_SAMAJ posts visible only to same-samaj members, blocked for different-samaj ✅ (3) FOLLOWERS posts/reels visible only to followers, blocked for non-followers ✅ (4) ONLY_ME posts visible only to creator, blocked for all others ✅ (5) EDIT operation preserves privacy (visibility=only_me maintained) ✅ (6) LIST endpoint correctly filters private content (no leaks) ✅ (7) NO AUTH requests do not leak private content ✅ (8) UNFOLLOW immediately revokes FOLLOWERS access for both posts and reels ✅. NO PRIVATE CONTENT LEAKS DETECTED. Server-side privacy enforcement is working correctly."
+
+metadata:
+  created_by: "main_agent"
+  version: "1.2"
+  test_sequence: 2
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Post/Reel privacy enforcement (PUBLIC / MY_SAMAJ / FOLLOWERS / ONLY_ME)"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+    -agent: "main"
+    -message: "ACTIVE APP UNDER TEST IS NODE (server.ts), NOT the FastAPI in /app/backend. I stopped supervisor 'backend' and am running server.ts on port 8001 in DEV auth mode. Base URL: https://b5c99426-11b3-4b0f-8151-b911a4003d2b.preview.emergentagent.com  (append /api). Auth = header 'Authorization: Bearer mock-token-<10digits>' (dev mode). DO NOT restart supervisor/backend or the server will change. Test Post/Reel privacy only. Seeded data + tokens + expected results are provided in the testing task message."
+    -agent: "testing"
+    -message: "✅ PRIVACY ENFORCEMENT VERIFICATION COMPLETE. All 13 test cases passed successfully. Tested: PUBLIC (accessible to all), MY_SAMAJ (same-samaj only), FOLLOWERS (followers only), ONLY_ME (creator only), EDIT preserves privacy, LIST filtering, NO AUTH protection, and UNFOLLOW revocation. No private content leaks detected. The canUserViewPost() function and privacy filters are working correctly for both posts and reels. Server-side enforcement is solid. Ready for main agent to summarize and finish."
+    -agent: "testing"
+    -message: "Phase 4 privacy: 13/13 tests PASSED. No private content leaked to unauthorized users. PUBLIC/MY_SAMAJ/FOLLOWERS/ONLY_ME all enforced server-side for posts AND reels; unfollow immediately revokes FOLLOWERS access; edit preserves visibility; list endpoint filters private items."
+    -agent: "main"
+    -message: "Post-verification hardening: unauthenticated GET /api/posts and GET /api/posts/:pid now return 401 (previously threw 500). Verified via curl (401 no-auth, 200 authenticated). Frontend production build PASS. Restored supervisor backend to original state."

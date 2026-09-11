@@ -1338,14 +1338,16 @@ app.patch("/api/auth/me", (req: Request, res: Response) => {
 
 // Samaj Endpoints
 app.get("/api/samaj", (req: Request, res: Response) => {
+  const authUser = getAuthUser(req);
   res.json({
     items: samajList.filter((s) => s.isActive),
-    mine: currentUser.samajIds,
-    active: currentUser.activeSamajId,
+    mine: authUser?.samajIds || [DEFAULT_SAMAJ_ID],
+    active: authUser?.activeSamajId || DEFAULT_SAMAJ_ID,
   });
 });
 
 app.post("/api/samaj", (req: Request, res: Response) => {
+  const authUser = getAuthUser(req);
   const { name, nameEn, code } = req.body;
   const newSid = `samaj_${Date.now()}`;
   const newSamaj = {
@@ -1358,23 +1360,34 @@ app.post("/api/samaj", (req: Request, res: Response) => {
     createdAt: new Date().toISOString(),
   };
   samajList.push(newSamaj);
-  currentUser.samajIds.push(newSid);
+  if (authUser) {
+    if (!authUser.samajIds) authUser.samajIds = [];
+    if (!authUser.samajIds.includes(newSid)) authUser.samajIds.push(newSid);
+  }
   res.json(newSamaj);
 });
 
 app.post("/api/samaj/:sid/join", (req: Request, res: Response) => {
+  const authUser = getAuthUser(req);
   const sid = req.params.sid;
-  if (!currentUser.samajIds.includes(sid)) {
-    currentUser.samajIds.push(sid);
+  if (!authUser) return res.status(401).json({ detail: "Not authenticated" });
+  if (!authUser.samajIds) authUser.samajIds = [];
+  if (!authUser.samajIds.includes(sid)) {
+    authUser.samajIds.push(sid);
   }
-  currentUser.activeSamajId = sid;
-  res.json(currentUser);
+  authUser.activeSamajId = sid;
+  res.json(authUser);
 });
 
 app.post("/api/samaj/:sid/activate", (req: Request, res: Response) => {
+  const authUser = getAuthUser(req);
   const sid = req.params.sid;
-  currentUser.activeSamajId = sid;
-  res.json(currentUser);
+  if (!authUser) return res.status(401).json({ detail: "Not authenticated" });
+  if (!(authUser.samajIds || []).includes(sid)) {
+    return res.status(403).json({ detail: "Not a member of this Samaj" });
+  }
+  authUser.activeSamajId = sid;
+  res.json(authUser);
 });
 
 // ----------------- CHAT & MESSAGING SYSTEM (POINT 1) -----------------
@@ -2420,6 +2433,7 @@ app.post("/api/events/:eid/unregister", (req: Request, res: Response) => {
 // Posts / Social Endpoints
 app.get("/api/posts", (req: Request, res: Response) => {
   const authUser = getAuthUser(req);
+  if (!authUser) return res.status(401).json({ detail: "Authentication required" });
   const { authorId, saved, eventId, filter } = req.query;
 
   let list = postsList.filter((p) => p.status !== "deleted");
@@ -2462,6 +2476,7 @@ app.get("/api/posts", (req: Request, res: Response) => {
 // Single Post retrieval with privacy authorization enforcement
 app.get("/api/posts/:pid", (req: Request, res: Response) => {
   const authUser = getAuthUser(req);
+  if (!authUser) return res.status(401).json({ detail: "Authentication required" });
   const post = postsList.find((p) => p.id === req.params.pid && p.status !== "deleted");
   if (!post) {
     res.status(404).json({ detail: "Post not found" });
