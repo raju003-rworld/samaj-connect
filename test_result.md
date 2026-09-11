@@ -126,7 +126,8 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Profile Verification UI (Task 4) - Profile card + Admin approve/reject"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -163,3 +164,34 @@ agent_communication:
     -message: "✅ TASK 4 VERIFICATION COMPLETE. All 14 test cases passed successfully. Tested: (1) Incomplete profile submission blocked, (2) Complete profile can submit, (3) Status transitions (PROFILE_INCOMPLETE → VERIFICATION_PENDING → VERIFIED/REJECTED), (4) Self-verification blocked, (5) Admin pending list, (6) Admin approval, (7) Admin rejection with reason validation, (8) Rejection reason visibility, (9) Resubmission after rejection, (10) Verified user publishing when guard ON, (11) Non-verified blocked when guard ON (posts + reels), (12) Direct API bypass blocked, (13) Guard OFF regression, (14) Admin security regression. CRITICAL SECURITY VERIFIED: No self-verification possible, no unauthorized publishing when guard enabled, no API bypass. Profile verification workflow is production-ready."
     -agent: "testing"
     -message: "TASK 4 verified: 14/14 PASS. Normal/unverified users cannot self-verify (field ignored + admin endpoint 403) and cannot publish posts or reels when requireVerificationForPosting=true. Approve/reject (reason required) work; rejection reason visible to user; resubmit clears reason. No regression to admin security or posting when setting off."
+
+frontend:
+  - task: "Profile Verification UI (Task 4) - Profile card + Admin approve/reject"
+    implemented: true
+    working: true
+    file: "src/pages/Profile.jsx, src/pages/Admin.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        -working: "NA"
+        -agent: "main"
+        -comment: "Profile page shows verification card (status/submit/resubmit/rejection reason). Admin > Verification tab lists pending users with Approve/Reject(reason via window.prompt). App served via Vite build; dev-auth ON for testing."
+        -working: false
+        -agent: "testing"
+        -comment: "❌ CRITICAL: Frontend UI is NOT IMPLEMENTED. Code inspection reveals: (1) Profile.jsx (lines 1-87) has NO verification card, NO submit button, NO rejection reason display, NO API calls to /api/verification/* endpoints. (2) Admin.jsx verification tab (lines 885-909) only shows a placeholder message and count - NO user list, NO approve/reject buttons, NO window.prompt() for rejection reason. The main agent's claim that 'Profile page shows verification card' is INCORRECT - grep confirms zero 'verification' mentions in Profile.jsx. Backend endpoints may work but frontend UI must be built from scratch. Cannot test what doesn't exist."
+        -working: true
+        -agent: "testing"
+        -comment: "✅ ALL 16 PROFILE VERIFICATION UI TESTS PASSED (16/16). UI is now fully implemented in /app/src/ (Vite app). Verified: (A) NORMAL USER FLOW: (1) Quick-login works ✅ (2) Profile page loads with verification card visible ✅ (3) NOT-verified state shows submit button ✅ (4) Incomplete profile (missing Village) shows 'complete required fields' message with no submit button ✅ (5) After completing profile (Village='Unjha'), submit button reappears ✅ (6) Submit changes status to PENDING ('સમીક્ષા હેઠળ છે / Pending review') ✅. (B) ADMIN APPROVE: (7) Admin login successful ✅ (8) Admin verification tab shows pending user 'Nita Patel' with Approve/Reject buttons ✅ (9) Approve button works ✅ (10) User profile now shows VERIFIED ('ચકાસાયેલ પ્રોફાઇલ / Verified') with sparkle icon ✅. (C) REJECT + RESUBMIT: (11) New user 'Reject User' submitted for verification (PENDING) ✅ (12) Empty rejection reason blocked (user still pending), then rejected with reason 'Photo unclear' via window.prompt() ✅ (13) User sees REJECTED state with rejection reason 'કારણ: Photo unclear' displayed in red box, resubmit button visible ✅ (14) Resubmit returns status to PENDING ✅. (D) REGRESSION: (15) Admin dashboard security intact (server-side /admin/verify passed) ✅ (16) Chat/Messages, Posts/Home, and Reels pages load without crashes ✅. All data-testids present: verification-card, submit-verification-btn, resubmit-verification-btn, rejection-reason. Profile verification workflow is production-ready."
+
+agent_communication:
+    -agent: "main"
+    -message: "FRONTEND UI TEST for Task 4 only. App is at the preview URL in DEV auth mode (no real OTP). Login: enter 10-digit phone + name, Send OTP, enter 123456, Verify. Normal user phone 9551200001; SUPER_ADMIN phone 9925514713. The Admin Reject button opens a browser prompt() for the reason - must be handled. DO NOT restart supervisor."
+    -agent: "testing"
+    -message: "❌ TASK 4 FRONTEND UI NOT IMPLEMENTED. Code inspection shows Profile.jsx has NO verification card/UI (zero 'verification' mentions), and Admin.jsx verification tab only shows placeholder text with no approve/reject functionality. Main agent must BUILD the entire frontend UI: (1) Profile page: VerificationCard component showing status (PROFILE_INCOMPLETE/VERIFICATION_PENDING/VERIFIED/REJECTED), submit button (data-testid='submit-verification-btn'), resubmit button (data-testid='resubmit-verification-btn'), rejection reason display (data-testid='rejection-reason'), incomplete fields message. (2) Admin verification tab: User list with name/phone/village, Approve button (મંજૂર), Reject button (નકારો) with window.prompt() for reason. Backend endpoints exist but frontend UI is 0% complete. Cannot test non-existent UI."
+    -agent: "testing"
+    -message: "✅ TASK 4 PROFILE VERIFICATION UI COMPLETE - ALL 16 TESTS PASSED. Main agent successfully implemented the full UI. Testing confirmed: (1) Profile verification card with all states (PROFILE_INCOMPLETE, VERIFICATION_PENDING, VERIFIED, REJECTED) working correctly. (2) Incomplete profile validation (missing Village field) blocks submission with clear message. (3) Submit for verification transitions to PENDING state. (4) Admin verification tab displays pending users with functional Approve/Reject buttons. (5) Admin Reject uses window.prompt() for reason, validates non-empty reason (empty rejection blocked). (6) Rejected user sees rejection reason 'કારણ: Photo unclear' in red box with resubmit button. (7) Resubmit clears rejection and returns to PENDING. (8) Approve transitions user to VERIFIED state with sparkle icon. (9) All data-testids present and functional. (10) No regressions: Admin security intact, Chat/Posts/Reels pages load without crashes. Quick login flow works perfectly. UI is production-ready."
+    -agent: "testing"
+    -message: "Task 4 FRONTEND UI: 16/16 PASS. Verification card renders all states (incomplete/submit, pending, verified, rejected-with-reason, resubmit). Admin Verification tab lists pending users; Approve and Reject(window.prompt reason, empty-reason rejected) work. Regression OK: admin security, Chat, Posts/Social, Reels load without crashes. NOTE: previous run failed only due to inspecting dead /app/frontend copy + networkidle timeout; active app is /app/src served via Vite build."
+    -agent: "main"
+    -message: "Only code change this task: dev-login now seeds verificationStatus 'none' (was 'verified') so DEV matches production and the workflow is demonstrable. Dev-login is 403 in production; no security impact. Rebuilt dist; restored supervisor services."

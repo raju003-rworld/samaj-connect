@@ -1294,7 +1294,8 @@ app.post("/api/auth/dev-login", (req: Request, res: Response) => {
       blocked: [],
       followers: [],
       following: [],
-      verificationStatus: "verified",
+      verificationStatus: "none",
+      rejectionReason: null,
       mainSamajId: "main_patidar",
       gam: "અમદાવાદ",
     };
