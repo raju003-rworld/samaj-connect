@@ -1,8 +1,10 @@
 import axios from "axios";
 import { auth } from "@/lib/firebase";
 
-const BACKEND_URL = (typeof process !== "undefined" && process.env?.REACT_APP_BACKEND_URL) || "";
-export const API = BACKEND_URL ? `${BACKEND_URL}/api` : "/api";
+// In our full-stack architecture (Express + Vite), the backend API runs co-located on the same server.
+// Relative "/api" ensures requests always route to the container Express backend (containing all master data and latest endpoints),
+// rather than an outdated or unreachable remote service.
+export const API = "/api";
 
 export const api = axios.create({ baseURL: API });
 

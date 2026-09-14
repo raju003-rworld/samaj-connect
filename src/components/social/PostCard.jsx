@@ -245,7 +245,7 @@ function ShareDialog({ p, open, onOpenChange, onDone }) {
 }
 
 export function PostCard({ p, onChange, onRemove, onCreated, autoOpenComments = false }) {
-  const { user, t, isMod } = useApp();
+  const { user, t, isMod, activeSamaj } = useApp();
   const nav = useNavigate();
   const [open, setOpen] = useState(autoOpenComments);
   const [menu, setMenu] = useState(false);
@@ -284,31 +284,101 @@ export function PostCard({ p, onChange, onRemove, onCreated, autoOpenComments = 
     await api.post("/reports", { targetType: "post", targetId: p.id, reason }); toast.success("રિપોર્ટ મોકલાયો"); setMenu(false);
   };
   const block = async () => { await api.post(`/users/${p.authorId}/block`); toast.success("બ્લોક થયું"); onRemove(p.id); };
+  const copyLink = () => {
+    const url = `${window.location.origin}/posts/${p.id}`;
+    navigator.clipboard.writeText(url);
+    toast.success("પોસ્ટ લિંક કૉપિ થઈ ગઈ");
+    setMenu(false);
+  };
   const mine = p.authorId === user?.id;
+  const authorSamajName = p.samajName || p.samaj?.name || activeSamaj?.name;
 
   return (
-    <article ref={ref} data-testid={`post-card-${p.id}`} className="bg-white rounded-3xl p-4 border border-slate-100 shadow-sm">
+    <article
+      ref={ref}
+      data-testid={`post-card-${p.id}`}
+      className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-100 shadow-sm hover:shadow-md transition-shadow duration-200"
+    >
+      {/* Header: Photo, Name, Samaj, Time, Privacy, Menu */}
       <header className="flex items-center gap-3">
-        <Link to={`/users/${p.authorId}`} className="w-10 h-10 rounded-full bg-purple-100 text-purple-800 grid place-items-center font-bold overflow-hidden shrink-0">
-          {p.authorPhoto ? <img src={p.authorPhoto} alt="" className="w-full h-full object-cover" /> : (p.authorName?.[0] || "?").toUpperCase()}
+        <Link
+          to={`/users/${p.authorId}`}
+          className="w-11 h-11 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 p-[2px] shrink-0 shadow-xs group"
+        >
+          <div className="w-full h-full rounded-full bg-white grid place-items-center font-bold text-purple-900 overflow-hidden text-sm">
+            {p.authorPhoto ? (
+              <img src={p.authorPhoto} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+            ) : (
+              (p.authorName?.[0] || "?").toUpperCase()
+            )}
+          </div>
         </Link>
+
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <Link to={`/users/${p.authorId}`} className="text-sm font-semibold text-slate-900 hover:text-purple-800">{p.authorName}</Link>
-            {["super_admin", "samaj_admin", "admin"].includes(p.authorRole) && <span className="text-[9px] font-bold bg-purple-900 text-white px-1.5 py-0.5 rounded-full">ADMIN</span>}
-            {p.mediaType === "share" && <span className="text-[11px] text-slate-500 flex items-center gap-0.5"><Repeat2 className="w-3 h-3" /> શેર કર્યું</span>}
+            <Link
+              to={`/users/${p.authorId}`}
+              className="text-sm font-bold text-slate-900 hover:text-purple-900 transition-colors truncate"
+            >
+              {p.authorName}
+            </Link>
+            {["super_admin", "samaj_admin", "admin"].includes(p.authorRole) && (
+              <span className="text-[9px] font-extrabold bg-gradient-to-r from-purple-800 to-indigo-700 text-white px-2 py-0.5 rounded-full shadow-2xs">
+                ADMIN
+              </span>
+            )}
+            {p.mediaType === "share" && (
+              <span className="text-[11px] text-purple-700 font-medium flex items-center gap-0.5 bg-purple-50 px-2 py-0.5 rounded-md">
+                <Repeat2 className="w-3 h-3" /> શેર કર્યું
+              </span>
+            )}
           </div>
-          <div className="text-[11px] text-slate-500 flex items-center gap-2 flex-wrap">
-            <span title={new Date(p.createdAt).toLocaleString("en-IN")}>{timeAgo(p.createdAt)}</span>
+
+          <div className="text-[11px] text-slate-500 flex items-center gap-2 flex-wrap mt-0.5">
+            {authorSamajName && (
+              <span className="font-medium text-slate-600 truncate max-w-[140px] sm:max-w-[180px]">
+                🏛️ {authorSamajName}
+              </span>
+            )}
+            {authorSamajName && <span>•</span>}
+            <span title={new Date(p.createdAt).toLocaleString("en-IN")}>
+              {timeAgo(p.createdAt)}
+            </span>
+            <span>•</span>
             <VisibilityBadge value={p.visibility} />
-            {p.location && <span className="flex items-center gap-0.5"><MapPin className="w-3 h-3" /> {p.location}</span>}
-            {!p.approved && <span className="text-amber-600 font-semibold">મંજૂરી બાકી</span>}
+            {p.location && (
+              <span className="flex items-center gap-0.5 text-slate-600">
+                <MapPin className="w-3 h-3 text-rose-500" /> {p.location}
+              </span>
+            )}
+            {!p.approved && (
+              <span className="text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded font-semibold text-[10px]">
+                મંજૂરી બાકી
+              </span>
+            )}
           </div>
         </div>
+
+        {/* More Menu */}
         <div className="relative">
-          <button data-testid={`post-menu-${p.id}`} onClick={() => setMenu(!menu)} className="p-1.5 rounded-full text-slate-400 hover:bg-slate-50"><MoreHorizontal className="w-4 h-4" /></button>
+          <button
+            data-testid={`post-menu-${p.id}`}
+            onClick={() => setMenu(!menu)}
+            className="p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+          >
+            <MoreHorizontal className="w-4 h-4" />
+          </button>
           {menu && (
-            <div className="absolute right-0 mt-1 bg-white border border-slate-200 rounded-2xl shadow-lg py-1.5 w-48 z-10 text-sm">
+            <div className="absolute right-0 mt-1 bg-white border border-slate-200 rounded-2xl shadow-xl py-1.5 w-48 z-20 text-sm animate-in fade-in zoom-in-95 duration-150">
+              <button
+                type="button"
+                onClick={copyLink}
+                className="w-full text-left px-4 py-2 hover:bg-slate-50 text-slate-700 flex items-center gap-2 font-medium"
+              >
+                <ExternalLink className="w-4 h-4 text-slate-500" />
+                <span>લિંક કૉપિ કરો</span>
+              </button>
+
               {(mine || isMod) && (
                 <button
                   type="button"
@@ -339,9 +409,9 @@ export function PostCard({ p, onChange, onRemove, onCreated, autoOpenComments = 
                   type="button"
                   data-testid={`post-report-${p.id}`}
                   onClick={report}
-                  className="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2"
+                  className="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2 text-slate-700"
                 >
-                  <Flag className="w-4 h-4" /> {t("report")}
+                  <Flag className="w-4 h-4 text-amber-500" /> {t("report")}
                 </button>
               )}
               {!mine && (
@@ -358,6 +428,8 @@ export function PostCard({ p, onChange, onRemove, onCreated, autoOpenComments = 
           )}
         </div>
       </header>
+
+      {/* Post Content */}
       <Caption text={p.caption} />
       {p.music && <PostMusicBanner music={p.music} />}
       {p.sharedFrom ? (
@@ -372,23 +444,130 @@ export function PostCard({ p, onChange, onRemove, onCreated, autoOpenComments = 
         />
       )}
       <EventCard event={p.event} />
-      <div className="mt-3 pt-3 border-t border-slate-100 flex items-center gap-1 text-xs">
-        <button data-testid={`post-like-${p.id}`} onClick={like} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold transition-colors ${p.likedByMe ? "bg-rose-50 text-rose-600" : "text-slate-600 hover:bg-slate-50"}`}>
-          <Heart className={`w-4 h-4 ${p.likedByMe ? "fill-current" : ""}`} /> {p.likesCount || 0}
+
+      {/* Clean Counts Display */}
+      <div className="mt-3.5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-medium px-1">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+          <span data-testid={`post-likes-count-${p.id}`} className="hover:text-slate-700">
+            {p.likesCount || 0} Likes
+          </span>
+          <span>•</span>
+          <button
+            onClick={() => setOpen(!open)}
+            data-testid={`post-comments-count-${p.id}`}
+            className="hover:text-purple-900 transition-colors"
+          >
+            {p.commentsCount || 0} Comments
+          </button>
+          <span>•</span>
+          <span data-testid={`post-shares-count-${p.id}`} className="hover:text-slate-700">
+            {p.sharesCount || 0} Shares
+          </span>
+        </div>
+        {p.viewsCount > 0 && (
+          <span
+            data-testid={`post-views-${p.id}`}
+            className="flex items-center gap-1 text-[11px] text-slate-400"
+          >
+            <Eye className="w-3.5 h-3.5" /> {p.viewsCount}
+          </span>
+        )}
+      </div>
+
+      {/* Action Buttons: Like, Comment, Share, Save */}
+      <div className="mt-2 pt-2 border-t border-slate-100/90 flex items-center justify-between gap-1 text-xs sm:text-sm">
+        <button
+          data-testid={`post-like-${p.id}`}
+          onClick={like}
+          className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2 rounded-2xl font-semibold transition-all ${
+            p.likedByMe
+              ? "bg-rose-50 text-rose-600"
+              : "text-slate-700 hover:bg-slate-50 active:scale-95"
+          }`}
+        >
+          <Heart className={`w-4 h-4 transition-transform duration-150 ${p.likedByMe ? "fill-current scale-110" : ""}`} />
+          <span>લાઈક</span>
         </button>
-        <button data-testid={`post-comments-${p.id}`} onClick={() => setOpen(!open)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold text-slate-600 hover:bg-slate-50">
-          <MessageCircle className="w-4 h-4" /> {p.commentsCount || 0}
+
+        <button
+          data-testid={`post-comments-${p.id}`}
+          onClick={() => setOpen(!open)}
+          className="flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2 rounded-2xl font-semibold text-slate-700 hover:bg-slate-50 active:scale-95 transition-all"
+        >
+          <MessageCircle className="w-4 h-4 text-purple-700" />
+          <span>કમેન્ટ</span>
         </button>
-        <button data-testid={`post-share-${p.id}`} onClick={() => setShare(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold text-slate-600 hover:bg-slate-50">
-          <Share2 className="w-4 h-4" /> {p.sharesCount || 0}
+
+        <button
+          data-testid={`post-share-${p.id}`}
+          onClick={() => setShare(true)}
+          className="flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2 rounded-2xl font-semibold text-slate-700 hover:bg-slate-50 active:scale-95 transition-all"
+        >
+          <Share2 className="w-4 h-4 text-indigo-600" />
+          <span>શેર</span>
         </button>
-        {p.viewsCount > 0 && <span data-testid={`post-views-${p.id}`} className="flex items-center gap-1 px-2 text-slate-400"><Eye className="w-3.5 h-3.5" /> {p.viewsCount}</span>}
-        <button data-testid={`post-save-${p.id}`} onClick={save} className={`ml-auto p-2 rounded-full ${p.savedByMe ? "text-purple-800 bg-purple-50" : "text-slate-500 hover:bg-slate-50"}`}>
-          <Bookmark className={`w-4 h-4 ${p.savedByMe ? "fill-current" : ""}`} />
+
+        <button
+          data-testid={`post-save-${p.id}`}
+          onClick={save}
+          className={`p-2.5 rounded-2xl transition-all ${
+            p.savedByMe
+              ? "text-purple-900 bg-purple-50"
+              : "text-slate-500 hover:bg-slate-50 hover:text-purple-900"
+          }`}
+          title="સેવ કરો"
+        >
+          <Bookmark className={`w-4.5 h-4.5 ${p.savedByMe ? "fill-current" : ""}`} />
         </button>
       </div>
-      {open && <Comments postId={p.id} onCount={(d) => onChange({ ...p, commentsCount: Math.max(0, (p.commentsCount || 0) + d) })} />}
-      {share && <ShareDialog p={p} open={share} onOpenChange={setShare} onDone={(np) => { onChange({ ...p, sharesCount: (p.sharesCount || 0) + 1 }); onCreated?.(np); }} />}
+
+      {/* Desktop Inline Comments */}
+      {open && (
+        <div className="hidden md:block">
+          <Comments
+            postId={p.id}
+            onCount={(d) => onChange({ ...p, commentsCount: Math.max(0, (p.commentsCount || 0) + d) })}
+            onClose={() => setOpen(false)}
+          />
+        </div>
+      )}
+
+      {/* Mobile Bottom-Sheet for Comments */}
+      {open && (
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogContent
+            className="md:hidden fixed bottom-0 top-auto left-0 right-0 max-w-none w-full rounded-t-3xl rounded-b-none p-4 bg-white border-t border-slate-200 shadow-2xl max-h-[85vh] flex flex-col translate-y-0"
+            data-testid={`post-comments-sheet-${p.id}`}
+          >
+            <div className="w-12 h-1.5 bg-slate-300 rounded-full mx-auto mb-2 shrink-0" />
+            <DialogHeader className="p-0 text-left border-b border-slate-100 pb-2.5 shrink-0">
+              <DialogTitle className="text-base font-bold text-slate-900 flex items-center justify-between">
+                <span>કમેન્ટ્સ ({p.commentsCount || 0})</span>
+              </DialogTitle>
+              <DialogDescription className="sr-only">કમેન્ટ્સ જુઓ અને નવી કમેન્ટ ઉમેરો</DialogDescription>
+            </DialogHeader>
+            <div className="flex-1 overflow-y-auto pt-2">
+              <Comments
+                postId={p.id}
+                onCount={(d) => onChange({ ...p, commentsCount: Math.max(0, (p.commentsCount || 0) + d) })}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {share && (
+        <ShareDialog
+          p={p}
+          open={share}
+          onOpenChange={setShare}
+          onDone={(np) => {
+            onChange({ ...p, sharesCount: (p.sharesCount || 0) + 1 });
+            onCreated?.(np);
+          }}
+        />
+      )}
+
       {editOpen && (
         <EditPostModal
           open={editOpen}

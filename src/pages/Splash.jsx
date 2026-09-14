@@ -10,7 +10,18 @@ export default function Splash() {
 
   useEffect(() => {
     if (booting) return;
-    const t = setTimeout(() => nav(user ? "/home" : "/login", { replace: true }), 1400);
+    const t = setTimeout(() => {
+      if (!user) {
+        nav("/login", { replace: true });
+      } else {
+        const isAdmin = ["super_admin", "admin", "main_samaj_admin", "samaj_admin"].includes(user?.role) || Boolean(user?.adminRole);
+        if (!user.onboardingCompleted && !isAdmin) {
+          nav("/onboarding", { replace: true });
+        } else {
+          nav("/home", { replace: true });
+        }
+      }
+    }, 1400);
     return () => clearTimeout(t);
   }, [booting, user, nav]);
 

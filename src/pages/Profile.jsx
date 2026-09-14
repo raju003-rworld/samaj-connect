@@ -20,6 +20,7 @@ import {
   ShoppingBag,
   Store,
   Share2,
+  Heart,
   Users,
   Sparkles,
   Phone,
@@ -549,7 +550,7 @@ export default function Profile() {
       {tab === "modules" && (
         <div className="bg-white rounded-3xl border border-slate-100 shadow-xs overflow-hidden divide-y divide-slate-100">
           <button
-            onClick={() => nav("/coming-soon?m=family")}
+            onClick={() => nav("/family-tree")}
             className="w-full flex items-center justify-between p-4 hover:bg-slate-50 transition text-left"
           >
             <div className="flex items-center gap-3">
@@ -559,6 +560,22 @@ export default function Profile() {
               <div>
                 <div className="text-sm font-semibold text-slate-900">ફેમિલી ટ્રી (Family Tree)</div>
                 <div className="text-[11px] text-slate-500">તમારા પરિવારની ડિજિટલ વંશાવલિ</div>
+              </div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-slate-400" />
+          </button>
+
+          <button
+            onClick={() => nav("/maran-nodh")}
+            className="w-full flex items-center justify-between p-4 hover:bg-slate-50 transition text-left"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-900 grid place-items-center">
+                <Heart className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="text-sm font-semibold text-slate-900">મરણ નોંધ & બેસણું (Obituary & Besnu)</div>
+                <div className="text-[11px] text-slate-500">શ્રદ્ધાંજલિ, બેસણું અને સાંત્વના સંદેશાઓ</div>
               </div>
             </div>
             <ChevronRight className="w-4 h-4 text-slate-400" />

@@ -255,21 +255,68 @@ export default function Home() {
 
   return (
     <div className="space-y-4">
-      {/* 1. INSTAGRAM-STYLE STORIES SECTION */}
-      <section className="bg-white rounded-3xl p-3 sm:p-4 border border-slate-100 shadow-xs">
-        <div className="flex items-center justify-between mb-2.5 px-1">
-          <div className="font-heading font-extrabold text-sm text-slate-900 tracking-tight flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-gradient-to-tr from-purple-600 to-fuchsia-500 animate-pulse" />
-            {t("stories")}
+      {/* 0. ACTIVE SAMAJ COMMUNITY BAR */}
+      <section
+        data-testid="home-active-samaj-bar"
+        className="bg-gradient-to-r from-purple-900 via-indigo-900 to-purple-950 text-white rounded-3xl p-4 sm:p-5 shadow-sm border border-purple-800/40 relative overflow-hidden"
+      >
+        <div className="flex items-center justify-between gap-3 relative z-10">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-12 h-12 rounded-2xl bg-white/15 backdrop-blur-md grid place-items-center text-2xl shrink-0 shadow-inner">
+              🏛️
+            </div>
+            <div className="min-w-0">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-purple-200 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span>સક્રિય સમાજ</span>
+              </div>
+              <div className="font-heading font-extrabold text-base sm:text-lg truncate text-white">
+                {activeSamaj?.name || "શ્રી ઉમિયાનગર પાટીદાર સમાજ"}
+              </div>
+              <div className="text-xs text-purple-200/90 truncate font-medium">
+                {activeSamaj?.village || activeSamaj?.city || "Gadhsisa · કચ્છ"}
+              </div>
+            </div>
           </div>
-          <span className="text-[11px] font-semibold text-purple-800">24h અપડેટ્સ</span>
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new CustomEvent("samaj-open-switcher"))}
+            className="px-3.5 py-1.5 rounded-full bg-white/15 hover:bg-white/25 border border-white/20 text-white text-xs font-semibold shrink-0 transition active:scale-95"
+          >
+            બદલો
+          </button>
         </div>
-        <Stories />
       </section>
 
-      {/* 2. POST COMPOSER (INSTAGRAM / SOCIAL STYLE) */}
-      <section className="bg-white rounded-3xl p-4 border border-slate-100 shadow-xs">
-        <div className="flex items-start gap-3">
+      {/* 1. STORIES SECTION: "તમારી સ્ટોરી" */}
+      <section className="bg-white rounded-3xl p-3 sm:p-4 border border-slate-100 shadow-xs">
+        <div className="flex items-center justify-between mb-2.5 px-1">
+          <div className="font-heading font-extrabold text-sm text-slate-900 tracking-tight flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-gradient-to-tr from-purple-600 to-fuchsia-500 animate-pulse" />
+            <span>તમારી સ્ટોરી</span>
+          </div>
+          <span className="text-[11px] font-semibold text-purple-800">24 કલાક અપડેટ્સ</span>
+        </div>
+        <div className="overflow-x-auto scrollbar-none -mx-1 px-1">
+          <Stories />
+        </div>
+      </section>
+
+      {/* 2. "શું શેર કરવું છે?" LARGE CREATE POST CARD */}
+      <section
+        data-testid="home-create-post-card"
+        className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-100 shadow-xs space-y-3"
+      >
+        <div className="flex items-center justify-between">
+          <h3 className="font-heading font-bold text-sm text-slate-900">શું શેર કરવું છે?</h3>
+          <span className="text-xs font-medium text-purple-700">નવી પોસ્ટ</span>
+        </div>
+
+        {/* Input Trigger */}
+        <div
+          onClick={() => setComposeOpen(true)}
+          className="flex items-center gap-3 p-2.5 bg-slate-50 hover:bg-slate-100/80 rounded-2xl cursor-pointer border border-slate-200/70 transition"
+        >
           <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-900 grid place-items-center font-bold text-sm shrink-0 overflow-hidden border border-purple-200">
             {user?.profilePhoto ? (
               <img src={user.profilePhoto} alt="" className="w-full h-full object-cover" />
@@ -277,250 +324,381 @@ export default function Home() {
               (user?.name?.[0] || "?").toUpperCase()
             )}
           </div>
-          <div className="flex-1 min-w-0">
-            <textarea
-              data-testid={IDS.postCreateInput}
-              value={caption}
-              onChange={(e) => setCaption(e.target.value)}
-              onClick={() => setComposeOpen(true)}
-              placeholder={`તમારા મનમાં શું છે, ${user?.name?.split(" ")[0] || "સમાજ સભ્ય"}? #હૅશટૅગ...`}
-              rows={composeOpen ? 3 : 2}
-              className="w-full resize-none rounded-2xl bg-slate-50/80 hover:bg-slate-50 focus:bg-white border border-slate-200/80 p-3 text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-purple-400 transition"
-            />
-
-            {/* Media Previews in Composer */}
-            {mediaUrls.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {mediaUrls.map((u, i) => (
-                  <div key={i} className="relative w-24 h-24 rounded-xl overflow-hidden border border-slate-200 bg-black group">
-                    {isVideoUrl(u) ? (
-                      <video src={u} className="w-full h-full object-cover" />
-                    ) : (
-                      <img src={u} alt="" className="w-full h-full object-cover" />
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => setMediaUrls((prev) => prev.filter((_, idx) => idx !== i))}
-                      className="absolute top-1 right-1 p-1 rounded-full bg-black/70 text-white hover:bg-black transition"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      data-testid={`post-media-edit-${i}`}
-                      onClick={() => {
-                        setEditingMedia({ url: u, index: i, type: isVideoUrl(u) ? "video" : "image" });
-                        setPostEditorOpen(true);
-                      }}
-                      className="absolute bottom-1 left-1 px-2 py-0.5 rounded-md bg-purple-900/90 text-white hover:bg-purple-950 text-[10px] font-semibold flex items-center gap-1 shadow"
-                    >
-                      <Wand2 className="w-2.5 h-2.5" /> એડિટ
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Selected Music Banner */}
-            {selectedMusic && (
-              <div className="flex items-center gap-2 mt-2 bg-purple-50 border border-purple-200 rounded-xl px-3 py-1.5 text-xs text-purple-900">
-                <span className="text-base">{selectedMusic.cover || "🎵"}</span>
-                <div className="min-w-0 flex-1">
-                  <div className="font-semibold truncate">{selectedMusic.title}</div>
-                  <div className="text-[10px] text-purple-700 truncate">{selectedMusic.artist || "સમાજ સંગીત"}</div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setSelectedMusic(null)}
-                  className="p-1 text-purple-600 hover:text-purple-900"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            )}
-
-            {/* Optional Location Input */}
-            {showLocation && (
-              <div className="mt-2 flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-1.5 border border-slate-200">
-                <MapPin className="w-4 h-4 text-purple-700 shrink-0" />
-                <input
-                  type="text"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  placeholder="ગામ / શહેર / સ્થળ દાખલ કરો..."
-                  className="w-full text-xs bg-transparent outline-none text-slate-800"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setLocation("");
-                    setShowLocation(false);
-                  }}
-                  className="text-slate-400 hover:text-slate-600"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            )}
-
-            {/* Expanded Composer Options */}
-            {composeOpen && (
-              <div className="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  {/* Media Uploader */}
-                  <MediaUploader
-                    multiple={true}
-                    accept="image/*,video/*"
-                    kind="posts"
-                    onDone={(urls) => setMediaUrls((prev) => [...prev, ...urls])}
-                    label={
-                      <span className="flex items-center gap-1 text-xs font-semibold text-purple-800 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-full transition">
-                        <ImageIcon className="w-3.5 h-3.5" /> ફોટો/વિડિયો
-                      </span>
-                    }
-                    testId="post-media-upload"
-                  />
-
-                  {/* Music Picker Button */}
-                  <button
-                    type="button"
-                    data-testid="post-music-btn"
-                    onClick={() => setMusicPickerOpen(true)}
-                    className={`flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full transition ${
-                      selectedMusic ? "bg-purple-900 text-white" : "text-purple-800 bg-purple-50 hover:bg-purple-100"
-                    }`}
-                  >
-                    <Music className="w-3.5 h-3.5" />
-                    {selectedMusic ? <span className="max-w-[90px] truncate">{selectedMusic.title}</span> : "સંગીત"}
-                  </button>
-
-                  {/* Quick Gujarati Emojis Picker Button */}
-                  <div className="relative">
-                    <button
-                      type="button"
-                      data-testid="post-emoji-btn"
-                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                      className="flex items-center gap-1 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-full transition"
-                    >
-                      <Smile className="w-3.5 h-3.5 text-amber-500" /> ઇમોજી
-                    </button>
-                    {showEmojiPicker && (
-                      <div className="absolute left-0 bottom-full mb-1 p-2 bg-white border border-slate-200 rounded-2xl shadow-xl flex items-center gap-1.5 z-30">
-                        {["🙏", "🪔", "💐", "🎉", "🚩", "✨", "🌺", "❤️", "👍", "🎂"].map((emoji) => (
-                          <button
-                            key={emoji}
-                            type="button"
-                            onClick={() => {
-                              setCaption((prev) => prev + " " + emoji);
-                              setShowEmojiPicker(false);
-                            }}
-                            className="text-lg hover:scale-125 transition-transform p-1"
-                          >
-                            {emoji}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Location Toggle */}
-                  <button
-                    type="button"
-                    onClick={() => setShowLocation(!showLocation)}
-                    className={`flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full transition ${
-                      showLocation || location
-                        ? "bg-purple-900 text-white"
-                        : "text-slate-600 bg-slate-100 hover:bg-slate-200"
-                    }`}
-                  >
-                    <MapPin className="w-3.5 h-3.5" /> સ્થળ
-                  </button>
-
-                  {/* Event Linking */}
-                  {events.length > 0 && (
-                    <select
-                      value={eventId}
-                      onChange={(e) => setEventId(e.target.value)}
-                      className="text-xs font-semibold bg-slate-100 border border-slate-200 text-slate-700 px-2.5 py-1.5 rounded-full outline-none"
-                    >
-                      <option value="">ઈવેન્ટ લિંક કરો</option>
-                      {events.map((ev) => (
-                        <option key={ev.id} value={ev.id}>
-                          📅 {ev.title}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-
-                  {/* Visibility */}
-                  <VisibilitySelect value={visibility} onChange={setVisibility} testId="post-visibility" />
-                </div>
-
-                {/* Submit Post Button */}
-                <button
-                  data-testid={IDS.postSubmit}
-                  onClick={handleCreatePost}
-                  disabled={posting || (!caption.trim() && !mediaUrls.length)}
-                  className="inline-flex items-center gap-1.5 px-5 py-2 rounded-full bg-purple-900 hover:bg-purple-950 text-white text-xs font-semibold shadow-sm transition disabled:opacity-50"
-                >
-                  <Send className="w-3.5 h-3.5" />
-                  <span>{posting ? "શેરિંગ..." : "પોસ્ટ કરો"}</span>
-                </button>
-              </div>
-            )}
+          <div className="text-xs sm:text-sm text-slate-500 font-medium truncate flex-1">
+            તમારા સમાજ સાથે શું શેર કરશો?
           </div>
+          <button
+            type="button"
+            className="px-3.5 py-1.5 rounded-full bg-purple-900 text-white text-xs font-semibold shadow-xs hover:bg-purple-950 transition shrink-0"
+          >
+            લખો
+          </button>
         </div>
 
-        {/* Music Picker Modal */}
-        {musicPickerOpen && (
-          <MusicPickerModal
-            open={musicPickerOpen}
-            onOpenChange={setMusicPickerOpen}
-            selectedTrack={selectedMusic}
-            onSelectTrack={(track) => {
-              setSelectedMusic(track);
-              setMusicPickerOpen(false);
-              toast.success("સંગીત પસંદ થયું");
+        {/* 4 Quick Action Pill Buttons */}
+        <div className="grid grid-cols-4 gap-1.5 sm:gap-2 pt-1">
+          {/* Photo */}
+          <MediaUploader
+            multiple={true}
+            accept="image/*"
+            kind="posts"
+            onDone={(urls) => {
+              setMediaUrls((prev) => [...prev, ...urls]);
+              setComposeOpen(true);
             }}
+            label={
+              <span className="w-full flex items-center justify-center gap-1.5 py-2 px-1 rounded-xl text-xs font-semibold text-purple-900 bg-purple-50/80 hover:bg-purple-100 border border-purple-100 transition truncate">
+                <span>📷</span>
+                <span className="truncate">ફોટો</span>
+              </span>
+            }
+            testId="quick-photo-btn"
           />
-        )}
 
-        {/* Post Editor Modal for Photo/Video Enhancement */}
-        {postEditorOpen && editingMedia && (
-          <PostEditorModal
-            open={postEditorOpen}
-            onOpenChange={setPostEditorOpen}
-            mediaUrl={editingMedia.url}
-            mediaType={editingMedia.type}
-            initialConfig={postConfig}
-            onSave={(edited) => {
-              if (edited.mediaUrl && editingMedia.index !== undefined) {
-                setMediaUrls((prev) => {
-                  const updated = [...prev];
-                  updated[editingMedia.index] = edited.mediaUrl;
-                  return updated;
-                });
-              }
-              setPostConfig({
-                filter: edited.filter || "normal",
-                rotation: edited.rotation || 0,
-                aspectRatio: edited.aspectRatio || "original",
-                volume: edited.volume ?? 1,
-                trimStart: edited.trimStart || 0,
-                trimEnd: edited.trimEnd || 0,
-                textOverlays: edited.textOverlays || [],
-                emojiOverlays: edited.emojiOverlays || [],
-              });
-              if (edited.music) {
-                setSelectedMusic(edited.music);
-              }
-              setPostEditorOpen(false);
-              setEditingMedia(null);
-              toast.success("ફેરફારો સેવ થયા");
+          {/* Video */}
+          <MediaUploader
+            multiple={true}
+            accept="video/*"
+            kind="posts"
+            onDone={(urls) => {
+              setMediaUrls((prev) => [...prev, ...urls]);
+              setComposeOpen(true);
             }}
+            label={
+              <span className="w-full flex items-center justify-center gap-1.5 py-2 px-1 rounded-xl text-xs font-semibold text-indigo-900 bg-indigo-50/80 hover:bg-indigo-100 border border-indigo-100 transition truncate">
+                <span>🎥</span>
+                <span className="truncate">વિડિયો</span>
+              </span>
+            }
+            testId="quick-video-btn"
           />
-        )}
+
+          {/* Feeling */}
+          <button
+            type="button"
+            data-testid="quick-feeling-btn"
+            onClick={() => {
+              setComposeOpen(true);
+              setShowEmojiPicker(true);
+            }}
+            className="flex items-center justify-center gap-1.5 py-2 px-1 rounded-xl text-xs font-semibold text-amber-900 bg-amber-50/80 hover:bg-amber-100 border border-amber-100 transition truncate"
+          >
+            <span>😊</span>
+            <span className="truncate">Feeling</span>
+          </button>
+
+          {/* Music */}
+          <button
+            type="button"
+            data-testid="quick-music-btn"
+            onClick={() => {
+              setComposeOpen(true);
+              setMusicPickerOpen(true);
+            }}
+            className="flex items-center justify-center gap-1.5 py-2 px-1 rounded-xl text-xs font-semibold text-rose-900 bg-rose-50/80 hover:bg-rose-100 border border-rose-100 transition truncate"
+          >
+            <span>🎵</span>
+            <span className="truncate">Music</span>
+          </button>
+        </div>
       </section>
+
+      {/* PREMIUM FULL-SCREEN / BOTTOM-SHEET COMPOSER MODAL */}
+      {composeOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4 animate-in fade-in duration-200"
+          data-testid="create-post-modal"
+        >
+          <div className="w-full max-w-lg bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[85vh] overflow-hidden animate-in slide-in-from-bottom duration-300">
+            {/* Modal Header */}
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setComposeOpen(false)}
+                className="flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-slate-900 py-1 px-2.5 rounded-full hover:bg-slate-100 transition"
+              >
+                <X className="w-4 h-4" />
+                <span>← નવી પોસ્ટ</span>
+              </button>
+              <div className="font-heading font-extrabold text-sm text-slate-900">
+                પોસ્ટ બનાવો
+              </div>
+              <button
+                type="button"
+                data-testid={IDS.postSubmit}
+                onClick={handleCreatePost}
+                disabled={posting || (!caption.trim() && !mediaUrls.length)}
+                className="px-4 py-1.5 rounded-full bg-gradient-to-r from-purple-800 to-indigo-700 text-white text-xs font-bold shadow hover:from-purple-900 hover:to-indigo-800 disabled:opacity-40 transition active:scale-95"
+              >
+                {posting ? "શેરિંગ..." : "પોસ્ટ કરો"}
+              </button>
+            </div>
+
+            {/* Profile Bar & Privacy */}
+            <div className="p-4 pb-2 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-900 grid place-items-center font-bold text-sm shrink-0 overflow-hidden border border-purple-200">
+                  {user?.profilePhoto ? (
+                    <img src={user.profilePhoto} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    (user?.name?.[0] || "?").toUpperCase()
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <div className="text-xs font-bold text-slate-900 truncate">
+                    {user?.name || "સમાજ સભ્ય"}
+                  </div>
+                  <div className="text-[11px] font-semibold text-purple-800 truncate">
+                    🏛️ {activeSamaj?.name || "સમાજ પરિવાર"}
+                  </div>
+                </div>
+              </div>
+
+              {/* Privacy Selector */}
+              <div className="shrink-0">
+                <VisibilitySelect value={visibility} onChange={setVisibility} testId="post-visibility" />
+              </div>
+            </div>
+
+            {/* Composer Scrollable Body */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              <textarea
+                data-testid={IDS.postCreateInput}
+                value={caption}
+                onChange={(e) => setCaption(e.target.value)}
+                placeholder="તમારા સમાજ સાથે શું શેર કરશો? #હૅશટૅગ..."
+                rows={4}
+                className="w-full resize-none bg-transparent p-1 text-sm sm:text-base text-slate-800 placeholder:text-slate-400 outline-none leading-relaxed"
+                autoFocus
+              />
+
+              {/* Selected Music Banner */}
+              {selectedMusic && (
+                <div className="flex items-center gap-2 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-2xl p-2.5 text-xs text-purple-900">
+                  <span className="text-lg">{selectedMusic.cover || "🎵"}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-bold truncate">{selectedMusic.title}</div>
+                    <div className="text-[10px] text-purple-700 truncate">{selectedMusic.artist || "સમાજ સંગીત"}</div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedMusic(null)}
+                    className="p-1 rounded-full text-purple-600 hover:text-purple-900 hover:bg-purple-100"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+
+              {/* Media Previews in Composer */}
+              {mediaUrls.length > 0 && (
+                <div className="grid grid-cols-3 gap-2 pt-1">
+                  {mediaUrls.map((u, i) => (
+                    <div key={i} className="relative aspect-square rounded-2xl overflow-hidden border border-slate-200 bg-black group">
+                      {isVideoUrl(u) ? (
+                        <video src={u} className="w-full h-full object-cover" />
+                      ) : (
+                        <img src={u} alt="" className="w-full h-full object-cover" />
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setMediaUrls((prev) => prev.filter((_, idx) => idx !== i))}
+                        className="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/70 text-white hover:bg-black transition shadow"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        data-testid={`post-media-edit-${i}`}
+                        onClick={() => {
+                          setEditingMedia({ url: u, index: i, type: isVideoUrl(u) ? "video" : "image" });
+                          setPostEditorOpen(true);
+                        }}
+                        className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-lg bg-purple-900/90 text-white hover:bg-purple-950 text-[10px] font-semibold flex items-center gap-1 shadow"
+                      >
+                        <Wand2 className="w-2.5 h-2.5" /> એડિટ
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Optional Location Input */}
+              {showLocation && (
+                <div className="flex items-center gap-2 bg-slate-50 rounded-2xl px-3 py-2 border border-slate-200">
+                  <MapPin className="w-4 h-4 text-rose-600 shrink-0" />
+                  <input
+                    type="text"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    placeholder="ગામ / શહેર / સ્થળ દાખલ કરો..."
+                    className="w-full text-xs bg-transparent outline-none text-slate-800"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLocation("");
+                      setShowLocation(false);
+                    }}
+                    className="text-slate-400 hover:text-slate-600"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+
+              {/* Quick Emojis Grid */}
+              {showEmojiPicker && (
+                <div className="p-3 bg-purple-50/70 border border-purple-200/80 rounded-2xl flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-semibold text-purple-900 w-full mb-1">ઝડપી ઇમોજી:</span>
+                  {["🙏", "🪔", "💐", "🎉", "🚩", "✨", "🌺", "❤️", "👍", "🎂", "🤝", "😇"].map((emoji) => (
+                    <button
+                      key={emoji}
+                      type="button"
+                      onClick={() => setCaption((prev) => prev + " " + emoji)}
+                      className="text-xl hover:scale-125 transition-transform p-1.5 rounded-lg hover:bg-white"
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Bottom Actions Bar */}
+            <div className="p-3 border-t border-slate-100 bg-slate-50/70 flex items-center justify-between gap-1 flex-wrap">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <MediaUploader
+                  multiple={true}
+                  accept="image/*"
+                  kind="posts"
+                  onDone={(urls) => setMediaUrls((prev) => [...prev, ...urls])}
+                  label={
+                    <span className="flex items-center gap-1 text-xs font-semibold text-purple-800 bg-white hover:bg-purple-50 border border-slate-200 px-3 py-1.5 rounded-full transition shadow-2xs">
+                      <ImageIcon className="w-3.5 h-3.5 text-purple-700" /> ફોટો
+                    </span>
+                  }
+                  testId="modal-post-photo"
+                />
+
+                <MediaUploader
+                  multiple={true}
+                  accept="video/*"
+                  kind="posts"
+                  onDone={(urls) => setMediaUrls((prev) => [...prev, ...urls])}
+                  label={
+                    <span className="flex items-center gap-1 text-xs font-semibold text-indigo-800 bg-white hover:bg-indigo-50 border border-slate-200 px-3 py-1.5 rounded-full transition shadow-2xs">
+                      <Film className="w-3.5 h-3.5 text-indigo-700" /> વિડિયો
+                    </span>
+                  }
+                  testId="modal-post-video"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setMusicPickerOpen(true)}
+                  className={`flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full border transition shadow-2xs ${
+                    selectedMusic
+                      ? "bg-purple-900 text-white border-purple-900"
+                      : "text-purple-800 bg-white hover:bg-purple-50 border-slate-200"
+                  }`}
+                >
+                  <Music className="w-3.5 h-3.5" />
+                  <span>સંગીત</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                  className="flex items-center gap-1 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-full transition shadow-2xs"
+                >
+                  <Smile className="w-3.5 h-3.5 text-amber-500" />
+                  <span>ઇમોજી</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowLocation(!showLocation)}
+                  className={`flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full border transition shadow-2xs ${
+                    showLocation || location
+                      ? "bg-purple-900 text-white border-purple-900"
+                      : "text-slate-700 bg-white hover:bg-slate-100 border-slate-200"
+                  }`}
+                >
+                  <MapPin className="w-3.5 h-3.5" />
+                  <span>સ્થળ</span>
+                </button>
+              </div>
+
+              {/* Event Linking dropdown if any */}
+              {events.length > 0 && (
+                <select
+                  value={eventId}
+                  onChange={(e) => setEventId(e.target.value)}
+                  className="text-xs font-semibold bg-white border border-slate-200 text-slate-700 px-2.5 py-1.5 rounded-full outline-none"
+                >
+                  <option value="">ઈવેન્ટ લિંક</option>
+                  {events.map((ev) => (
+                    <option key={ev.id} value={ev.id}>
+                      📅 {ev.title}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Music Picker Modal */}
+      {musicPickerOpen && (
+        <MusicPickerModal
+          open={musicPickerOpen}
+          onOpenChange={setMusicPickerOpen}
+          selectedTrack={selectedMusic}
+          onSelectTrack={(track) => {
+            setSelectedMusic(track);
+            setMusicPickerOpen(false);
+            toast.success("સંગીત પસંદ થયું");
+          }}
+        />
+      )}
+
+      {/* Post Editor Modal for Photo/Video Enhancement */}
+      {postEditorOpen && editingMedia && (
+        <PostEditorModal
+          open={postEditorOpen}
+          onOpenChange={setPostEditorOpen}
+          mediaUrl={editingMedia.url}
+          mediaType={editingMedia.type}
+          initialConfig={postConfig}
+          onSave={(edited) => {
+            if (edited.mediaUrl && editingMedia.index !== undefined) {
+              setMediaUrls((prev) => {
+                const updated = [...prev];
+                updated[editingMedia.index] = edited.mediaUrl;
+                return updated;
+              });
+            }
+            setPostConfig({
+              filter: edited.filter || "normal",
+              rotation: edited.rotation || 0,
+              aspectRatio: edited.aspectRatio || "original",
+              volume: edited.volume ?? 1,
+              trimStart: edited.trimStart || 0,
+              trimEnd: edited.trimEnd || 0,
+              textOverlays: edited.textOverlays || [],
+              emojiOverlays: edited.emojiOverlays || [],
+            });
+            if (edited.music) {
+              setSelectedMusic(edited.music);
+            }
+            setPostEditorOpen(false);
+            setEditingMedia(null);
+            toast.success("ફેરફારો સેવ થયા");
+          }}
+        />
+      )}
 
       {/* 3. PINNED OFFICIAL SAMAJ ANNOUNCEMENT BANNER */}
       {announcements.length > 0 && tab !== "reels" && (

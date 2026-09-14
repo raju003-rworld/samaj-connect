@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import "@/App.css";
 import { AppProvider, useApp } from "@/context/AppContext";
 import AppShell from "@/components/AppShell";
@@ -27,12 +27,33 @@ import HallBooking from "@/pages/HallBooking";
 import Reels from "@/pages/Reels";
 import AdminLogin from "@/pages/AdminLogin";
 import AdminProtected from "@/components/admin/AdminProtected";
+import FamilyTree from "@/pages/FamilyTree";
+import MaranNodh from "@/pages/MaranNodh";
+import GlobalCallReceiver from "@/components/chat/GlobalCallReceiver";
+import Onboarding from "@/pages/Onboarding";
 
 const Protected = ({ children }) => {
   const { user, booting } = useApp();
   if (booting) return <div className="min-h-screen grid place-items-center text-slate-400 text-sm">Loading...</div>;
   if (!user) return <Navigate to="/login" replace />;
+  const isAdmin = ["super_admin", "admin", "main_samaj_admin", "samaj_admin"].includes(user?.role) || Boolean(user?.adminRole);
+  if (!user.onboardingCompleted && !isAdmin) {
+    return <Navigate to="/onboarding" replace />;
+  }
   return <AppShell>{children}</AppShell>;
+};
+
+const OnboardingRoute = () => {
+  const { user, booting } = useApp();
+  const location = useLocation();
+  if (booting) return <div className="min-h-screen grid place-items-center text-slate-400 text-sm">Loading...</div>;
+  if (!user) return <Navigate to="/login" replace />;
+  const isAdmin = ["super_admin", "admin", "main_samaj_admin", "samaj_admin"].includes(user?.role) || Boolean(user?.adminRole);
+  const isChangeRequested = new URLSearchParams(location.search).get("change") === "1";
+  if (user.onboardingCompleted && !isAdmin && !isChangeRequested) {
+    return <Navigate to="/home" replace />;
+  }
+  return <Onboarding />;
 };
 
 function AppRoutes() {
@@ -40,6 +61,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<Splash />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/onboarding" element={<OnboardingRoute />} />
       <Route path="/admin-login" element={<AdminLogin />} />
       <Route path="/admin" element={<AdminProtected><Admin /></AdminProtected>} />
       <Route path="/admin/*" element={<AdminProtected><Admin /></AdminProtected>} />
@@ -59,8 +81,12 @@ function AppRoutes() {
       <Route path="/users/:uid" element={<Protected><UserProfile /></Protected>} />
       <Route path="/search" element={<Protected><Search /></Protected>} />
       <Route path="/p/:pid" element={<PublicPost />} />
+      <Route path="/posts/:pid" element={<PublicPost />} />
       <Route path="/photos" element={<Protected><Photos /></Protected>} />
       <Route path="/photos/:aid" element={<Protected><Album /></Protected>} />
+      <Route path="/family-tree" element={<Protected><FamilyTree /></Protected>} />
+      <Route path="/maran-nodh" element={<Protected><MaranNodh /></Protected>} />
+      <Route path="/obituary" element={<Protected><MaranNodh /></Protected>} />
       <Route path="/hall" element={<Protected><HallBooking /></Protected>} />
       <Route path="/coming-soon" element={<Protected><ComingSoon /></Protected>} />
       <Route path="*" element={<Navigate to="/" replace />} />
@@ -72,6 +98,7 @@ function App() {
   return (
     <AppProvider>
       <BrowserRouter>
+        <GlobalCallReceiver />
         <AppRoutes />
       </BrowserRouter>
     </AppProvider>

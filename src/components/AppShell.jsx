@@ -21,6 +21,7 @@ import {
   ShoppingBag,
   Store,
   HeartHandshake,
+  Heart,
   PhoneCall,
   HelpCircle,
   Settings,
@@ -72,7 +73,8 @@ const MoreMenuSheet = ({ open, onOpenChange }) => {
       title: "સમાજ મુખ્ય સેવાઓ (Community Modules)",
       items: [
         { to: "/members", icon: Users, label: "સભ્યો ડિરેક્ટરી (Members)", badge: "સંપર્ક" },
-        { to: "/coming-soon?m=family", icon: TreeDeciduous, label: "ફેમિલી ટ્રી (Family Tree)", badge: "વંશાવલિ" },
+        { to: "/family-tree", icon: TreeDeciduous, label: "ફેમિલી ટ્રી (Family Tree)", badge: "વંશાવલિ" },
+        { to: "/maran-nodh", icon: Heart, label: "મરણ નોંધ & બેસણું (Maran Nodh)", badge: "શ્રદ્ધાંજલિ" },
         { to: "/events", icon: Calendar, label: "સમાજ ઈવેન્ટ્સ (Events)", badge: "કાર્યક્રમ" },
         { to: "/hall", icon: Building2, label: "હોલ બુકિંગ (Hall Booking)", badge: "બુકિંગ" },
         { to: "/coming-soon?m=finance", icon: HeartHandshake, label: "દાન & ફંડ હિસાબ (Finance & Donations)", badge: "દાન" },
@@ -322,10 +324,18 @@ const DesktopRightSidebar = () => {
             👥 સભ્ય યાદી
           </button>
           <button
-            onClick={() => nav("/coming-soon?m=family")}
-            className="p-2.5 rounded-xl bg-purple-50/50 hover:bg-purple-100 text-purple-900 font-semibold text-left transition"
+            onClick={() => nav("/family-tree")}
+            className="p-2.5 rounded-xl bg-purple-50/50 hover:bg-purple-100 text-purple-900 font-semibold text-left transition flex items-center justify-between"
           >
-            🌳 ફેમિલી ટ્રી
+            <span>🌳 ફેમિલી ટ્રી</span>
+            <span className="text-[10px] bg-purple-200/80 text-purple-900 px-1.5 py-0.2 rounded-md font-bold">વંશાવલિ</span>
+          </button>
+          <button
+            onClick={() => nav("/maran-nodh")}
+            className="p-2.5 rounded-xl bg-amber-50/50 hover:bg-amber-100 text-amber-950 font-semibold text-left transition flex items-center justify-between"
+          >
+            <span>🕊️ મરણ નોંધ & બેસણું</span>
+            <span className="text-[10px] bg-amber-200/80 text-amber-950 px-1.5 py-0.2 rounded-md font-bold">શ્રદ્ધાંજલિ</span>
           </button>
           <button
             onClick={() => nav("/coming-soon?m=orders")}
@@ -354,6 +364,8 @@ export default function AppShell({ children }) {
     { to: "/reels", icon: Film, label: "રીલ્સ (Reels)" },
     { to: "/messages", icon: MessageCircle, label: "સંદેશા (Messages)" },
     { to: "/photos", icon: Images, label: "ફોટોઝ (Photos)" },
+    { to: "/family-tree", icon: TreeDeciduous, label: "ફેમિલી ટ્રી (Tree)" },
+    { to: "/maran-nodh", icon: Heart, label: "મરણ નોંધ (Obituary)" },
     { to: "/events", icon: Calendar, label: "ઈવેન્ટ્સ (Events)" },
     { to: "/members", icon: Users, label: "સભ્યો (Members)" },
     { to: "/profile", icon: User, label: "પ્રોફાઇલ (Profile)" },
@@ -368,6 +380,8 @@ export default function AppShell({ children }) {
       nav("/home?compose=1");
     }
   };
+
+  const isMessagesPage = location.pathname.startsWith("/messages");
 
   return (
     <div className="min-h-screen bg-slate-50/80">
@@ -528,13 +542,21 @@ export default function AppShell({ children }) {
           </div>
         </aside>
 
-        {/* CENTER CONTENT */}
-        <main className="flex-1 max-w-2xl min-w-0 pb-24 md:pb-12">{children}</main>
+        {/* CENTER / MAIN CONTENT (Fuller width for Messages, focused max-w-2xl for Home feed) */}
+        <main
+          className={`flex-1 min-w-0 pb-24 md:pb-12 ${
+            isMessagesPage ? "max-w-5xl" : "max-w-2xl"
+          }`}
+        >
+          {children}
+        </main>
 
-        {/* DESKTOP RIGHT SIDEBAR (STICKY ON XL SCREENS) */}
-        <div className="hidden xl:block">
-          <DesktopRightSidebar />
-        </div>
+        {/* DESKTOP RIGHT SIDEBAR (STICKY ON XL SCREENS FOR FEED/HOME) */}
+        {!isMessagesPage && (
+          <div className="hidden xl:block">
+            <DesktopRightSidebar />
+          </div>
+        )}
       </div>
 
       {/* BOTTOM MOBILE NAVIGATION: Reels | Messages | + Add Post (Center) | Photos | More */}

@@ -8,6 +8,8 @@ for (const [key, value] of Object.entries(process.env)) {
     clientEnv[key] = value;
   }
 }
+// Strip external backend URL so browser always talks to local/preview Express server
+delete clientEnv.REACT_APP_BACKEND_URL;
 // Verified API key from https://samaj-connect-6ad91.firebaseapp.com/__/firebase/init.json
 if (!clientEnv.REACT_APP_FIREBASE_API_KEY || clientEnv.REACT_APP_FIREBASE_API_KEY === "AIzaSyAbtSfHuagl-N8p0wU3-C5kX0CUseb_59jA") {
   clientEnv.REACT_APP_FIREBASE_API_KEY = "AIzaSyAbtSfHuagL-N8p0Uw3-C5kXOCusb_59jA";

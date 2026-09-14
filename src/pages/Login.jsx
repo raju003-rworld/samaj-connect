@@ -34,6 +34,17 @@ export default function Login() {
   }, []);
 
   // Instant login fallback (works even if Firebase SMS domain is not authorized yet)
+  const handlePostLoginRedirect = (u) => {
+    const isAdmin = ["super_admin", "admin", "main_samaj_admin", "samaj_admin"].includes(u?.role) || Boolean(u?.adminRole);
+    if (!u?.onboardingCompleted && !isAdmin) {
+      toast.info("સમાજ કનેક્ટમાં સ્વાગત છે! કૃપા કરીને તમારો સમાજ અને ગામ પસંદ કરો.");
+      nav("/onboarding", { replace: true });
+    } else {
+      toast.success(`${t("hello")}!`);
+      nav("/home", { replace: true });
+    }
+  };
+
   const bypassLogin = async () => {
     if (cleanPhone.length !== 10) return toast.error("10 અંકનો સાચો મોબાઇલ નંબર દાખલ કરો");
     setLoading(true);
@@ -44,16 +55,17 @@ export default function Login() {
         name: name || undefined,
       });
       await signInCustom(data.customToken, fullPhone);
+      let u = null;
       try {
-        const u = await refreshUser();
-        if (name && (!u?.name || u.name.startsWith("Member "))) {
-          await api.patch("/auth/me", { name }).then(refreshUser).catch(() => {});
+        u = await refreshUser();
+        if (name && (!u?.name || u.name.startsWith("Member ") || u.name.startsWith("સભ્ય"))) {
+          u = await api.patch("/auth/me", { name }).then((r) => r.data).catch(() => u);
+          await refreshUser();
         }
       } catch (userErr) {
         console.warn("refreshUser notice:", userErr);
       }
-      toast.success(`${t("hello")}!`);
-      nav("/home", { replace: true });
+      handlePostLoginRedirect(u);
     } catch (err) {
       toast.error("લોગિનમાં ક્ષતિ આવી, ફરી પ્રયાસ કરો");
     } finally {
@@ -99,16 +111,17 @@ export default function Login() {
         const { data } = await api.post("/auth/dev-login", { phone: fullPhone, otp, name: name || undefined });
         await signInCustom(data.customToken, fullPhone);
       }
+      let u = null;
       try {
-        const u = await refreshUser();
-        if (name && (!u?.name || u.name.startsWith("Member "))) {
-          await api.patch("/auth/me", { name }).then(refreshUser).catch(() => {});
+        u = await refreshUser();
+        if (name && (!u?.name || u.name.startsWith("Member ") || u.name.startsWith("સભ્ય"))) {
+          u = await api.patch("/auth/me", { name }).then((r) => r.data).catch(() => u);
+          await refreshUser();
         }
       } catch (userErr) {
         console.warn("refreshUser notice:", userErr);
       }
-      toast.success(`${t("hello")}!`);
-      nav("/home", { replace: true });
+      handlePostLoginRedirect(u);
     } catch (e) {
       const code = e?.code;
       if (code === "auth/invalid-verification-code") {
@@ -164,7 +177,7 @@ export default function Login() {
                 placeholder={t("name") + " (optional)"}
                 className="mt-3 w-full px-4 py-3 rounded-2xl border border-slate-200 outline-none focus:ring-2 focus:ring-purple-400 placeholder:text-slate-400"
               />
-              <div className="flex gap-2 mt-4">
+              <div className="flex flex-col sm:flex-row gap-2 mt-4">
                 <button
                   data-testid={IDS.loginSendOtp}
                   onClick={() => sendOtp()}
@@ -173,15 +186,17 @@ export default function Login() {
                 >
                   {loading ? "..." : t("send_otp")}
                 </button>
-                <button
-                  type="button"
-                  onClick={bypassLogin}
-                  disabled={loading}
-                  className="px-4 py-3.5 rounded-2xl bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-200 font-semibold transition text-xs whitespace-nowrap"
-                  title="SMS વગર ત્વરિત પ્રવેશ કરો"
-                >
-                  ત્વરિત લોગિન ⚡
-                </button>
+                {devAuth && (
+                  <button
+                    type="button"
+                    onClick={bypassLogin}
+                    disabled={loading}
+                    className="px-4 py-3.5 rounded-2xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-semibold transition text-xs whitespace-nowrap"
+                    title="ડેવલપમેન્ટ ટેસ્ટ મોડ"
+                  >
+                    ટેસ્ટ મોડ લોગિન ⚡
+                  </button>
+                )}
               </div>
 
               {errorInfo && (
@@ -245,19 +260,21 @@ export default function Login() {
                         </a>
                       </div>
 
-                      <div className="pt-2 border-t border-rose-200">
-                        <p className="text-[11px] text-slate-600 mb-2 font-medium">
-                          જો Firebase Console માં ફેરફાર કરવાનો બાકી હોય તો પણ તમે સીધા લોગિન કરી શકો છો:
-                        </p>
-                        <button
-                          type="button"
-                          onClick={bypassLogin}
-                          disabled={loading}
-                          className="w-full py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold rounded-xl text-xs shadow-sm transition"
-                        >
-                          હમણાં જ સીધા લોગિન કરો (Instant Login) &rarr;
-                        </button>
-                      </div>
+                      {devAuth && (
+                        <div className="pt-2 border-t border-rose-200">
+                          <p className="text-[11px] text-slate-600 mb-2 font-medium">
+                            (ટેસ્ટ મોડ) જો Firebase Console માં ફેરફાર કરવાનો બાકી હોય તો:
+                          </p>
+                          <button
+                            type="button"
+                            onClick={bypassLogin}
+                            disabled={loading}
+                            className="w-full py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold rounded-xl text-xs shadow-sm transition"
+                          >
+                            ટેસ્ટ મોડ લોગિન (Dev Bypass) &rarr;
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <p className="mt-1 leading-relaxed text-slate-700">

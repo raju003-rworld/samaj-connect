@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Send,
   Reply,
@@ -20,6 +21,15 @@ import {
   ShieldAlert,
   PhoneIncoming,
   PhoneMissed,
+  Smile,
+  Paperclip,
+  Mic,
+  MapPin,
+  Search,
+  User,
+  Image as ImageIcon,
+  Plus,
+  ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
@@ -30,9 +40,27 @@ import { CallOverlay } from "@/components/chat/CallOverlay";
 import { ThemePickerModal, CHAT_THEMES } from "@/components/chat/ThemePickerModal";
 import { DisappearingModal } from "@/components/chat/DisappearingModal";
 import { DeleteMessageModal } from "@/components/chat/DeleteMessageModal";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 
 const fmtTime = (iso) =>
   new Date(iso).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+
+const getMessageDateKey = (iso) => {
+  if (!iso) return "આજે";
+  const d = new Date(iso);
+  const now = new Date();
+  const isToday = d.toDateString() === now.toDateString();
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  const isYesterday = d.toDateString() === yesterday.toDateString();
+  if (isToday) return "આજે";
+  if (isYesterday) return "ગઈકાલે";
+  try {
+    return d.toLocaleDateString("gu-IN", { day: "numeric", month: "long" });
+  } catch {
+    return d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+  }
+};
 
 const Ticks = ({ m, members }) => {
   const others = members.filter((i) => i !== m.senderId);
@@ -46,6 +74,8 @@ const Ticks = ({ m, members }) => {
 
 const DISAPPEARING_LABELS = {
   off: "બંધ (Off)",
+  "10s": "10 સેકન્ડ (10 Seconds)",
+  "30s": "30 સેકન્ડ (30 Seconds)",
   "1m": "1 મિનિટ (1 Minute)",
   "5m": "5 મિનિટ (5 Minutes)",
   "1h": "1 કલાક (1 Hour)",
@@ -78,6 +108,10 @@ const setCachedConvSettings = (cId, updates) => {
 
 const getDisappearingDurationMs = (dur) => {
   switch (dur) {
+    case "10s":
+      return 10 * 1000;
+    case "30s":
+      return 30 * 1000;
     case "1m":
       return 60 * 1000;
     case "5m":
@@ -221,6 +255,24 @@ const Bubble = ({
               <video src={m.mediaUrl} controls className="rounded-xl max-h-72 mb-1.5 border border-black/5" />
             )}
             {m.type === "voice" && <audio src={m.mediaUrl} controls className="mb-1.5 max-w-full" />}
+            {m.type === "location" && (
+              <a
+                href={m.mediaUrl || `https://www.google.com/maps?q=${encodeURIComponent(m.text || "")}`}
+                target="_blank"
+                rel="noreferrer"
+                className={`flex items-center gap-2.5 mb-1.5 p-2.5 rounded-xl border ${
+                  mine ? "bg-white/15 border-white/20 text-white" : "bg-purple-50/80 border-purple-200/70 text-purple-950"
+                }`}
+              >
+                <div className="w-8 h-8 rounded-lg bg-purple-600 text-white grid place-items-center shrink-0">
+                  <MapPin className="w-4 h-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="font-bold text-xs">📍 સ્થાન (Location)</div>
+                  <div className="text-[11px] truncate opacity-90">{m.text || "મેપ પર જુઓ"}</div>
+                </div>
+              </a>
+            )}
             {m.type === "document" && (
               <a
                 href={m.mediaUrl}
@@ -297,12 +349,17 @@ const Bubble = ({
 
 export function ChatWindow({ cid, onBack }) {
   const { user, t } = useApp();
+  const nav = useNavigate();
   const [conv, setConv] = useState(null);
   const [msgs, setMsgs] = useState([]);
   const [text, setText] = useState("");
   const [replyTo, setReplyTo] = useState(null);
   const [presence, setPresence] = useState(null);
   const [menu, setMenu] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQ, setSearchQ] = useState("");
+  const [emojiOpen, setEmojiOpen] = useState(false);
+  const [attachMenuOpen, setAttachMenuOpen] = useState(false);
 
   // Point 1 Features States
   const [activeCall, setActiveCall] = useState(null);
@@ -455,7 +512,7 @@ export function ChatWindow({ cid, onBack }) {
     if (isBlockedByMe) {
       return toast.error("આ યુઝર બ્લોક કરેલ છે. મેસેજ મોકલવા પહેલા અનબ્લોક કરો.");
     }
-    if (!text.trim() && !extra.mediaUrl) return;
+    if (!text.trim() && !extra.mediaUrl && !extra.text) return;
     const currentDur = conv?.disappearingDuration || "off";
     const body = {
       type: "text",
@@ -466,6 +523,8 @@ export function ChatWindow({ cid, onBack }) {
     };
     setText("");
     setReplyTo(null);
+    setEmojiOpen(false);
+    setAttachMenuOpen(false);
     try {
       const { data: newMsg } = await api.post(`/conversations/${cid}/messages`, body);
       const enrichedMsg = {
@@ -498,6 +557,46 @@ export function ChatWindow({ cid, onBack }) {
       ? "voice"
       : "document";
     send({ type, mediaUrl: urls[0], fileName: f.name });
+    setAttachMenuOpen(false);
+  };
+
+  const shareLocation = () => {
+    setAttachMenuOpen(false);
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
+          const mapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
+          send({
+            type: "location",
+            mediaUrl: mapsUrl,
+            text: `📍 સ્થાન: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
+          });
+          toast.success("સ્થાન શેર થયું");
+        },
+        () => {
+          const loc = window.prompt("તમારું ગામ / શહેર દાખલ કરો:");
+          if (loc) {
+            send({
+              type: "location",
+              mediaUrl: `https://www.google.com/maps?q=${encodeURIComponent(loc)}`,
+              text: `📍 સ્થાન: ${loc}`,
+            });
+            toast.success("સ્થાન શેર થયું");
+          }
+        }
+      );
+    } else {
+      const loc = window.prompt("તમારું ગામ / શહેર દાખલ કરો:");
+      if (loc) {
+        send({
+          type: "location",
+          mediaUrl: `https://www.google.com/maps?q=${encodeURIComponent(loc)}`,
+          text: `📍 સ્થાન: ${loc}`,
+        });
+        toast.success("સ્થાન શેર થયું");
+      }
+    }
   };
 
   // Edit Message
@@ -511,7 +610,7 @@ export function ChatWindow({ cid, onBack }) {
       return toast.error("સંદેશ ખાલી ન હોઈ શકે");
     }
     try {
-      const { data } = await api.patch(`/conversations/${cid}/messages/${mid}`, { text: editText });
+      await api.patch(`/conversations/${cid}/messages/${mid}`, { text: editText });
       setMsgs((prev) =>
         prev.map((m) => (m.id === mid ? { ...m, text: editText, edited: true, editedAt: new Date().toISOString() } : m))
       );
@@ -546,9 +645,15 @@ export function ChatWindow({ cid, onBack }) {
     if (isBlockedByMe) {
       return toast.error("આ યુઝર બ્લોક છે. કૉલ કરવા માટે પહેલા અનબ્લોક કરો.");
     }
+    const targetCid = conv?.id || cid;
+    if (!targetCid) {
+      return toast.error("ચેટ મળી નથી");
+    }
     try {
-      const { data } = await api.post(`/conversations/${cid}/call/start`, { callType });
-      setActiveCall(data.call);
+      const { data } = await api.post(`/conversations/${targetCid}/call/start`, { callType });
+      if (data?.call) {
+        setActiveCall(data.call);
+      }
     } catch (e) {
       toast.error(e?.response?.data?.detail || "કૉલ શરૂ થઈ શક્યો નહીં");
     }
@@ -573,13 +678,20 @@ export function ChatWindow({ cid, onBack }) {
     }
   };
 
+  // Clear Chat
+  const handleClearChat = () => {
+    if (window.confirm("શું તમે આ ચેટના તમામ સંદેશા સાફ કરવા માંગો છો?")) {
+      setMsgs([]);
+      toast.success("ચેટ સાફ કરવામાં આવી");
+      setMenu(false);
+    }
+  };
+
   // Disappearing Messages change
   const handleChangeDisappearing = async (duration) => {
-    // 1. Immediately cache and update state
     setCachedConvSettings(cid, { disappearingDuration: duration });
     setConv((prev) => (prev ? { ...prev, disappearingDuration: duration } : prev));
 
-    // 2. Add an informational system message in chat
     const label = DISAPPEARING_LABELS[duration] || duration;
     const sysMsg = {
       id: `sys_disappearing_${Date.now()}`,
@@ -596,7 +708,6 @@ export function ChatWindow({ cid, onBack }) {
     };
     setMsgs((prev) => dedupeMsgs([...prev, sysMsg]));
 
-    // 3. Attempt API patch and fallback gracefully
     try {
       await api.patch(`/conversations/${cid}/disappearing`, { duration });
     } catch {
@@ -614,11 +725,9 @@ export function ChatWindow({ cid, onBack }) {
 
   // Theme change
   const handleChangeTheme = async (newTheme) => {
-    // 1. Immediately cache and update state
     setCachedConvSettings(cid, { theme: newTheme });
     setConv((prev) => (prev ? { ...prev, theme: newTheme } : prev));
 
-    // 2. Attempt API patch and fallback gracefully
     try {
       await api.patch(`/conversations/${cid}/theme`, { theme: newTheme });
     } catch {
@@ -661,45 +770,57 @@ export function ChatWindow({ cid, onBack }) {
   const currentTheme = conv.theme || "default";
   const themeConfig = CHAT_THEMES[currentTheme] || CHAT_THEMES.default;
 
-  const title = conv.type === "group" ? conv.name : conv.members?.[otherId]?.name;
+  const title = conv.type === "group" ? conv.name : conv.members?.[otherId]?.name || "સમાજ સભ્ય";
   const typingNames = Object.entries(conv.typing || {})
     .filter(([k, v]) => v && k !== user.id)
     .map(([k]) => conv.members?.[k]?.name)
     .filter(Boolean);
   const muted = (conv.muted || []).includes(user.id);
+  const isOnline = presence?.online;
   const sub = typingNames.length
     ? `${typingNames.join(", ")} ${t("typing")}`
     : conv.type === "group"
     ? `${conv.memberIds.length} ${t("members_count")}`
-    : presence?.online
-    ? t("online")
+    : isOnline
+    ? "ઓનલાઇન"
     : presence?.lastSeen
     ? `${t("last_seen")} ${fmtTime(presence.lastSeen)}`
-    : "";
+    : otherUser?.village || otherUser?.samajName || "સમાજ સભ્ય";
 
-  const isDirect = conv.type === "direct";
+  const isDirect = conv.type === "direct" || (!conv.type && (conv.memberIds?.length === 2 || Object.keys(conv.members || {}).length === 2));
+
+  // Filter messages if in-chat search query active
+  const filteredMessages = dedupeMsgs(msgs).filter((m) => {
+    if (!searchQ.trim()) return true;
+    return (m.text || "").toLowerCase().includes(searchQ.toLowerCase());
+  });
 
   return (
     <div
       className={`flex flex-col h-[calc(100vh-9rem)] md:h-[calc(100vh-8rem)] ${themeConfig.bgClass} rounded-3xl overflow-hidden border border-slate-200/80 shadow-sm relative transition-colors duration-300`}
       data-testid="chat-window"
     >
-      {/* Top Bar Header */}
-      <div className="bg-white/95 backdrop-blur-md px-3 sm:px-4 py-2.5 flex items-center gap-2.5 sm:gap-3 border-b border-slate-200/80 shadow-xs z-10">
-        <button onClick={onBack} className="md:hidden p-1.5 rounded-full hover:bg-slate-100" data-testid="chat-back">
+      {/* Top Bar Header (WhatsApp / Instagram DM Quality) */}
+      <div className="bg-white/95 backdrop-blur-md px-3 sm:px-4 py-2.5 flex items-center gap-2.5 sm:gap-3 border-b border-slate-200/80 shadow-2xs z-20">
+        <button onClick={onBack} className="md:hidden p-2 rounded-full hover:bg-slate-100" data-testid="chat-back">
           <ArrowLeft className="w-5 h-5 text-slate-700" />
         </button>
 
-        {/* Avatar */}
-        <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-900 grid place-items-center font-bold overflow-hidden shrink-0 border border-purple-200">
-          {(conv.type === "group" ? conv.photo : conv.members?.[otherId]?.photo) ? (
-            <img
-              src={conv.type === "group" ? conv.photo : conv.members?.[otherId]?.photo}
-              alt=""
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            (title?.[0] || "?").toUpperCase()
+        {/* Avatar with live status indicator */}
+        <div className="relative shrink-0">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-100 to-indigo-100 text-purple-900 grid place-items-center font-bold overflow-hidden border border-purple-200">
+            {(conv.type === "group" ? conv.photo : conv.members?.[otherId]?.photo) ? (
+              <img
+                src={conv.type === "group" ? conv.photo : conv.members?.[otherId]?.photo}
+                alt=""
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              (title?.[0] || "?").toUpperCase()
+            )}
+          </div>
+          {isOnline && (
+            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full shadow-xs animate-pulse" />
           )}
         </div>
 
@@ -710,30 +831,51 @@ export function ChatWindow({ cid, onBack }) {
               {title}
             </span>
             {conv.disappearingDuration && conv.disappearingDuration !== "off" && (
-              <span
+              <button
                 data-testid="chat-disappearing-badge"
-                className="bg-purple-100 text-purple-800 text-[10px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-0.5 shrink-0"
+                onClick={() => setDisappearingModal(true)}
+                className="bg-purple-100 hover:bg-purple-200 text-purple-800 text-[10px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-0.5 shrink-0 transition-colors"
                 title={`અદ્રશ્ય સંદેશા: ${conv.disappearingDuration}`}
               >
                 <Clock className="w-3 h-3" />
                 <span>{conv.disappearingDuration}</span>
-              </span>
+              </button>
             )}
           </div>
-          <div className="text-[11px] text-slate-500 truncate" data-testid="chat-subtitle">
-            {sub}
+          <div className="text-[11px] flex items-center gap-1.5 truncate" data-testid="chat-subtitle">
+            {isOnline ? (
+              <span className="text-emerald-600 font-bold flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> ઓનલાઇન
+              </span>
+            ) : (
+              <span className="text-slate-500">{sub}</span>
+            )}
           </div>
         </div>
 
-        {/* Action Buttons: Voice Call, Video Call, Menu */}
+        {/* Action Buttons: Audio call, Video call, In-Chat Search, Menu */}
         <div className="flex items-center gap-1">
+          {/* In-chat search toggle */}
+          <button
+            onClick={() => {
+              setSearchOpen(!searchOpen);
+              if (searchOpen) setSearchQ("");
+            }}
+            className={`p-2 rounded-full transition-colors ${
+              searchOpen ? "bg-purple-100 text-purple-900" : "text-slate-600 hover:bg-slate-100"
+            }`}
+            title="ચેટમાં શોધો (Search in Chat)"
+          >
+            <Search className="w-4.5 h-4.5" />
+          </button>
+
           {isDirect && !isBlockedByMe && (
             <>
               <button
                 data-testid="voice-call-btn"
                 onClick={() => handleStartCall("voice")}
                 className="p-2 rounded-full text-slate-600 hover:text-purple-900 hover:bg-purple-50 transition-colors"
-                title="વૉઇસ કૉલ"
+                title="ઓડિયો કૉલ"
               >
                 <Phone className="w-4.5 h-4.5" />
               </button>
@@ -749,119 +891,311 @@ export function ChatWindow({ cid, onBack }) {
             </>
           )}
 
-          <div className="relative">
-            <button
-              onClick={() => setMenu(!menu)}
-              className="p-2 rounded-full hover:bg-slate-100 text-slate-600"
-              data-testid="chat-menu"
-            >
-              <MoreVertical className="w-5 h-5" />
-            </button>
-
-            {menu && (
-              <div className="absolute right-0 mt-1 bg-white border border-slate-200 rounded-2xl shadow-xl py-1.5 w-52 z-30 text-sm animate-in fade-in zoom-in-95 duration-150">
-                {/* Chat Theme Option */}
-                <button
-                  data-testid="menu-chat-theme"
-                  onClick={() => {
-                    setThemeModal(true);
-                    setMenu(false);
-                  }}
-                  className="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2.5 text-slate-700"
-                >
-                  <Palette className="w-4 h-4 text-purple-700" />
-                  <span>ચેટ થીમ (Themes)</span>
-                </button>
-
-                {/* Disappearing Messages Option */}
-                <button
-                  data-testid="menu-disappearing"
-                  onClick={() => {
-                    setDisappearingModal(true);
-                    setMenu(false);
-                  }}
-                  className="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2.5 text-slate-700"
-                >
-                  <Clock className="w-4 h-4 text-purple-700" />
-                  <span>અદ્રશ્ય સંદેશા</span>
-                </button>
-
-                {/* Block / Unblock Option for Direct Chat */}
-                {isDirect && (
-                  <button
-                    data-testid="menu-block-user"
-                    onClick={handleToggleBlock}
-                    className={`w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2.5 ${
-                      isBlockedByMe ? "text-emerald-700" : "text-rose-600"
-                    }`}
-                  >
-                    <ShieldAlert className="w-4 h-4" />
-                    <span>{isBlockedByMe ? "અનબ્લોક કરો (Unblock)" : "બ્લોક કરો (Block User)"}</span>
-                  </button>
-                )}
-
-                {/* Mute */}
-                <button
-                  data-testid="chat-mute"
-                  onClick={mute}
-                  className="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2.5 text-slate-700"
-                >
-                  {muted ? (
-                    <>
-                      <Bell className="w-4 h-4" />
-                      <span>{t("unmute")}</span>
-                    </>
-                  ) : (
-                    <>
-                      <BellOff className="w-4 h-4" />
-                      <span>{t("mute")}</span>
-                    </>
-                  )}
-                </button>
-
-                {/* Add Member for Group */}
-                {conv.type === "group" && (conv.admins || []).includes(user.id) && (
-                  <button
-                    data-testid="chat-add-member"
-                    onClick={addMember}
-                    className="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2.5 text-slate-700"
-                  >
-                    <UserPlus className="w-4 h-4" />
-                    <span>સભ્ય ઉમેરો</span>
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
+          {/* 3-Dot Extra Menu Trigger */}
+          <button
+            onClick={() => setMenu(true)}
+            className="p-2 rounded-full hover:bg-slate-100 text-slate-600 active:scale-95 transition"
+            data-testid="chat-menu"
+            title="વધુ વિકલ્પો (Menu)"
+          >
+            <MoreVertical className="w-5 h-5" />
+          </button>
         </div>
       </div>
 
-      {/* Messages Stream */}
-      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-1">
-        {dedupeMsgs(msgs).map((m) => (
-          <Bubble
-            key={m.id}
-            m={m}
-            mine={m.senderId === user.id}
-            members={conv.memberIds}
-            currentThemeConfig={themeConfig}
-            onReply={setReplyTo}
-            onEdit={handleStartEdit}
-            onDelete={setDeleteModalMsg}
-            onCallBack={handleStartCall}
-            editingId={editingId}
-            editText={editText}
-            setEditText={setEditText}
-            onSaveEdit={handleSaveEdit}
-            onCancelEdit={() => setEditingId(null)}
+      {/* Modern Bottom Sheet for Chat Menu */}
+      <Sheet open={menu} onOpenChange={setMenu}>
+        <SheetContent side="bottom" className="rounded-t-3xl border-t border-slate-200/90 bg-white p-5 max-w-lg mx-auto shadow-2xl">
+          <div className="w-12 h-1.5 bg-slate-300 rounded-full mx-auto mb-4" />
+          <SheetHeader className="text-left pb-3 border-b border-slate-100 mb-2">
+            <SheetTitle className="text-base font-extrabold text-slate-900 flex items-center justify-between">
+              <span>ચેટ સેટિંગ્સ & વિકલ્પો</span>
+              <span className="text-xs font-semibold px-2.5 py-1 bg-purple-50 text-purple-800 rounded-full border border-purple-100 truncate max-w-[160px]">
+                {title}
+              </span>
+            </SheetTitle>
+            <SheetDescription className="text-xs text-slate-500">
+              થીમ, ગોપનીયતા અને સુરક્ષા નિયંત્રણ સેટિંગ્સ
+            </SheetDescription>
+          </SheetHeader>
+
+          <div className="space-y-1 max-h-[65vh] overflow-y-auto pr-1">
+            {/* 🎨 Chat Theme */}
+            <button
+              data-testid="menu-chat-theme"
+              onClick={() => {
+                setThemeModal(true);
+                setMenu(false);
+              }}
+              className="w-full text-left px-3.5 py-2.5 rounded-2xl hover:bg-purple-50/70 flex items-center justify-between text-slate-800 transition group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-800 grid place-items-center shrink-0 group-hover:scale-105 transition">
+                  <Palette className="w-4.5 h-4.5" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-slate-900">🎨 ચેટ થીમ (Chat Themes)</div>
+                  <div className="text-[11px] text-slate-500 capitalize">{currentTheme} થીમ સક્રિય</div>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition" />
+            </button>
+
+            {/* ⏱ Disappearing Messages */}
+            <button
+              data-testid="menu-disappearing"
+              onClick={() => {
+                setDisappearingModal(true);
+                setMenu(false);
+              }}
+              className="w-full text-left px-3.5 py-2.5 rounded-2xl hover:bg-purple-50/70 flex items-center justify-between text-slate-800 transition group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-800 grid place-items-center shrink-0 group-hover:scale-105 transition">
+                  <Clock className="w-4.5 h-4.5" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-slate-900">⏱ અદ્રશ્ય સંદેશા (Disappearing)</div>
+                  <div className="text-[11px] text-slate-500">
+                    {conv.disappearingDuration && conv.disappearingDuration !== "off"
+                      ? `ટાઈમર: ${conv.disappearingDuration}`
+                      : "હાલમાં બંધ છે (Off)"}
+                  </div>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition" />
+            </button>
+
+            {/* 🔕 Mute */}
+            <button
+              data-testid="chat-mute"
+              onClick={() => {
+                mute();
+                setMenu(false);
+              }}
+              className="w-full text-left px-3.5 py-2.5 rounded-2xl hover:bg-purple-50/70 flex items-center justify-between text-slate-800 transition group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-900 grid place-items-center shrink-0 group-hover:scale-105 transition">
+                  {muted ? <Bell className="w-4.5 h-4.5" /> : <BellOff className="w-4.5 h-4.5" />}
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-slate-900">
+                    {muted ? "🔔 સૂચનાઓ ચાલુ કરો (Unmute)" : "🔕 સૂચનાઓ મ્યૂટ કરો (Mute)"}
+                  </div>
+                  <div className="text-[11px] text-slate-500">
+                    {muted ? "હાલમાં નોટિફિકેશન બંધ છે" : "નવા સંદેશા માટે નોટિફિકેશન મ્યૂટ કરો"}
+                  </div>
+                </div>
+              </div>
+              <span className="text-xs font-bold text-purple-700">{muted ? "અનમ્યૂટ" : "મ્યૂટ"}</span>
+            </button>
+
+            {/* 🔍 Search in Chat */}
+            <button
+              onClick={() => {
+                setSearchOpen(true);
+                setMenu(false);
+              }}
+              className="w-full text-left px-3.5 py-2.5 rounded-2xl hover:bg-purple-50/70 flex items-center justify-between text-slate-800 transition group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-800 grid place-items-center shrink-0 group-hover:scale-105 transition">
+                  <Search className="w-4.5 h-4.5" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-slate-900">🔍 ચેટમાં શોધો (Search in Chat)</div>
+                  <div className="text-[11px] text-slate-500">જૂના સંદેશાઓ શોધો</div>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition" />
+            </button>
+
+            {/* View Profile */}
+            {isDirect && otherId && (
+              <button
+                onClick={() => {
+                  nav(`/profile/${otherId}`);
+                  setMenu(false);
+                }}
+                className="w-full text-left px-3.5 py-2.5 rounded-2xl hover:bg-purple-50/70 flex items-center justify-between text-slate-800 transition group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-800 grid place-items-center shrink-0 group-hover:scale-105 transition">
+                    <User className="w-4.5 h-4.5" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold text-slate-900">👤 પ્રોફાઇલ જુઓ (View Profile)</div>
+                    <div className="text-[11px] text-slate-500">સભ્યની સંપૂર્ણ વિગતો જુઓ</div>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition" />
+              </button>
+            )}
+
+            {/* Add Member for Group */}
+            {conv.type === "group" && (conv.admins || []).includes(user.id) && (
+              <button
+                data-testid="chat-add-member"
+                onClick={() => {
+                  addMember();
+                  setMenu(false);
+                }}
+                className="w-full text-left px-3.5 py-2.5 rounded-2xl hover:bg-purple-50/70 flex items-center justify-between text-slate-800 transition group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-800 grid place-items-center shrink-0 group-hover:scale-105 transition">
+                    <UserPlus className="w-4.5 h-4.5" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold text-slate-900">👥 સભ્ય ઉમેરો (Add Member)</div>
+                    <div className="text-[11px] text-slate-500">ગ્રૂપમાં અન્ય સભ્યોને જોડો</div>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition" />
+              </button>
+            )}
+
+            {/* 🚫 Block / Unblock Member */}
+            {isDirect && (
+              <button
+                data-testid="menu-block-user"
+                onClick={() => {
+                  handleToggleBlock();
+                  setMenu(false);
+                }}
+                className={`w-full text-left px-3.5 py-2.5 rounded-2xl flex items-center justify-between transition group ${
+                  isBlockedByMe ? "hover:bg-emerald-50 text-emerald-800" : "hover:bg-rose-50 text-rose-700"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-9 h-9 rounded-xl grid place-items-center shrink-0 transition group-hover:scale-105 ${
+                      isBlockedByMe ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-700"
+                    }`}
+                  >
+                    <ShieldAlert className="w-4.5 h-4.5" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold">
+                      {isBlockedByMe ? "🚫 અનબ્લોક કરો (Unblock Member)" : "🚫 બ્લોક કરો (Block Member)"}
+                    </div>
+                    <div className="text-[11px] opacity-80">
+                      {isBlockedByMe ? "સભ્ય સાથે ફરી વાતચીત કરી શકશો" : "આ સભ્ય તમને મેસેજ નહીં કરી શકે"}
+                    </div>
+                  </div>
+                </div>
+                <span className="text-xs font-bold">{isBlockedByMe ? "અનબ્લોક" : "બ્લોક"}</span>
+              </button>
+            )}
+
+            {/* Clear Chat */}
+            <button
+              onClick={() => {
+                handleClearChat();
+                setMenu(false);
+              }}
+              className="w-full text-left px-3.5 py-2.5 rounded-2xl hover:bg-slate-100 text-slate-600 flex items-center justify-between transition"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-600 grid place-items-center shrink-0">
+                  <Trash2 className="w-4.5 h-4.5" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold">🗑️ ચેટ સાફ કરો (Clear Chat)</div>
+                  <div className="text-[11px] text-slate-400">સ્ક્રીન પરથી મેસેજ દૂર કરો</div>
+                </div>
+              </div>
+            </button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* In-Chat Search Bar */}
+      {searchOpen && (
+        <div className="bg-purple-50/95 px-4 py-2 flex items-center gap-2 border-b border-purple-200 z-10 animate-in slide-in-from-top-1">
+          <Search className="w-4 h-4 text-purple-700 shrink-0" />
+          <input
+            value={searchQ}
+            onChange={(e) => setSearchQ(e.target.value)}
+            placeholder="ચેટમાં સંદેશો શોધો..."
+            className="flex-1 bg-transparent text-xs text-purple-950 outline-none placeholder:text-purple-400 font-medium"
+            autoFocus
           />
-        ))}
+          {searchQ && (
+            <span className="text-[10px] text-purple-700 font-bold">
+              {filteredMessages.length} મળ્યા
+            </span>
+          )}
+          <button
+            onClick={() => {
+              setSearchOpen(false);
+              setSearchQ("");
+            }}
+            className="p-1 rounded-full hover:bg-purple-200/60 text-purple-900"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
+      {/* Disappearing Messages Indicator Banner */}
+      {conv.disappearingDuration && conv.disappearingDuration !== "off" && (
+        <div className="bg-gradient-to-r from-purple-100/90 via-indigo-100/90 to-purple-100/90 border-b border-purple-200/90 px-4 py-2 flex items-center justify-between text-xs text-purple-950 font-medium z-10">
+          <div className="flex items-center gap-2">
+            <Clock className="w-3.5 h-3.5 text-purple-800 shrink-0" />
+            <span>⏱️ {conv.disappearingDuration} માં મેસેજ આપમેળે અદ્રશ્ય થઈ જશે</span>
+          </div>
+          <button
+            onClick={() => setDisappearingModal(true)}
+            className="text-[11px] font-bold text-purple-800 hover:underline px-2 py-0.5 rounded"
+          >
+            બદલો
+          </button>
+        </div>
+      )}
+
+      {/* Messages Stream with Date Dividers */}
+      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-1">
+        {filteredMessages.map((m, idx) => {
+          const prevMsg = filteredMessages[idx - 1];
+          const currentDate = getMessageDateKey(m.createdAt);
+          const prevDate = prevMsg ? getMessageDateKey(prevMsg.createdAt) : null;
+          const showDateDivider = currentDate !== prevDate;
+
+          return (
+            <React.Fragment key={m.id}>
+              {showDateDivider && (
+                <div className="flex justify-center my-3">
+                  <span className="text-[11px] font-bold bg-white/90 backdrop-blur-xs text-slate-500 border border-slate-200/80 px-3.5 py-1 rounded-full shadow-2xs">
+                    {currentDate}
+                  </span>
+                </div>
+              )}
+              <Bubble
+                m={m}
+                mine={m.senderId === user.id}
+                members={conv.memberIds}
+                currentThemeConfig={themeConfig}
+                onReply={setReplyTo}
+                onEdit={handleStartEdit}
+                onDelete={setDeleteModalMsg}
+                onCallBack={handleStartCall}
+                editingId={editingId}
+                editText={editText}
+                setEditText={setEditText}
+                onSaveEdit={handleSaveEdit}
+                onCancelEdit={() => setEditingId(null)}
+              />
+            </React.Fragment>
+          );
+        })}
         <div ref={bottom} />
       </div>
 
       {/* Reply Banner */}
       {replyTo && (
-        <div className="bg-white/90 backdrop-blur-sm px-4 py-2 text-xs text-slate-700 flex items-center gap-2 border-t border-slate-200">
+        <div className="bg-white/95 backdrop-blur-sm px-4 py-2 text-xs text-slate-700 flex items-center gap-2 border-t border-slate-200">
           <span className="font-bold text-purple-900">↩ {replyTo.senderName}:</span>
           <span className="truncate flex-1 text-slate-600">{replyTo.text || replyTo.type}</span>
           <button onClick={() => setReplyTo(null)} className="p-1 hover:bg-slate-100 rounded">
@@ -870,7 +1204,73 @@ export function ChatWindow({ cid, onBack }) {
         </div>
       )}
 
-      {/* Bottom Input Area or Blocked Banner */}
+      {/* Emoji Quick Picker Row */}
+      {emojiOpen && (
+        <div className="bg-white border-t border-slate-200/90 px-3 py-2 flex items-center gap-2 overflow-x-auto z-10 animate-in slide-in-from-bottom-2">
+          {["🙏", "👍", "❤️", "😊", "👏", "🎉", "💐", "🚩", "🌸", "🙌", "✨", "🔥"].map((em) => (
+            <button
+              key={em}
+              type="button"
+              onClick={() => {
+                setText((prev) => prev + em);
+              }}
+              className="text-xl p-1.5 hover:scale-125 transition-transform"
+            >
+              {em}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Attachment Popover Menu */}
+      {attachMenuOpen && (
+        <div className="bg-white border border-slate-200 rounded-3xl p-3 shadow-xl mx-3 mb-2 flex items-center justify-around gap-2 z-20 animate-in slide-in-from-bottom-2">
+          <div className="text-center">
+            <MediaUploader
+              multiple={false}
+              kind="chat"
+              accept="image/*,video/*"
+              onDone={upload}
+              label={
+                <div className="w-11 h-11 rounded-2xl bg-purple-100 text-purple-800 grid place-items-center shadow-xs mx-auto hover:bg-purple-200 transition">
+                  <ImageIcon className="w-5 h-5" />
+                </div>
+              }
+              className="!p-0"
+            />
+            <span className="text-[10px] font-bold text-slate-700 mt-1 block">ફોટો / વિડિયો</span>
+          </div>
+
+          <div className="text-center">
+            <MediaUploader
+              multiple={false}
+              kind="chat"
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.txt"
+              onDone={upload}
+              label={
+                <div className="w-11 h-11 rounded-2xl bg-indigo-100 text-indigo-800 grid place-items-center shadow-xs mx-auto hover:bg-indigo-200 transition">
+                  <FileText className="w-5 h-5" />
+                </div>
+              }
+              className="!p-0"
+            />
+            <span className="text-[10px] font-bold text-slate-700 mt-1 block">દસ્તાવેજ</span>
+          </div>
+
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={shareLocation}
+              className="w-11 h-11 rounded-2xl bg-rose-100 text-rose-700 grid place-items-center shadow-xs mx-auto hover:bg-rose-200 transition"
+            >
+              <MapPin className="w-5 h-5" />
+            </button>
+            <span className="text-[10px] font-bold text-slate-700 mt-1 block">સ્થાન (Location)</span>
+          </div>
+        </div>
+      )}
+
+      {/* Bottom Composer Area or Blocked Banner */}
       {isBlockedByMe ? (
         <div
           data-testid="chat-blocked-banner"
@@ -897,33 +1297,83 @@ export function ChatWindow({ cid, onBack }) {
           <span>આ સભ્ય દ્વારા સંદેશાઓ મર્યાદિત કરવામાં આવ્યા છે. તમે મેસેજ મોકલી શકતા નથી.</span>
         </div>
       ) : (
-        <div className="bg-white/95 backdrop-blur-md p-2.5 sm:p-3 flex items-center gap-2 border-t border-slate-200/80">
-          <MediaUploader
-            multiple={false}
-            kind="chat"
-            accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
-            onDone={upload}
-            testId="chat-attach"
-            label="📎"
-            className="!px-2.5"
-          />
+        /* Modern Composer: [＋] [Message લખો...] [😊] [🎤/➤] */
+        <div className="bg-white/95 backdrop-blur-md p-2 sm:p-2.5 flex items-center gap-1.5 sm:gap-2 border-t border-slate-200/80">
+          {/* [＋] Attachment Toggle */}
+          <button
+            type="button"
+            data-testid="chat-attach-plus"
+            onClick={() => {
+              setAttachMenuOpen(!attachMenuOpen);
+              setEmojiOpen(false);
+            }}
+            className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all ${
+              attachMenuOpen
+                ? "bg-purple-900 text-white rotate-45 shadow-md"
+                : "bg-purple-50 hover:bg-purple-100 text-purple-900 active:scale-95 border border-purple-100/80"
+            }`}
+            title="જોડાણ (Attach)"
+          >
+            <Plus className="w-5 h-5 transition-transform duration-200" />
+          </button>
 
+          {/* [Message લખો...] Input Box */}
           <input
             data-testid="chat-input"
             value={text}
             onChange={(e) => onType(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && send()}
-            placeholder={t("type_message")}
-            className="flex-1 bg-slate-100/90 border border-slate-200/80 rounded-full px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-purple-300 focus:bg-white transition-all"
+            placeholder="Message લખો..."
+            className="flex-1 bg-slate-100/90 border border-slate-200/80 rounded-full px-4 py-2.5 text-xs sm:text-sm outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white transition-all text-slate-800 placeholder:text-slate-400 font-medium"
           />
 
+          {/* [😊] Emoji Toggle */}
           <button
-            data-testid="chat-send"
-            onClick={() => send()}
-            className={`p-2.5 sm:p-3 rounded-full shadow-sm transition-all active:scale-95 ${themeConfig.btnMine}`}
+            type="button"
+            data-testid="chat-emoji-btn"
+            onClick={() => {
+              setEmojiOpen(!emojiOpen);
+              setAttachMenuOpen(false);
+            }}
+            className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-colors ${
+              emojiOpen
+                ? "bg-purple-100 text-purple-900"
+                : "text-slate-500 hover:text-slate-800 hover:bg-slate-100 active:scale-95"
+            }`}
+            title="ઇમોજી (Emoji)"
           >
-            <Send className="w-4 h-4" />
+            <Smile className="w-5 h-5" />
           </button>
+
+          {/* [🎤/➤] Send or Voice Note Mic */}
+          {text.trim() ? (
+            <button
+              type="button"
+              data-testid="chat-send"
+              onClick={() => send()}
+              className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-gradient-to-tr from-purple-800 to-indigo-700 hover:from-purple-900 hover:to-indigo-800 text-white shadow-md active:scale-95 transition-all cursor-pointer"
+              title="મોકલો (Send)"
+            >
+              <Send className="w-4 h-4 translate-x-0.5" />
+            </button>
+          ) : (
+            <MediaUploader
+              multiple={false}
+              kind="chat"
+              accept="audio/*"
+              onDone={upload}
+              label={
+                <span
+                  data-testid="chat-mic"
+                  className="w-10 h-10 rounded-full bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-100/80 flex items-center justify-center shrink-0 transition-colors cursor-pointer shadow-xs active:scale-95"
+                  title="વોઇસ મેસેજ (Voice Note)"
+                >
+                  <Mic className="w-5 h-5" />
+                </span>
+              }
+              className="!p-0 shrink-0"
+            />
+          )}
         </div>
       )}
 

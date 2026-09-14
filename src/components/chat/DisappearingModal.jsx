@@ -4,10 +4,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 
 const OPTIONS = [
   { id: "off", title: "બંધ (Off)", desc: "મેસેજ આપમેળે ડિલીટ થશે નહીં" },
+  { id: "10s", title: "10 સેકન્ડ (10 Seconds)", desc: "વાંચ્યા પછી ફક્ત 10 સેકન્ડમાં ડિલીટ થશે (ઝડપી ટેસ્ટ)" },
+  { id: "30s", title: "30 સેકન્ડ (30 Seconds)", desc: "વાંચ્યા પછી 30 સેકન્ડમાં આપમેળે ડિલીટ થશે" },
   { id: "1m", title: "1 મિનિટ (1 Minute)", desc: "સામેવાળો વાંચે પછી 1 મિનિટમાં ડિલીટ થશે" },
   { id: "5m", title: "5 મિનિટ (5 Minutes)", desc: "સામેવાળો વાંચે પછી 5 મિનિટમાં ડિલીટ થશે" },
   { id: "1h", title: "1 કલાક (1 Hour)", desc: "સામેવાળો વાંચે પછી 1 કલાકમાં ડિલીટ થશે" },
-  { id: "1d", title: "1 દિવસ (1 Day)", desc: "સામેવાળો વાંચે પછી 24 કલાકમાં ડિલીટ થશે" },
+  { id: "1d", title: "24 કલાક (1 Day)", desc: "સામેવાળો વાંચે પછી 24 કલાકમાં ડિલીટ થશે" },
+  { id: "7d", title: "7 દિવસ (7 Days)", desc: "સામેવાળો વાંચે પછી 7 દિવસમાં ડિલીટ થશે" },
 ];
 
 export function DisappearingModal({ open, onOpenChange, currentDuration = "off", onSelectDuration }) {

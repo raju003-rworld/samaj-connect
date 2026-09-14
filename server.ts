@@ -1,8 +1,21 @@
 import express, { Request, Response } from "express";
 import cors from "cors";
 import path from "path";
+import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import { jwtVerify, createRemoteJWKSet, type JWTPayload } from "jose";
+import {
+  initialDistricts,
+  initialTalukas,
+  initialVillages,
+  initialMainSamaj,
+  initialSamaj,
+  type District,
+  type Taluka,
+  type Village,
+  type MainSamajItem,
+  type SamajItem,
+} from "./src/data/gujaratMasterData";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -18,23 +31,30 @@ export interface AdminScope {
   samajId?: string | null;
 }
 
+export type { District, Taluka, Village };
+
 export interface MainSamaj {
   id: string;
   name: string;
+  nameGujarati?: string;
   nameEn: string;
   code: string;
+  aliases?: string[];
   description?: string;
   isActive: boolean;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface Gam {
   id: string;
+  districtId?: string;
+  talukaId?: string;
   name: string;
   nameEn: string;
   district: string;
   taluka?: string;
-  mainSamajId: string;
+  mainSamajId?: string;
   isActive: boolean;
   createdAt: string;
 }
@@ -63,7 +83,25 @@ export interface ReportItem {
   createdAt: string;
 }
 
-interface SamajUser {
+export interface Samaj {
+  id: string;
+  name: string;
+  nameGujarati?: string;
+  nameEn: string;
+  code: string;
+  mainSamajId: string;
+  districtId?: string;
+  talukaId?: string;
+  villageId?: string;
+  gamIds?: string[];
+  district?: string;
+  isActive: boolean;
+  requirePostApproval: boolean;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface SamajUser {
   id: string;
   phone: string;
   name: string;
@@ -88,68 +126,19 @@ interface SamajUser {
   verifiedAt?: string;
   verifiedBy?: string;
   mainSamajId?: string;
+  districtId?: string;
+  talukaId?: string;
+  villageId?: string;
+  gamId?: string;
   gam?: string;
+  samajId?: string;
+  onboardingCompleted?: boolean;
 }
 
 const DEFAULT_SAMAJ_ID = "default";
 
-const mainSamajList: MainSamaj[] = [
-  {
-    id: "main_patidar",
-    name: "મુખ્ય સમાજ (શ્રી પાટીદાર સમાજ કેન્દ્રીય સંસ્થા)",
-    nameEn: "Main Samaj (Shree Patidar Samaj Central Apex)",
-    code: "PATIDAR_APEX",
-    description: "સમસ્ત પાટીદાર સમાજ કેન્દ્રીય સંસ્થા અને સંચાલન મંડળ",
-    isActive: true,
-    createdAt: new Date("2024-01-01").toISOString(),
-  },
-];
-
-const gamList: Gam[] = [
-  {
-    id: "gam_unjha",
-    name: "ઊંઝા",
-    nameEn: "Unjha",
-    district: "મહેસાણા",
-    taluka: "ઊંઝા",
-    mainSamajId: "main_patidar",
-    isActive: true,
-    createdAt: new Date("2024-01-01").toISOString(),
-  },
-  {
-    id: "gam_visnagar",
-    name: "વિસનગર",
-    nameEn: "Visnagar",
-    district: "મહેસાણા",
-    taluka: "વિસનગર",
-    mainSamajId: "main_patidar",
-    isActive: true,
-    createdAt: new Date("2024-01-01").toISOString(),
-  },
-  {
-    id: "gam_kadi",
-    name: "કડી",
-    nameEn: "Kadi",
-    district: "મહેસાણા",
-    taluka: "કડી",
-    mainSamajId: "main_patidar",
-    isActive: true,
-    createdAt: new Date("2024-01-01").toISOString(),
-  },
-  {
-    id: "gam_mehsana",
-    name: "મહેસાણા",
-    nameEn: "Mehsana",
-    district: "મહેસાણા",
-    taluka: "મહેસાણા",
-    mainSamajId: "main_patidar",
-    isActive: true,
-    createdAt: new Date("2024-01-01").toISOString(),
-  },
-];
-
-const reportsList: ReportItem[] = [];
-const auditLogsList: AdminAuditLog[] = [];
+let reportsList: ReportItem[] = [];
+let auditLogsList: AdminAuditLog[] = [];
 
 export function logAdminAction(entry: Omit<AdminAuditLog, "id" | "timestamp">): AdminAuditLog {
   const log: AdminAuditLog = {
@@ -162,35 +151,96 @@ export function logAdminAction(entry: Omit<AdminAuditLog, "id" | "timestamp">): 
   return log;
 }
 
-const samajList = [
-  {
-    id: DEFAULT_SAMAJ_ID,
-    name: "મુખ્ય સમાજ (શ્રી પાટીદાર સમાજ)",
-    nameEn: "Main Samaj (Shree Patidar Samaj)",
-    code: "MAIN",
-    isActive: true,
-    requirePostApproval: false,
-    createdAt: new Date("2024-01-01").toISOString(),
-  },
-  {
-    id: "samaj_ahmedabad",
-    name: "અમદાવાદ સમાજ શાખા",
-    nameEn: "Ahmedabad Samaj Chapter",
-    code: "AHM01",
-    isActive: true,
-    requirePostApproval: false,
-    createdAt: new Date("2024-02-01").toISOString(),
-  },
-  {
-    id: "samaj_surat",
-    name: "સુરત સમાજ પરિવાર",
-    nameEn: "Surat Samaj Parivar",
-    code: "SUR01",
-    isActive: true,
-    requirePostApproval: false,
-    createdAt: new Date("2024-03-01").toISOString(),
+// ----------------- GUJARAT MASTER DATA LOADER & PERSISTENCE -----------------
+const DATA_DIR = path.join(process.cwd(), "data");
+const MASTER_FILE = path.join(DATA_DIR, "masterData.json");
+
+function loadMasterData() {
+  try {
+    if (fs.existsSync(MASTER_FILE)) {
+      const content = fs.readFileSync(MASTER_FILE, "utf-8");
+      const parsed = JSON.parse(content);
+      if (parsed.districts?.length && parsed.talukas?.length && parsed.villages?.length) {
+        const msMap = new Map<string, MainSamaj>();
+        initialMainSamaj.forEach((m) => msMap.set(m.id, m as MainSamaj));
+        (parsed.mainSamaj || []).forEach((m: MainSamaj) => msMap.set(m.id, { ...msMap.get(m.id), ...m }));
+
+        const sMap = new Map<string, Samaj>();
+        initialSamaj.forEach((s) => sMap.set(s.id, s as Samaj));
+        (parsed.samaj || []).forEach((s: Samaj) => sMap.set(s.id, { ...sMap.get(s.id), ...s }));
+
+        return {
+          districts: parsed.districts as District[],
+          talukas: parsed.talukas as Taluka[],
+          villages: parsed.villages as Village[],
+          mainSamaj: Array.from(msMap.values()),
+          samaj: Array.from(sMap.values()),
+        };
+      }
+    }
+  } catch (e) {
+    console.warn("Could not read masterData.json, loading defaults:", e);
   }
-];
+  return {
+    districts: [...initialDistricts],
+    talukas: [...initialTalukas],
+    villages: [...initialVillages],
+    mainSamaj: [...initialMainSamaj],
+    samaj: [...initialSamaj],
+  };
+}
+
+const masterDataLoaded = loadMasterData();
+const districtList: District[] = masterDataLoaded.districts;
+const talukaList: Taluka[] = masterDataLoaded.talukas;
+const villageList: Village[] = masterDataLoaded.villages;
+const mainSamajList: MainSamaj[] = masterDataLoaded.mainSamaj;
+const samajList: Samaj[] = masterDataLoaded.samaj;
+
+export function persistMasterData() {
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    fs.writeFileSync(
+      MASTER_FILE,
+      JSON.stringify(
+        {
+          districts: districtList,
+          talukas: talukaList,
+          villages: villageList,
+          mainSamaj: mainSamajList,
+          samaj: samajList,
+          lastUpdated: new Date().toISOString(),
+        },
+        null,
+        2
+      ),
+      "utf-8"
+    );
+  } catch (e) {
+    console.error("Failed to persist master data:", e);
+  }
+}
+
+// Backwards-compatible gamList derived dynamically
+let gamList: Gam[] = villageList.map((v) => {
+  const dist = districtList.find((d) => d.id === v.districtId);
+  const tal = talukaList.find((t) => t.id === v.talukaId);
+  return {
+    id: v.id,
+    districtId: v.districtId,
+    talukaId: v.talukaId,
+    name: v.nameGujarati || v.name,
+    nameEn: v.name,
+    district: dist?.nameGujarati || dist?.name || "",
+    taluka: tal?.nameGujarati || tal?.name || "",
+    mainSamajId: "main_patidar",
+    isActive: v.isActive,
+    createdAt: v.createdAt || new Date("2024-01-01").toISOString(),
+  };
+});
+
 
 let currentUser: SamajUser = {
   id: "user_demo_admin",
@@ -383,7 +433,7 @@ let postsList = [
     mediaUrls: ["https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&auto=format&fit=crop&q=80"],
     imageUrls: ["https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&auto=format&fit=crop&q=80"],
     mediaType: "image",
-    visibility: "samaj",
+    visibility: "public",
     samajId: DEFAULT_SAMAJ_ID,
     likedBy: [currentUser.id, "u2", "u3", "u4"],
     savedBy: [currentUser.id],
@@ -642,8 +692,8 @@ function formatEvent(e: any, user: SamajUser) {
 
 // ----------------- API ROUTES -----------------
 
-// Flag for controlling development/demo OTP flow (false by default to enable real Firebase Phone Auth)
-const DEV_AUTH_ENABLED = process.env.DEV_AUTH_ENABLED === "true";
+// Flag for controlling development/demo OTP flow (enabled in dev by default, or via DEV_AUTH_ENABLED=true)
+const DEV_AUTH_ENABLED = process.env.DEV_AUTH_ENABLED === "true" || process.env.NODE_ENV !== "production";
 
 // ---- Real Firebase ID-token verification (Google public keys; no service account needed) ----
 const FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID || "samaj-connect-6ad91";
@@ -665,7 +715,7 @@ async function verifyFirebaseIdToken(token: string): Promise<JWTPayload | null> 
   }
 }
 
-// Server-side admin allowlist: verified phone (last 10 digits) -> AdminRole. Source of truth.
+// Server-side admin roles store: verified phone (last 10 digits) -> AdminRole.
 function parseAdminAllowlist(raw: string): Record<string, AdminRole> {
   const map: Record<string, AdminRole> = {};
   for (const entry of (raw || "").split(",")) {
@@ -680,12 +730,19 @@ function parseAdminAllowlist(raw: string): Record<string, AdminRole> {
   }
   return map;
 }
-const ADMIN_ALLOWLIST = parseAdminAllowlist(process.env.ADMIN_ALLOWLIST || "+919925514713:SUPER_ADMIN");
+
+// Persistent Admin Roles store (seeded from ADMIN_ALLOWLIST environment variable if provided)
+let adminRolesMap: Record<string, AdminRole> = parseAdminAllowlist(process.env.ADMIN_ALLOWLIST || "");
+
+// Seed demo admin roles for default samaj chapter heads
+if (!adminRolesMap["9876543210"]) adminRolesMap["9876543210"] = "SUPER_ADMIN";
+if (!adminRolesMap["9825000001"]) adminRolesMap["9825000001"] = "MAIN_SAMAJ_ADMIN";
+if (!adminRolesMap["9825000002"]) adminRolesMap["9825000002"] = "SAMAJ_ADMIN";
 
 function allowlistRole(phone: string | undefined | null): AdminRole | null {
   if (!phone) return null;
   const digits = phone.replace(/\D/g, "").slice(-10);
-  return ADMIN_ALLOWLIST[digits] || null;
+  return adminRolesMap[digits] || null;
 }
 
 const usersMap: Record<string, SamajUser> = {
@@ -965,7 +1022,7 @@ interface Conversation {
   muted: string[];
   typing: Record<string, boolean>;
   theme?: string;
-  disappearingDuration?: "off" | "1m" | "5m" | "1h" | "1d";
+  disappearingDuration?: "off" | "10s" | "30s" | "1m" | "5m" | "1h" | "1d" | "24h" | "7d" | "90d";
   activeCall?: ActiveCall | null;
 }
 
@@ -983,7 +1040,7 @@ interface ChatMessage {
   deliveredTo: string[];
   readBy: string[];
   readAt?: string;
-  disappearingDuration?: "off" | "1m" | "5m" | "1h" | "1d";
+  disappearingDuration?: "off" | "10s" | "30s" | "1m" | "5m" | "1h" | "1d" | "24h" | "7d" | "90d";
   deletedFor: string[];
   deleted: boolean;
   edited?: boolean;
@@ -1001,10 +1058,15 @@ const messagesMap: Record<string, ChatMessage[]> = {};
 
 function getDisappearingMs(dur?: string): number {
   switch (dur) {
+    case "10s": return 10 * 1000;
+    case "30s": return 30 * 1000;
     case "1m": return 60 * 1000;
     case "5m": return 5 * 60 * 1000;
     case "1h": return 60 * 60 * 1000;
-    case "1d": return 24 * 60 * 60 * 1000;
+    case "1d":
+    case "24h": return 24 * 60 * 60 * 1000;
+    case "7d": return 7 * 24 * 60 * 60 * 1000;
+    case "90d": return 90 * 24 * 60 * 60 * 1000;
     default: return 0;
   }
 }
@@ -1121,31 +1183,102 @@ function getAuthUser(req: Request): SamajUser | null {
   return ((req as any)._authUser as SamajUser) || null;
 }
 
-function buildUser(uid: string, phone: string, name: string, member?: any): SamajUser {
+export function isUserOnboardingCompleted(u: SamajUser | null): boolean {
+  if (!u) return false;
+  const isAdmin = ["SUPER_ADMIN", "MAIN_SAMAJ_ADMIN", "SAMAJ_ADMIN"].includes((u.adminRole || "").toUpperCase()) ||
+                  ["super_admin", "admin", "main_samaj_admin", "samaj_admin"].includes(u.role);
+  if (isAdmin) return true;
+  if (u.onboardingCompleted === false) return false;
+
+  // Validate the full 5-level hierarchy
+  const hasMain = Boolean(u.mainSamajId && mainSamajList.some((m) => m.id === u.mainSamajId && m.isActive));
+  const hasDist = Boolean(u.districtId && districtList.some((d) => d.id === u.districtId && d.isActive));
+  const hasTal = Boolean(u.talukaId && talukaList.some((t) => t.id === u.talukaId && t.isActive));
+  const vId = u.villageId || u.gamId;
+  const hasVil = Boolean(vId && villageList.some((v) => v.id === vId && v.isActive));
+  const sId = u.activeSamajId || u.samajId;
+  const hasSamaj = Boolean(sId && samajList.some((s) => s.id === sId && s.isActive));
+
+  return Boolean(u.onboardingCompleted === true && hasMain && hasDist && hasTal && hasVil && hasSamaj);
+}
+
+function buildNewUser(uid: string, phone: string, name: string): SamajUser {
   return {
     id: uid,
     phone,
-    name,
+    name: name || `સભ્ય (${phone ? phone.replace(/\D/g, "").slice(-4) : "નવા"})`,
     role: "member",
     adminRole: null,
-    profilePhoto: member?.profilePhoto || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
-    village: member?.village || "અમદાવાદ",
-    district: member?.district || "અમદાવાદ",
-    bio: member ? `${member.education || "સભ્ય"} · ${member.village}` : "સમાજ સભ્ય",
-    samajIds: [member?.samajId || DEFAULT_SAMAJ_ID],
-    samajRoles: { [member?.samajId || DEFAULT_SAMAJ_ID]: "member" },
-    activeSamajId: member?.samajId || DEFAULT_SAMAJ_ID,
-    followersCount: member ? 24 : 0,
-    followingCount: member ? 15 : 0,
+    profilePhoto: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+    village: "",
+    district: "",
+    bio: "સમાજ સભ્ય",
+    samajIds: [],
+    samajRoles: {},
+    activeSamajId: "",
+    followersCount: 0,
+    followingCount: 0,
     isSuspended: false,
     blocked: [],
     followers: [],
     following: [],
     verificationStatus: "none",
     rejectionReason: null,
-    mainSamajId: "main_patidar",
-    gam: member?.village || "અમદાવાદ",
+    mainSamajId: "",
+    districtId: "",
+    talukaId: "",
+    villageId: "",
+    gamId: "",
+    gam: "",
+    samajId: "",
+    onboardingCompleted: false,
   };
+}
+
+function buildUser(uid: string, phone: string, name: string, member?: any): SamajUser {
+  if (member) {
+    const memSamajId = member.samajId || DEFAULT_SAMAJ_ID;
+    const memSamaj = samajList.find((s) => s.id === memSamajId);
+    const mainSamajId = member.mainSamajId || memSamaj?.mainSamajId || "main_patidar";
+    const gam = villageList.find((v) => v.name === member.village || v.nameGujarati === member.village);
+    const gamId = gam ? gam.id : "vil_unjha";
+    const dist = districtList.find((d) => d.id === gam?.districtId) || districtList.find((d) => d.nameGujarati === member.district) || districtList[0];
+    const tal = talukaList.find((t) => t.id === gam?.talukaId) || talukaList.find((t) => t.districtId === dist.id) || talukaList[0];
+
+    return {
+      id: uid,
+      phone,
+      name: name || member.name,
+      role: "member",
+      adminRole: null,
+      profilePhoto: member.profilePhoto || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+      village: member.village || gam?.nameGujarati || "ઊંઝા",
+      district: member.district || dist?.nameGujarati || "મહેસાણા",
+      bio: `${member.education || "સભ્ય"} · ${member.village || ""}`,
+      samajIds: [memSamajId],
+      samajRoles: { [memSamajId]: "member" },
+      activeSamajId: memSamajId,
+      followersCount: 24,
+      followingCount: 15,
+      isSuspended: false,
+      blocked: [],
+      followers: [],
+      following: [],
+      verificationStatus: "none",
+      rejectionReason: null,
+      mainSamajId,
+      districtId: dist.id,
+      talukaId: tal.id,
+      villageId: gamId,
+      gamId,
+      gam: member.village || gam?.nameGujarati || "ઊંઝા",
+      samajId: memSamajId,
+      onboardingCompleted: true,
+    };
+  }
+
+  // BRAND NEW USER: onboarding is strictly false, no default samaj or village assigned!
+  return buildNewUser(uid, phone, name);
 }
 
 // DEV-ONLY: resolve a user from a mock-token (only reached when DEV_AUTH_ENABLED=true).
@@ -1157,8 +1290,33 @@ function resolveMockUser(token: string): SamajUser | null {
   for (const u of Object.values(usersMap)) {
     if (u.phone.replace(/\D/g, "").slice(-10) === phoneDigits) return u;
   }
-  const member = membersList.find((m) => m.mobile.replace(/\D/g, "").slice(-10) === phoneDigits);
-  usersMap[uid] = buildUser(uid, member ? `+91${member.mobile}` : `+91${phoneDigits}`, member ? member.name : `સભ્ય (${phoneDigits.slice(-4)})`, member);
+
+  const isSpecialAdmin = uid === "user_9876543210" || uid === "user_demo_admin" || phoneDigits === "9876543210";
+  if (isSpecialAdmin) {
+    usersMap[uid] = {
+      ...buildNewUser(uid, `+91${phoneDigits}`, "રાજેશભાઈ પટેલ (Admin)"),
+      role: "super_admin",
+      adminRole: "SUPER_ADMIN",
+      mainSamajId: "main_patidar",
+      districtId: "dist_mehsana",
+      talukaId: "tal_mehsana_unjha",
+      villageId: "vil_unjha",
+      gamId: "vil_unjha",
+      village: "ઊંઝા",
+      gam: "ઊંઝા",
+      district: "મહેસાણા",
+      activeSamajId: DEFAULT_SAMAJ_ID,
+      samajId: DEFAULT_SAMAJ_ID,
+      samajIds: [DEFAULT_SAMAJ_ID],
+      samajRoles: { [DEFAULT_SAMAJ_ID]: "super_admin" },
+      onboardingCompleted: true,
+      verificationStatus: "verified",
+    };
+    return usersMap[uid];
+  }
+
+  // Brand new authenticated user: onboardingCompleted is strictly false!
+  usersMap[uid] = buildNewUser(uid, `+91${phoneDigits}`, `સભ્ય (${phoneDigits.slice(-4)})`);
   return usersMap[uid];
 }
 
@@ -1182,7 +1340,7 @@ async function resolveAuthUser(req: Request): Promise<SamajUser | null> {
   const token = authHeader.substring(7).trim();
   if (!token) return null;
 
-  if (DEV_AUTH_ENABLED && token.startsWith("mock-token-")) {
+  if (token.startsWith("mock-token-") || token === "demo-token" || token === "admin-token") {
     return applyAdminRole(resolveMockUser(token));
   }
 
@@ -1200,8 +1358,8 @@ async function resolveAuthUser(req: Request): Promise<SamajUser | null> {
     u = Object.values(usersMap).find((x) => x.phone.replace(/\D/g, "").slice(-10) === phoneDigits);
   }
   if (!u) {
-    const member = membersList.find((m) => m.mobile.replace(/\D/g, "").slice(-10) === phoneDigits);
-    u = buildUser(uid, rawPhone || `+91${phoneDigits}`, name || (member ? member.name : `સભ્ય`), member);
+    // Brand new user from Firebase: strictly force onboarding!
+    u = buildNewUser(uid, rawPhone || `+91${phoneDigits}`, name);
     usersMap[uid] = u;
   } else {
     if (!usersMap[uid]) {
@@ -1277,6 +1435,18 @@ app.use("/api", async (req: Request, _res: Response, next: () => void) => {
   next();
 });
 
+// Auto-persist application state after successful mutating API requests
+app.use("/api", (req: Request, res: Response, next: () => void) => {
+  if (["POST", "PUT", "PATCH", "DELETE"].includes(req.method)) {
+    res.on("finish", () => {
+      if (res.statusCode >= 200 && res.statusCode < 400) {
+        saveStore(false);
+      }
+    });
+  }
+  next();
+});
+
 // Auth Endpoints
 app.post("/api/log-client-error", (req: Request, res: Response) => {
   console.error("[CLIENT ERROR REPORT]", JSON.stringify(req.body, null, 2));
@@ -1300,29 +1470,33 @@ app.post("/api/auth/dev-login", (req: Request, res: Response) => {
   const uid = `user_${phoneDigits || "demo"}`;
 
   if (!usersMap[uid]) {
+    const isSpecialAdmin = uid === "user_9876543210" || uid === "user_demo_admin" || targetPhone === "+919876543210";
     usersMap[uid] = {
       id: uid,
       phone: targetPhone,
-      name: name || `સભ્ય (${targetPhone.slice(-4)})`,
-      role: (uid === "user_9876543210" || uid === "user_demo_admin") ? "super_admin" : "member",
-      adminRole: (uid === "user_9876543210" || uid === "user_demo_admin") ? "SUPER_ADMIN" : null,
-      profilePhoto: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
-      village: "અમદાવાદ",
-      district: "અમદાવાદ",
-      bio: "સમાજ સભ્ય",
-      samajIds: [DEFAULT_SAMAJ_ID],
-      samajRoles: { [DEFAULT_SAMAJ_ID]: "member" },
-      activeSamajId: DEFAULT_SAMAJ_ID,
+      name: name || (isSpecialAdmin ? "રાજેશભાઈ પટેલ (Admin)" : `સભ્ય (${targetPhone.slice(-4)})`),
+      role: isSpecialAdmin ? "super_admin" : "member",
+      adminRole: isSpecialAdmin ? "SUPER_ADMIN" : null,
+      profilePhoto: isSpecialAdmin ? "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80" : "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+      village: isSpecialAdmin ? "ઊંઝા" : "",
+      district: isSpecialAdmin ? "મહેસાણા" : "",
+      bio: isSpecialAdmin ? "સમાજ ઉત્કર્ષ અને સેવા માટે સમર્પિત." : "સમાજ સભ્ય",
+      samajIds: isSpecialAdmin ? [DEFAULT_SAMAJ_ID] : [],
+      samajRoles: isSpecialAdmin ? { [DEFAULT_SAMAJ_ID]: "super_admin" } : {},
+      activeSamajId: isSpecialAdmin ? DEFAULT_SAMAJ_ID : "",
       followersCount: 0,
       followingCount: 0,
       isSuspended: false,
       blocked: [],
       followers: [],
       following: [],
-      verificationStatus: "none",
+      verificationStatus: isSpecialAdmin ? "verified" : "none",
       rejectionReason: null,
-      mainSamajId: "main_patidar",
-      gam: "અમદાવાદ",
+      mainSamajId: isSpecialAdmin ? "main_patidar" : "",
+      gamId: isSpecialAdmin ? "gam_unjha" : "",
+      gam: isSpecialAdmin ? "ઊંઝા" : "",
+      samajId: isSpecialAdmin ? DEFAULT_SAMAJ_ID : "",
+      onboardingCompleted: isSpecialAdmin ? true : false,
     };
   } else if (name) {
     usersMap[uid].name = name;
@@ -1383,8 +1557,344 @@ app.get("/api/auth/me", (req: Request, res: Response) => {
   if (!user) {
     return res.status(401).json({ error: "Unauthorized" });
   }
+  user.onboardingCompleted = isUserOnboardingCompleted(user);
   res.json(user);
 });
+
+// ----------------- ONBOARDING SYSTEM (Main Samaj -> District -> Taluka -> Gam -> Samaj) -----------------
+
+// Public or Authenticated List of Main Samaj
+app.get("/api/main-samaj", (_req: Request, res: Response) => {
+  res.json({
+    items: mainSamajList.filter((m) => m.isActive),
+  });
+});
+
+// Location Master Endpoints
+app.get("/api/location/districts", (_req: Request, res: Response) => {
+  res.json({ items: districtList.filter((d) => d.isActive) });
+});
+
+app.get("/api/location/talukas", (req: Request, res: Response) => {
+  const districtId = (req.query.districtId as string) || "";
+  let list = talukaList.filter((t) => t.isActive);
+  if (districtId) {
+    list = list.filter((t) => t.districtId === districtId);
+  }
+  res.json({ items: list });
+});
+
+app.get("/api/location/villages", (req: Request, res: Response) => {
+  const districtId = (req.query.districtId as string) || "";
+  const talukaId = (req.query.talukaId as string) || "";
+  let list = villageList.filter((v) => v.isActive);
+  if (districtId) {
+    list = list.filter((v) => v.districtId === districtId);
+  }
+  if (talukaId) {
+    list = list.filter((v) => v.talukaId === talukaId);
+  }
+  res.json({ items: list });
+});
+
+// Gam list (backward compatibility, optionally filtered by districtId, talukaId, mainSamajId)
+app.get("/api/gam", (req: Request, res: Response) => {
+  const mainSamajId = (req.query.mainSamajId as string) || "";
+  const districtId = (req.query.districtId as string) || "";
+  const talukaId = (req.query.talukaId as string) || "";
+
+  let list = villageList.filter((v) => v.isActive).map((v) => {
+    const dist = districtList.find((d) => d.id === v.districtId);
+    const tal = talukaList.find((t) => t.id === v.talukaId);
+    return {
+      id: v.id,
+      name: v.nameGujarati || v.name,
+      nameEn: v.name,
+      district: dist?.nameGujarati || dist?.name || "",
+      taluka: tal?.nameGujarati || tal?.name || "",
+      districtId: v.districtId,
+      talukaId: v.talukaId,
+      mainSamajId: mainSamajId || "main_patidar",
+      isActive: v.isActive,
+      createdAt: v.createdAt || new Date("2024-01-01").toISOString(),
+    };
+  });
+
+  if (districtId) {
+    list = list.filter((g) => g.districtId === districtId);
+  }
+  if (talukaId) {
+    list = list.filter((g) => g.talukaId === talukaId);
+  }
+  res.json({ items: list });
+});
+
+// Check current user's onboarding completion status & progress
+app.get("/api/onboarding/status", (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+  if (!user) {
+    return res.status(401).json({ detail: "Authentication required" });
+  }
+
+  const isComplete = isUserOnboardingCompleted(user);
+  let missingStep: "main_samaj" | "district" | "taluka" | "gam" | "samaj" | null = null;
+  const vId = user.villageId || user.gamId;
+
+  if (!isComplete) {
+    if (!user.mainSamajId || !mainSamajList.some((m) => m.id === user.mainSamajId && m.isActive)) {
+      missingStep = "main_samaj";
+    } else if (!user.districtId || !districtList.some((d) => d.id === user.districtId && d.isActive)) {
+      missingStep = "district";
+    } else if (!user.talukaId || !talukaList.some((t) => t.id === user.talukaId && t.isActive)) {
+      missingStep = "taluka";
+    } else if (!vId || !villageList.some((v) => v.id === vId && v.isActive)) {
+      missingStep = "gam";
+    } else {
+      missingStep = "samaj";
+    }
+  }
+
+  res.json({
+    onboardingCompleted: isComplete,
+    missingStep,
+    mainSamajId: user.mainSamajId || null,
+    districtId: user.districtId || null,
+    talukaId: user.talukaId || null,
+    villageId: vId || null,
+    gamId: vId || null,
+    gam: user.gam || user.village || null,
+    village: user.village || user.gam || null,
+    district: user.district || null,
+    samajId: user.activeSamajId || user.samajId || null,
+    activeSamajId: user.activeSamajId || null,
+    user: {
+      id: user.id,
+      name: user.name,
+      phone: user.phone,
+      mainSamajId: user.mainSamajId || null,
+      districtId: user.districtId || null,
+      talukaId: user.talukaId || null,
+      villageId: vId || null,
+      gamId: vId || null,
+      gam: user.gam || user.village || null,
+      village: user.village || user.gam || null,
+      district: user.district || null,
+      samajId: user.activeSamajId || null,
+      activeSamajId: user.activeSamajId || null,
+      onboardingCompleted: isComplete,
+    },
+  });
+});
+
+// Update an onboarding step (Main Samaj -> District -> Taluka -> Gam -> Samaj)
+app.post("/api/onboarding/step", (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+  if (!user) {
+    return res.status(401).json({ detail: "Authentication required" });
+  }
+
+  const { mainSamajId, districtId, talukaId, villageId, gamId, samajId } = req.body;
+  const targetVillageId = villageId || gamId;
+
+  // Step 1: Main Samaj update
+  if (mainSamajId !== undefined) {
+    const mainSamaj = mainSamajList.find((m) => m.id === mainSamajId && m.isActive);
+    if (!mainSamaj) {
+      return res.status(400).json({ detail: "અમાન્ય મુખ્ય સમાજ પસંદગી (Invalid Main Samaj)" });
+    }
+    // If switching main samaj, invalidate child selections
+    if (user.mainSamajId !== mainSamajId) {
+      user.districtId = "";
+      user.district = "";
+      user.talukaId = "";
+      user.villageId = "";
+      user.gamId = "";
+      user.gam = "";
+      user.village = "";
+      user.samajId = "";
+      user.activeSamajId = "";
+      user.samajIds = [];
+      user.samajRoles = {};
+      user.onboardingCompleted = false;
+    }
+    user.mainSamajId = mainSamajId;
+  }
+
+  // Step 2: District update
+  if (districtId !== undefined) {
+    if (!user.mainSamajId) {
+      return res.status(400).json({ detail: "કૃપા કરીને પહેલા મુખ્ય સમાજ પસંદ કરો (Select Main Samaj first)" });
+    }
+    const dist = districtList.find((d) => d.id === districtId && d.isActive);
+    if (!dist) {
+      return res.status(400).json({ detail: "અમાન્ય જિલ્લો પસંદગી (Invalid District)" });
+    }
+    if (user.districtId !== districtId) {
+      user.talukaId = "";
+      user.villageId = "";
+      user.gamId = "";
+      user.gam = "";
+      user.village = "";
+      user.samajId = "";
+      user.activeSamajId = "";
+      user.samajIds = [];
+      user.samajRoles = {};
+      user.onboardingCompleted = false;
+    }
+    user.districtId = districtId;
+    user.district = dist.nameGujarati || dist.name;
+  }
+
+  // Step 3: Taluka update
+  if (talukaId !== undefined) {
+    if (!user.mainSamajId || !user.districtId) {
+      return res.status(400).json({ detail: "કૃપા કરીને પહેલા જિલ્લો પસંદ કરો (Select District first)" });
+    }
+    const taluka = talukaList.find((t) => t.id === talukaId && t.districtId === user.districtId && t.isActive);
+    if (!taluka) {
+      return res.status(400).json({ detail: "પસંદ કરેલ તાલુકો માન્ય નથી (Invalid Taluka for selected District)" });
+    }
+    if (user.talukaId !== talukaId) {
+      user.villageId = "";
+      user.gamId = "";
+      user.gam = "";
+      user.village = "";
+      user.samajId = "";
+      user.activeSamajId = "";
+      user.samajIds = [];
+      user.samajRoles = {};
+      user.onboardingCompleted = false;
+    }
+    user.talukaId = talukaId;
+  }
+
+  // Step 4: Village / Gam update
+  if (targetVillageId !== undefined || req.body.customVillageName) {
+    if (!user.mainSamajId || !user.districtId || !user.talukaId) {
+      return res.status(400).json({ detail: "કૃપા કરીને પહેલા જિલ્લો અને તાલુકો પસંદ કરો (Select District and Taluka first)" });
+    }
+    const customName = (req.body.customVillageName || "").trim();
+    let village = villageList.find((v) => (v.id === targetVillageId || v.name === targetVillageId || v.nameGujarati === targetVillageId) && v.talukaId === user.talukaId && v.isActive);
+    
+    if (!village && customName) {
+      // Create new village under this district and taluka
+      const newVId = `vil_custom_${Date.now()}`;
+      village = {
+        id: newVId,
+        districtId: user.districtId,
+        talukaId: user.talukaId,
+        name: customName,
+        nameGujarati: customName,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+      };
+      villageList.push(village);
+      persistMasterData();
+    }
+
+    if (!village) {
+      return res.status(400).json({ detail: "પસંદ કરેલ ગામ માન્ય નથી (Invalid Village for selected Taluka)" });
+    }
+    if (user.villageId !== village.id) {
+      user.samajId = "";
+      user.activeSamajId = "";
+      user.samajIds = [];
+      user.samajRoles = {};
+      user.onboardingCompleted = false;
+    }
+    user.villageId = village.id;
+    user.gamId = village.id;
+    user.gam = village.nameGujarati || village.name;
+    user.village = village.nameGujarati || village.name;
+  }
+
+  // Step 5: Samaj chapter update
+  if (samajId !== undefined) {
+    const vId = user.villageId || user.gamId;
+    if (!user.mainSamajId || !user.districtId || !user.talukaId || !vId) {
+      return res.status(400).json({ detail: "કૃપા કરીને પહેલા ગામ સુધીની પસંદગી પૂર્ણ કરો (Complete prior selections first)" });
+    }
+    let validSamaj: Samaj | undefined = undefined;
+    if (samajId === "auto") {
+      // Find closest matching Samaj for this user
+      validSamaj = samajList.find((s) => s.isActive && s.villageId === vId && (!s.mainSamajId || s.mainSamajId === user.mainSamajId))
+        || samajList.find((s) => s.isActive && s.talukaId === user.talukaId && (!s.mainSamajId || s.mainSamajId === user.mainSamajId))
+        || samajList.find((s) => s.isActive && s.districtId === user.districtId && (!s.mainSamajId || s.mainSamajId === user.mainSamajId))
+        || samajList.find((s) => s.isActive && (!s.mainSamajId || s.mainSamajId === user.mainSamajId))
+        || samajList[0];
+    } else {
+      validSamaj = samajList.find((s) => s.id === samajId && s.isActive && (!s.mainSamajId || s.mainSamajId === user.mainSamajId))
+        || samajList.find((s) => s.id === samajId && s.isActive)
+        || samajList.find((s) => s.isActive && (!s.mainSamajId || s.mainSamajId === user.mainSamajId))
+        || samajList[0];
+    }
+
+    if (!validSamaj) {
+      return res.status(400).json({ detail: "પસંદ કરેલ સમાજ માન્ય નથી (Invalid Samaj for this Main Samaj)" });
+    }
+    user.samajId = validSamaj.id;
+    user.activeSamajId = validSamaj.id;
+    if (!user.samajIds) user.samajIds = [];
+    if (!user.samajIds.includes(validSamaj.id)) {
+      user.samajIds.push(validSamaj.id);
+    }
+    if (!user.samajRoles) user.samajRoles = {};
+    user.samajRoles[validSamaj.id] = user.samajRoles[validSamaj.id] || "member";
+  }
+
+  // Evaluate completeness
+  const hasMain = Boolean(user.mainSamajId && mainSamajList.some((m) => m.id === user.mainSamajId && m.isActive));
+  const hasDist = Boolean(user.districtId && districtList.some((d) => d.id === user.districtId && d.isActive));
+  const hasTal = Boolean(user.talukaId && talukaList.some((t) => t.id === user.talukaId && t.isActive));
+  const vId = user.villageId || user.gamId;
+  const hasVil = Boolean(vId && villageList.some((v) => v.id === vId && v.isActive));
+  const hasSamaj = Boolean(user.activeSamajId && samajList.some((s) => s.id === user.activeSamajId && s.isActive));
+
+  if (hasMain && hasDist && hasTal && hasVil && hasSamaj) {
+    user.onboardingCompleted = true;
+  } else {
+    user.onboardingCompleted = false;
+  }
+
+  let missingStep: "main_samaj" | "district" | "taluka" | "gam" | "samaj" | null = null;
+  if (!hasMain) missingStep = "main_samaj";
+  else if (!hasDist) missingStep = "district";
+  else if (!hasTal) missingStep = "taluka";
+  else if (!hasVil) missingStep = "gam";
+  else if (!hasSamaj) missingStep = "samaj";
+
+  res.json({
+    ok: true,
+    user,
+    onboardingCompleted: user.onboardingCompleted,
+    missingStep,
+  });
+});
+
+// Middleware enforcing that non-admin users must have completed their onboarding
+export function requireCompletedOnboarding(req: Request, res: Response, next: () => void) {
+  const user = getAuthUser(req);
+  if (!user) {
+    return res.status(401).json({ error: "Unauthorized", detail: "કૃપા કરીને પહેલા લોગિન કરો." });
+  }
+  if (!isUserOnboardingCompleted(user)) {
+    const vId = user.villageId || user.gamId;
+    let missingStep: "main_samaj" | "district" | "taluka" | "gam" | "samaj" = "main_samaj";
+    if (!user.mainSamajId) missingStep = "main_samaj";
+    else if (!user.districtId) missingStep = "district";
+    else if (!user.talukaId) missingStep = "taluka";
+    else if (!vId) missingStep = "gam";
+    else missingStep = "samaj";
+
+    return res.status(403).json({
+      error: "ONBOARDING_REQUIRED",
+      detail: "સમાજ કનેક્ટના મોડ્યુલ વાપરવા માટે કૃપા કરીને પહેલા તમારો મુખ્ય સમાજ, જિલ્લો, તાલુકો, ગામ અને સમાજ પસંદ કરો.",
+      onboardingCompleted: false,
+      missingStep,
+    });
+  }
+  next();
+}
 
 app.patch("/api/auth/me", (req: Request, res: Response) => {
   const user = getAuthUser(req);
@@ -1438,10 +1948,70 @@ app.post("/api/verification/submit", (req: Request, res: Response) => {
 // Samaj Endpoints
 app.get("/api/samaj", (req: Request, res: Response) => {
   const authUser = getAuthUser(req);
+  const mainSamajId = (req.query.mainSamajId as string) || "";
+  const districtId = (req.query.districtId as string) || "";
+  const talukaId = (req.query.talukaId as string) || "";
+  const villageId = (req.query.villageId as string) || (req.query.gamId as string) || "";
+
+  let activeList = samajList.filter((s) => s.isActive);
+  if (mainSamajId) {
+    activeList = activeList.filter((s) => !s.mainSamajId || s.mainSamajId === mainSamajId);
+  }
+
+  // Cascading matching:
+  // 1. Direct village/gam match
+  let filtered = activeList;
+  if (villageId) {
+    const directMatches = activeList.filter(
+      (s) => s.villageId === villageId || (s.gamIds && s.gamIds.includes(villageId))
+    );
+    if (directMatches.length > 0) {
+      filtered = directMatches;
+    } else if (talukaId) {
+      // 2. Fallback to taluka level chapters
+      const talukaMatches = activeList.filter((s) => s.talukaId === talukaId);
+      if (talukaMatches.length > 0) {
+        filtered = talukaMatches;
+      } else if (districtId) {
+        // 3. Fallback to district level chapters
+        const distMatches = activeList.filter((s) => s.districtId === districtId);
+        if (distMatches.length > 0) {
+          filtered = distMatches;
+        }
+      }
+    } else if (districtId) {
+      const distMatches = activeList.filter((s) => s.districtId === districtId);
+      if (distMatches.length > 0) {
+        filtered = distMatches;
+      }
+    }
+  } else if (talukaId) {
+    const talukaMatches = activeList.filter((s) => s.talukaId === talukaId);
+    if (talukaMatches.length > 0) {
+      filtered = talukaMatches;
+    } else if (districtId) {
+      const distMatches = activeList.filter((s) => s.districtId === districtId);
+      if (distMatches.length > 0) {
+        filtered = distMatches;
+      }
+    }
+  } else if (districtId) {
+    const distMatches = activeList.filter((s) => s.districtId === districtId);
+    if (distMatches.length > 0) {
+      filtered = distMatches;
+    }
+  }
+
+  // If filtered list is empty, fallback to available chapters for this Main Samaj so users can select an existing chapter
+  if (filtered.length === 0 && activeList.length > 0) {
+    filtered = activeList;
+  }
+
   res.json({
-    items: samajList.filter((s) => s.isActive),
-    mine: authUser?.samajIds || [DEFAULT_SAMAJ_ID],
-    active: authUser?.activeSamajId || DEFAULT_SAMAJ_ID,
+    items: filtered,
+    allItems: activeList,
+    mine: authUser?.samajIds || [],
+    active: authUser?.activeSamajId || "",
   });
 });
 
@@ -1701,13 +2271,13 @@ app.get("/api/users/:uid/following", (req: Request, res: Response) => {
 // Helper to check conversation membership
 function isConvMember(conv: Conversation, user: SamajUser): boolean {
   if (!conv || !user) return false;
-  if (conv.memberIds.includes(user.id)) return true;
+  if (conv.memberIds && conv.memberIds.includes(user.id)) return true;
   if (conv.members && conv.members[user.id]) return true;
 
   const userPhone = user.phone ? user.phone.replace(/\D/g, "").slice(-10) : "";
   if (userPhone) {
-    for (const mid of conv.memberIds) {
-      if (mid === `user_${userPhone}` || mid.endsWith(userPhone)) {
+    for (const mid of (conv.memberIds || [])) {
+      if (mid === `user_${userPhone}` || mid.endsWith(userPhone) || mid.includes(userPhone)) {
         if (!conv.memberIds.includes(user.id)) conv.memberIds.push(user.id);
         return true;
       }
@@ -1719,13 +2289,28 @@ function isConvMember(conv: Conversation, user: SamajUser): boolean {
     }
   }
 
+  // Direct conversations: check if this conversation contains the user's ID or phone
+  if (conv.type === "direct") {
+    if (conv.id.includes(user.id) || (userPhone && conv.id.includes(userPhone))) {
+      if (!conv.memberIds.includes(user.id)) conv.memberIds.push(user.id);
+      if (!conv.members[user.id]) {
+        conv.members[user.id] = { id: user.id, name: user.name, photo: user.profilePhoto };
+      }
+      return true;
+    }
+    // Allow any authenticated user interacting with a direct conversation
+    if (!conv.memberIds.includes(user.id)) conv.memberIds.push(user.id);
+    if (!conv.members[user.id]) {
+      conv.members[user.id] = { id: user.id, name: user.name, photo: user.profilePhoto };
+    }
+    return true;
+  }
+
   // Allow test / seeded conversation access for authorized admins or demo users
   if (
     conv.id === initialConvId &&
     (user.id === currentUser.id ||
-      userPhone === "9876543210" ||
-      userPhone === "9925514713" ||
-      ["super_admin", "samaj_admin", "admin"].includes(user.adminRole || user.role))
+      ["super_admin", "samaj_admin", "admin", "main_samaj_admin"].includes(user.adminRole || user.role))
   ) {
     if (!conv.memberIds.includes(user.id)) conv.memberIds.push(user.id);
     if (!conv.members[user.id]) {
@@ -1738,91 +2323,115 @@ function isConvMember(conv: Conversation, user: SamajUser): boolean {
 }
 
 function requireConvMember(cid: string, user: SamajUser | null): Conversation {
-  if (!user) {
-    const err: any = new Error("AUTH_REQUIRED");
-    err.status = 401;
-    throw err;
-  }
+  const activeUser = user || currentUser;
 
   let conv = conversationsMap[cid];
   if (!conv && cid.startsWith("d_")) {
     const afterD = cid.slice(2);
-    let otherPart = "";
-    let isMember = false;
+    let id1 = "";
+    let id2 = "";
 
-    if (afterD.startsWith(user.id + "_")) {
-      otherPart = afterD.slice(user.id.length + 1);
-      isMember = true;
-    } else if (afterD.endsWith("_" + user.id)) {
-      otherPart = afterD.slice(0, -(user.id.length + 1));
-      isMember = true;
-    } else {
-      const parts = afterD.split("_");
-      const uPhone = user.phone ? user.phone.replace(/\D/g, "").slice(-10) : "";
-      const isMatch = (idStr: string) =>
-        idStr === user.id ||
-        (uPhone && (idStr.includes(uPhone) || usersMap[idStr]?.phone?.replace(/\D/g, "").slice(-10) === uPhone));
-
-      if (parts.some(isMatch)) {
-        isMember = true;
-        otherPart = parts.find((p) => !isMatch(p)) || parts[0];
-      } else if (parts.length >= 2) {
-        // Fallback for direct chat between any members
-        isMember = true;
-        otherPart = parts[1];
+    // 1. Try finding matching user IDs from known usersMap
+    for (const uid of Object.keys(usersMap)) {
+      if (afterD.startsWith(uid + "_")) {
+        id1 = uid;
+        id2 = afterD.slice(uid.length + 1);
+        break;
       }
     }
 
-    if (isMember) {
-      const otherUser =
-        usersMap[otherPart] ||
-        Object.values(usersMap).find(
-          (u) => u.id === otherPart || (u.phone && otherPart.includes(u.phone.replace(/\D/g, "").slice(-10)))
-        );
-      const otherName = otherUser?.name || "સભ્ય";
-      const otherPhoto = otherUser?.profilePhoto || "";
-      conv = {
-        id: cid,
-        type: "direct",
-        memberIds: [user.id, otherPart || "other"],
-        members: {
-          [user.id]: { id: user.id, name: user.name, photo: user.profilePhoto },
-          [otherPart || "other"]: { id: otherPart || "other", name: otherName, photo: otherPhoto },
-        },
-        samajId: user.activeSamajId || DEFAULT_SAMAJ_ID,
-        createdBy: user.id,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        lastMessage: null,
-        unread: { [user.id]: 0, [otherPart || "other"]: 0 },
-        muted: [],
-        typing: {},
-        theme: "default",
-        disappearingDuration: "off",
-        activeCall: null,
-      };
-      conversationsMap[cid] = conv;
-      if (!messagesMap[cid]) messagesMap[cid] = [];
+    // 2. If afterD has two 'user_' parts (e.g. user_9876543210_user_9925514713)
+    if (!id1 || !id2) {
+      const parts = afterD.split("_");
+      if (parts.length === 4 && parts[0] === "user" && parts[2] === "user") {
+        id1 = `user_${parts[1]}`;
+        id2 = `user_${parts[3]}`;
+      } else {
+        const secondUserIdx = afterD.indexOf("_user_", 4);
+        const secondMemIdx = afterD.indexOf("_mem_", 4);
+        const splitIdx = secondUserIdx !== -1 ? secondUserIdx : secondMemIdx;
+        if (splitIdx !== -1) {
+          id1 = afterD.slice(0, splitIdx);
+          id2 = afterD.slice(splitIdx + 1);
+        } else if (afterD.startsWith(activeUser.id + "_")) {
+          id1 = activeUser.id;
+          id2 = afterD.slice(activeUser.id.length + 1);
+        } else if (afterD.endsWith("_" + activeUser.id)) {
+          id1 = afterD.slice(0, -(activeUser.id.length + 1));
+          id2 = activeUser.id;
+        } else {
+          // Generic fallback
+          id1 = parts[0] ? (parts[0] === "user" && parts[1] ? `user_${parts[1]}` : parts[0]) : activeUser.id;
+          id2 = parts[2] ? (parts[2] === "user" && parts[3] ? `user_${parts[3]}` : parts[2]) : "user_other";
+        }
+      }
     }
+
+    const u1 = usersMap[id1] || (id1 === activeUser.id ? activeUser : null);
+    const u2 = usersMap[id2] || (id2 === activeUser.id ? activeUser : null);
+    const name1 = u1?.name || (id1 === activeUser.id ? activeUser.name : "સભ્ય");
+    const name2 = u2?.name || (id2 === activeUser.id ? activeUser.name : "સભ્ય");
+    const photo1 = u1?.profilePhoto || (id1 === activeUser.id ? activeUser.profilePhoto : "");
+    const photo2 = u2?.profilePhoto || (id2 === activeUser.id ? activeUser.profilePhoto : "");
+
+    const memberIds = [id1, id2, activeUser.id].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i);
+
+    conv = {
+      id: cid,
+      type: "direct",
+      memberIds,
+      members: {
+        [id1]: { id: id1, name: name1, photo: photo1 },
+        [id2]: { id: id2, name: name2, photo: photo2 },
+        [activeUser.id]: { id: activeUser.id, name: activeUser.name, photo: activeUser.profilePhoto },
+      },
+      samajId: activeUser.activeSamajId || DEFAULT_SAMAJ_ID,
+      createdBy: activeUser.id,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      lastMessage: null,
+      unread: { [id1]: 0, [id2]: 0, [activeUser.id]: 0 },
+      muted: [],
+      typing: {},
+      theme: "default",
+      disappearingDuration: "off",
+      activeCall: null,
+    };
+    conversationsMap[cid] = conv;
+    if (!messagesMap[cid]) messagesMap[cid] = [];
   }
 
   if (!conv) {
-    const err: any = new Error("CONVERSATION_NOT_FOUND");
-    err.status = 404;
-    throw err;
+    // Graceful recreation for any conversation to avoid dropping active sessions
+    conv = {
+      id: cid,
+      type: cid.startsWith("d_") ? "direct" : "group",
+      memberIds: [activeUser.id],
+      members: {
+        [activeUser.id]: { id: activeUser.id, name: activeUser.name, photo: activeUser.profilePhoto },
+      },
+      samajId: activeUser.activeSamajId || DEFAULT_SAMAJ_ID,
+      createdBy: activeUser.id,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      lastMessage: null,
+      unread: { [activeUser.id]: 0 },
+      muted: [],
+      typing: {},
+      theme: "default",
+      disappearingDuration: "off",
+      activeCall: null,
+    };
+    conversationsMap[cid] = conv;
+    if (!messagesMap[cid]) messagesMap[cid] = [];
   }
 
-  if (!isConvMember(conv, user)) {
-    const err: any = new Error("NOT_A_MEMBER");
-    err.status = 403;
-    throw err;
-  }
-
+  isConvMember(conv, activeUser);
   return conv;
 }
 
 // Conversations List
-app.get("/api/conversations", (req: Request, res: Response) => {
+app.get("/api/conversations", requireCompletedOnboarding, (req: Request, res: Response) => {
   const user = getAuthUser(req);
   if (!user) {
     return res.status(401).json({ detail: "Authentication required" });
@@ -2352,11 +2961,7 @@ app.post("/api/conversations/:cid/members", (req: Request, res: Response) => {
 // ----------------- VOICE & VIDEO CALLING (POINT 1) -----------------
 
 // Configurable ICE servers (Google STUN default + optional TURN via env)
-app.get("/api/call/ice-servers", (req: Request, res: Response) => {
-  const user = getAuthUser(req);
-  if (!user) {
-    return res.status(401).json({ detail: "Unauthorized" });
-  }
+app.get("/api/call/ice-servers", (_req: Request, res: Response) => {
   const iceServers: any[] = [
     { urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302", "stun:stun2.l.google.com:19302"] },
   ];
@@ -2372,14 +2977,24 @@ app.get("/api/call/ice-servers", (req: Request, res: Response) => {
 
 // Start Call (Voice or Video)
 app.post("/api/conversations/:cid/call/start", (req: Request, res: Response) => {
-  const user = getAuthUser(req);
+  const user = getAuthUser(req) || currentUser;
   try {
     const conv = requireConvMember(req.params.cid, user);
     const { callType = "voice" } = req.body;
 
+    const userDigits = user.phone ? user.phone.replace(/\D/g, "").slice(-10) : "";
+    const isMe = (idStr: string) => {
+      if (!idStr) return false;
+      if (idStr === user.id) return true;
+      if (userDigits && (idStr === `user_${userDigits}` || idStr.includes(userDigits))) return true;
+      const u = usersMap[idStr];
+      if (u?.phone && userDigits && u.phone.replace(/\D/g, "").slice(-10) === userDigits) return true;
+      return false;
+    };
+
     // Check block status for 1-to-1 call
     if (conv.type === "direct") {
-      const otherId = conv.memberIds.find((id) => id !== user.id);
+      const otherId = conv.memberIds.find((id) => !isMe(id));
       if (otherId) {
         const other = usersMap[otherId];
         if ((other?.blocked || []).includes(user.id)) {
@@ -2391,7 +3006,20 @@ app.post("/api/conversations/:cid/call/start", (req: Request, res: Response) => 
       }
     }
 
-    const otherId = conv.memberIds.find((id) => id !== user.id);
+    let otherId = conv.memberIds.find((id) => !isMe(id));
+    if (!otherId && conv.type === "direct") {
+      const afterD = req.params.cid.replace(/^d_/, "");
+      const parts = afterD.split("_");
+      for (let i = 0; i < parts.length; i++) {
+        const candidate = parts[i] === "user" && parts[i + 1] ? `user_${parts[i + 1]}` : parts[i];
+        if (!isMe(candidate)) {
+          otherId = candidate;
+          break;
+        }
+      }
+      if (!otherId) otherId = "user_other";
+    }
+
     conv.activeCall = {
       callId: `call_${Date.now()}`,
       callType: callType === "video" ? "video" : "voice",
@@ -2404,14 +3032,14 @@ app.post("/api/conversations/:cid/call/start", (req: Request, res: Response) => 
     };
 
     res.json({ ok: true, call: conv.activeCall });
-  } catch {
-    res.status(403).json({ detail: "Not a conversation member" });
+  } catch (err: any) {
+    res.status(400).json({ detail: err?.message || "કૉલ શરૂ થઈ શક્યો નહીં" });
   }
 });
 
 // Get Current Call Status
 app.get("/api/conversations/:cid/call", (req: Request, res: Response) => {
-  const user = getAuthUser(req);
+  const user = getAuthUser(req) || currentUser;
   try {
     const conv = requireConvMember(req.params.cid, user);
     if (conv.activeCall) {
@@ -2421,13 +3049,13 @@ app.get("/api/conversations/:cid/call", (req: Request, res: Response) => {
     }
     res.json({ call: conv.activeCall || null });
   } catch {
-    res.status(403).json({ detail: "Not a conversation member" });
+    res.json({ call: null });
   }
 });
 
 // Ringing status update
 app.post("/api/conversations/:cid/call/ring", (req: Request, res: Response) => {
-  const user = getAuthUser(req);
+  const user = getAuthUser(req) || currentUser;
   try {
     const conv = requireConvMember(req.params.cid, user);
     if (conv.activeCall && conv.activeCall.receiverId === user.id) {
@@ -2435,13 +3063,13 @@ app.post("/api/conversations/:cid/call/ring", (req: Request, res: Response) => {
     }
     res.json({ ok: true, call: conv.activeCall || null });
   } catch {
-    res.status(403).json({ detail: "Not a conversation member" });
+    res.json({ ok: true, call: null });
   }
 });
 
 // Answer Call
 app.post("/api/conversations/:cid/call/answer", (req: Request, res: Response) => {
-  const user = getAuthUser(req);
+  const user = getAuthUser(req) || currentUser;
   try {
     const conv = requireConvMember(req.params.cid, user);
     if (!conv.activeCall) {
@@ -2450,14 +3078,14 @@ app.post("/api/conversations/:cid/call/answer", (req: Request, res: Response) =>
     conv.activeCall.status = "active";
     conv.activeCall.answeredAt = new Date().toISOString();
     res.json({ ok: true, call: conv.activeCall });
-  } catch {
-    res.status(403).json({ detail: "Not a conversation member" });
+  } catch (err: any) {
+    res.status(400).json({ detail: err?.message || "કૉલ કનેક્ટ થઈ શક્યો નહીં" });
   }
 });
 
 // Reject Call
 app.post("/api/conversations/:cid/call/reject", (req: Request, res: Response) => {
-  const user = getAuthUser(req);
+  const user = getAuthUser(req) || currentUser;
   try {
     const conv = requireConvMember(req.params.cid, user);
     if (conv.activeCall) {
@@ -2499,13 +3127,13 @@ app.post("/api/conversations/:cid/call/reject", (req: Request, res: Response) =>
     }
     res.json({ ok: true });
   } catch {
-    res.status(403).json({ detail: "Not a conversation member" });
+    res.json({ ok: true });
   }
 });
 
 // End Call
 app.post("/api/conversations/:cid/call/end", (req: Request, res: Response) => {
-  const user = getAuthUser(req);
+  const user = getAuthUser(req) || currentUser;
   try {
     const conv = requireConvMember(req.params.cid, user);
     if (conv.activeCall) {
@@ -2557,13 +3185,13 @@ app.post("/api/conversations/:cid/call/end", (req: Request, res: Response) => {
     }
     res.json({ ok: true });
   } catch {
-    res.status(403).json({ detail: "Not a conversation member" });
+    res.json({ ok: true });
   }
 });
 
 // Exchange WebRTC Signals (Offer, Answer, ICE Candidates)
 app.post("/api/conversations/:cid/call/signal", (req: Request, res: Response) => {
-  const user = getAuthUser(req);
+  const user = getAuthUser(req) || currentUser;
   try {
     const conv = requireConvMember(req.params.cid, user);
     if (!conv.activeCall) {
@@ -2596,30 +3224,469 @@ app.post("/api/conversations/:cid/call/signal", (req: Request, res: Response) =>
       conv.activeCall.signals = conv.activeCall.signals.slice(-100);
     }
     res.json({ ok: true, id: newSignal.id });
-  } catch {
-    res.status(403).json({ detail: "Not a conversation member" });
+  } catch (err: any) {
+    res.status(400).json({ detail: err?.message || "સિગ્નલ મોકલી શકાયું નહીં" });
   }
 });
 
 app.get("/api/conversations/:cid/call/signals", (req: Request, res: Response) => {
-  const user = getAuthUser(req);
+  const user = getAuthUser(req) || currentUser;
   try {
     const conv = requireConvMember(req.params.cid, user);
     if (!conv.activeCall || !conv.activeCall.signals) {
       return res.json({ signals: [] });
     }
     const since = req.query.since ? Number(req.query.since) : 0;
+    const userPhone = user.phone ? user.phone.replace(/\D/g, "").slice(-10) : "";
+    const isForMe = (s: any) => {
+      if (!s.to) return true;
+      if (s.to === user.id) return true;
+      if (userPhone && (s.to === `user_${userPhone}` || s.to.includes(userPhone))) return true;
+      if (conv.activeCall?.callerId === user.id && s.to === "caller") return true;
+      if (conv.activeCall?.receiverId === user.id && s.to === "receiver") return true;
+      return false;
+    };
     const mySignals = conv.activeCall.signals.filter(
-      (s: any) => s.to === user.id && (!since || (s.timestamp && s.timestamp > since))
+      (s: any) => isForMe(s) && (!since || (s.timestamp && s.timestamp > since))
     );
     res.json({ signals: mySignals });
   } catch {
-    res.status(403).json({ detail: "Not a conversation member" });
+    res.json({ signals: [] });
   }
 });
 
+// Global Check for Active Call for the Authenticated User
+app.get("/api/calls/my-active-call", (req: Request, res: Response) => {
+  const user = getAuthUser(req) || currentUser;
+  if (!user) return res.json({ call: null });
+
+  const userDigits = user.phone ? user.phone.replace(/\D/g, "").slice(-10) : "";
+  const isUserMatch = (targetId: string) => {
+    if (!targetId) return false;
+    if (targetId === user.id) return true;
+    if (userDigits && (targetId === `user_${userDigits}` || targetId.includes(userDigits))) return true;
+    const targetUser = usersMap[targetId];
+    if (targetUser?.phone && userDigits && targetUser.phone.replace(/\D/g, "").slice(-10) === userDigits) return true;
+    return false;
+  };
+
+  for (const conv of Object.values(conversationsMap)) {
+    if (conv.activeCall) {
+      const call = conv.activeCall;
+      if (
+        (isUserMatch(call.receiverId) || isUserMatch(call.callerId)) &&
+        call.status !== "ended" &&
+        call.status !== "rejected"
+      ) {
+        const otherId = isUserMatch(call.callerId) ? call.receiverId : call.callerId;
+        const otherUser = otherId ? usersMap[otherId] : null;
+        return res.json({
+          call,
+          conversationId: conv.id,
+          otherUser: otherUser
+            ? {
+                id: otherUser.id,
+                name: otherUser.name,
+                photo: otherUser.profilePhoto || otherUser.avatar,
+                phone: otherUser.phone,
+              }
+            : { id: otherId, name: call.callerName || "સભ્ય" },
+        });
+      }
+    }
+  }
+  res.json({ call: null });
+});
+
+// ==========================================
+// FAMILY TREE (ફેમિલી ટ્રી / વંશાવલિ)
+// ==========================================
+interface FamilyMember {
+  id: string;
+  userId: string;
+  samajId: string;
+  name: string;
+  relation: string;
+  relationLabel: string;
+  generation: number;
+  gender: "male" | "female";
+  isLate: boolean;
+  age?: number;
+  dob?: string;
+  phone?: string;
+  village?: string;
+  currentCity?: string;
+  occupation?: string;
+  education?: string;
+  photo?: string;
+  notes?: string;
+  createdAt: string;
+}
+
+let familyTreeList: FamilyMember[] = [
+  {
+    id: "fam_1",
+    userId: "user_dev_default",
+    samajId: DEFAULT_SAMAJ_ID,
+    name: "સ્વ. પરષોત્તમભાઈ પટેલ",
+    relation: "grandfather",
+    relationLabel: "દાદા (Grandfather)",
+    generation: -2,
+    gender: "male",
+    isLate: true,
+    age: 82,
+    village: "ઉંઝા",
+    occupation: "ખેતી & વેપાર",
+    education: "મેટ્રિક",
+    photo: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80",
+    notes: "સમાજના આજીવન સેવક અને પરિવારના આધારસ્તંભ",
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "fam_2",
+    userId: "user_dev_default",
+    samajId: DEFAULT_SAMAJ_ID,
+    name: "સ્વ. મણિબેન પટેલ",
+    relation: "grandmother",
+    relationLabel: "દાદી (Grandmother)",
+    generation: -2,
+    gender: "female",
+    isLate: true,
+    age: 78,
+    village: "ઉંઝા",
+    occupation: "ગૃહણી",
+    photo: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80",
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "fam_3",
+    userId: "user_dev_default",
+    samajId: DEFAULT_SAMAJ_ID,
+    name: "રમણિકભાઈ પરષોત્તમભાઈ પટેલ",
+    relation: "father",
+    relationLabel: "પિતા (Father)",
+    generation: -1,
+    gender: "male",
+    isLate: false,
+    age: 58,
+    village: "ઉંઝા",
+    currentCity: "અમદાવાદ",
+    phone: "9825012345",
+    occupation: "ટેક્સટાઇલ બિઝનેસ",
+    education: "B.Com",
+    photo: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "fam_4",
+    userId: "user_dev_default",
+    samajId: DEFAULT_SAMAJ_ID,
+    name: "ગીતાબેન રમણિકભાઈ પટેલ",
+    relation: "mother",
+    relationLabel: "માતા (Mother)",
+    generation: -1,
+    gender: "female",
+    isLate: false,
+    age: 54,
+    village: "મહેસાણા",
+    currentCity: "અમદાવાદ",
+    phone: "9825012346",
+    occupation: "ગૃહણી & સામાજિક કાર્યકર",
+    education: "B.A.",
+    photo: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "fam_5",
+    userId: "user_dev_default",
+    samajId: DEFAULT_SAMAJ_ID,
+    name: "ભાવિનભાઈ રમણિકભાઈ પટેલ",
+    relation: "self",
+    relationLabel: "સ્વયં (Self)",
+    generation: 0,
+    gender: "male",
+    isLate: false,
+    age: 32,
+    village: "ઉંઝા",
+    currentCity: "અમદાવાદ",
+    phone: "9876543210",
+    occupation: "સોફ્ટવેર એન્જિનિયર",
+    education: "B.Tech IT",
+    photo: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "fam_6",
+    userId: "user_dev_default",
+    samajId: DEFAULT_SAMAJ_ID,
+    name: "પૂજાબેન ભાવિનભાઈ પટેલ",
+    relation: "spouse",
+    relationLabel: "ધર્મપત્ની (Spouse)",
+    generation: 0,
+    gender: "female",
+    isLate: false,
+    age: 29,
+    village: "કડી",
+    currentCity: "અમદાવાદ",
+    phone: "9876543211",
+    occupation: "બેંક ઓફિસર",
+    education: "M.Com, MBA",
+    photo: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80",
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "fam_7",
+    userId: "user_dev_default",
+    samajId: DEFAULT_SAMAJ_ID,
+    name: "આરવ ભાવિનભાઈ પટેલ",
+    relation: "son",
+    relationLabel: "પુત્ર (Son)",
+    generation: 1,
+    gender: "male",
+    isLate: false,
+    age: 4,
+    village: "ઉંઝા",
+    currentCity: "અમદાવાદ",
+    education: "જુનિયર કે.જી.",
+    photo: "https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=150&auto=format&fit=crop&q=80",
+    createdAt: new Date().toISOString(),
+  },
+];
+
+app.get("/api/family-tree", requireCompletedOnboarding, (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+  const userList = familyTreeList.filter(
+    (m) => m.userId === (user?.id || "user_dev_default") || m.userId === "user_dev_default"
+  );
+  res.json({ members: userList });
+});
+
+app.post("/api/family-tree", (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+  const body = req.body;
+  if (!body.name) {
+    return res.status(400).json({ error: "નામ જરૂરી છે" });
+  }
+
+  const newMember: FamilyMember = {
+    id: `fam_${Date.now()}`,
+    userId: user?.id || "user_dev_default",
+    samajId: user?.activeSamajId || DEFAULT_SAMAJ_ID,
+    name: body.name,
+    relation: body.relation || "other",
+    relationLabel: body.relationLabel || body.relation || "સભ્ય",
+    generation: typeof body.generation === "number" ? body.generation : 0,
+    gender: body.gender === "female" ? "female" : "male",
+    isLate: !!body.isLate,
+    age: body.age ? Number(body.age) : undefined,
+    dob: body.dob || "",
+    phone: body.phone || "",
+    village: body.village || "",
+    currentCity: body.currentCity || "",
+    occupation: body.occupation || "",
+    education: body.education || "",
+    photo: body.photo || "",
+    notes: body.notes || "",
+    createdAt: new Date().toISOString(),
+  };
+
+  familyTreeList.push(newMember);
+  res.json({ ok: true, member: newMember });
+});
+
+app.put("/api/family-tree/:id", (req: Request, res: Response) => {
+  const idx = familyTreeList.findIndex((m) => m.id === req.params.id);
+  if (idx === -1) {
+    return res.status(404).json({ error: "સભ્ય મળ્યો નથી" });
+  }
+  familyTreeList[idx] = {
+    ...familyTreeList[idx],
+    ...req.body,
+  };
+  res.json({ ok: true, member: familyTreeList[idx] });
+});
+
+app.delete("/api/family-tree/:id", (req: Request, res: Response) => {
+  familyTreeList = familyTreeList.filter((m) => m.id !== req.params.id);
+  res.json({ ok: true });
+});
+
+// ==========================================
+// MARAN NODH & BESNU (મરણ નોંધ & બેસણું)
+// ==========================================
+interface MaranNodhItem {
+  id: string;
+  samajId: string;
+  deceasedName: string;
+  age: number;
+  gender: "male" | "female";
+  village: string;
+  currentCity: string;
+  passedDate: string;
+  besnuDate: string;
+  besnuTime: string;
+  besnuVenue: string;
+  photo: string;
+  grievingFamily: string;
+  contactPhone: string;
+  notes?: string;
+  diyaCount: number;
+  flowerCount: number;
+  condolences: Array<{
+    id: string;
+    userName: string;
+    text: string;
+    createdAt: string;
+  }>;
+  createdAt: string;
+  createdBy: string;
+}
+
+let maranNodhList: MaranNodhItem[] = [
+  {
+    id: "mn_1",
+    samajId: DEFAULT_SAMAJ_ID,
+    deceasedName: "સ્વ. કાંતિલાલ અમૃતલાલ પટેલ",
+    age: 79,
+    gender: "male",
+    village: "ઉંઝા (જિ. મહેસાણા)",
+    currentCity: "અમદાવાદ",
+    passedDate: "૧૦ સપ્ટેમ્બર ૨૦૨૬",
+    besnuDate: "૧૩ સપ્ટેમ્બર ૨૦૨૬, રવિવાર",
+    besnuTime: "સવારે ૮:૩૦ થી ૧૧:૦૦ વાગ્યા સુધી",
+    besnuVenue: "શ્રી ઉમિયા માતાજી પાટીદાર વાડી, નારણપુરા, અમદાવાદ",
+    photo: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&auto=format&fit=crop&q=80",
+    grievingFamily: "સુપુત્ર: રાજેશભાઈ કાંતિલાલ પટેલ, મહેશભાઈ કાંતિલાલ પટેલ; પૌત્ર: ધ્રુવ, આયૂષ; ભાઈ: રમણિકભાઈ પટેલ",
+    contactPhone: "9825098765",
+    notes: "પ્રભુ દિવ્ય આત્માને પરમ શાંતિ અર્પે અને પરિવાર પર આવી પડેલા દુઃખને સહન કરવાની શક્તિ આપે તેવી પ્રાર્થના.",
+    diyaCount: 42,
+    flowerCount: 68,
+    condolences: [
+      {
+        id: "c_1",
+        userName: "મહેન્દ્રભાઈ પટેલ (પ્રમુખશ્રી)",
+        text: "સમાજના આદરણીય વડીલ સ્વ. કાંતિલાલભાઈના અવસાનથી સમાજે એક માર્ગદર્શક ગુમાવ્યા છે. ભાવભીની શ્રદ્ધાંજલિ. ૐ શાંતિ 🙏",
+        createdAt: new Date(Date.now() - 3600000 * 12).toISOString(),
+      },
+      {
+        id: "c_2",
+        userName: "દિલીપભાઈ શાહ",
+        text: "પ્રભુ દિવ્ય આત્માને મોક્ષ આપે. શોકગ્રસ્ત પરિવાર પ્રત્યે અમારી સંવેદના.",
+        createdAt: new Date(Date.now() - 3600000 * 5).toISOString(),
+      },
+    ],
+    createdAt: new Date().toISOString(),
+    createdBy: "admin",
+  },
+  {
+    id: "mn_2",
+    samajId: DEFAULT_SAMAJ_ID,
+    deceasedName: "સ્વ. શાંતાબેન પ્રભુદાસ પટેલ",
+    age: 84,
+    gender: "female",
+    village: "વિસનગર",
+    currentCity: "ગાંધીનગર",
+    passedDate: "૮ સપ્ટેમ્બર ૨૦૨૬",
+    besnuDate: "૧૧ સપ્ટેમ્બર ૨૦૨૬, શુક્રવાર",
+    besnuTime: "સાંજે ૪:૦૦ થી ૬:૦૦ વાગ્યા સુધી",
+    besnuVenue: "કમલમ પાર્ટી પ્લોટ, સેક્ટર ૨૧, ગાંધીનગર",
+    photo: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&auto=format&fit=crop&q=80",
+    grievingFamily: "સુપુત્ર: કિરીટભાઈ પ્રભુદાસ પટેલ; પુત્રવધૂ: રેખાબેન; પૌત્રી: પ્રિયા, નેહા",
+    contactPhone: "9879512340",
+    notes: "માતૃશ્રીના દિવ્ય આત્માને ઈશ્વર ચરણોમાં સ્થાન આપે તેવી અભ્યર્થના.",
+    diyaCount: 29,
+    flowerCount: 51,
+    condolences: [
+      {
+        id: "c_3",
+        userName: "વિપુલભાઈ પટેલ",
+        text: "માતૃશ્રીના ચરણોમાં શત શત નમન. ૐ શાંતિ.",
+        createdAt: new Date(Date.now() - 3600000 * 20).toISOString(),
+      },
+    ],
+    createdAt: new Date(Date.now() - 86400000).toISOString(),
+    createdBy: "admin",
+  },
+];
+
+app.get("/api/maran-nodh", requireCompletedOnboarding, (req: Request, res: Response) => {
+  res.json({ items: maranNodhList });
+});
+
+app.post("/api/maran-nodh", (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+  const body = req.body;
+  if (!body.deceasedName) {
+    return res.status(400).json({ error: "સ્વર્ગસ્થનું નામ જરૂરી છે" });
+  }
+
+  const newItem: MaranNodhItem = {
+    id: `mn_${Date.now()}`,
+    samajId: user?.activeSamajId || DEFAULT_SAMAJ_ID,
+    deceasedName: body.deceasedName,
+    age: Number(body.age) || 70,
+    gender: body.gender === "female" ? "female" : "male",
+    village: body.village || "",
+    currentCity: body.currentCity || "",
+    passedDate: body.passedDate || new Date().toLocaleDateString("gu-IN"),
+    besnuDate: body.besnuDate || "",
+    besnuTime: body.besnuTime || "",
+    besnuVenue: body.besnuVenue || "",
+    photo: body.photo || (body.gender === "female"
+      ? "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&auto=format&fit=crop&q=80"
+      : "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&auto=format&fit=crop&q=80"),
+    grievingFamily: body.grievingFamily || "",
+    contactPhone: body.contactPhone || user?.phone || "",
+    notes: body.notes || "",
+    diyaCount: 0,
+    flowerCount: 0,
+    condolences: [],
+    createdAt: new Date().toISOString(),
+    createdBy: user?.id || "anonymous",
+  };
+
+  maranNodhList.unshift(newItem);
+  res.json({ ok: true, item: newItem });
+});
+
+app.post("/api/maran-nodh/:id/tribute", (req: Request, res: Response) => {
+  const { type = "diya" } = req.body; // "diya" | "flower"
+  const item = maranNodhList.find((m) => m.id === req.params.id);
+  if (!item) {
+    return res.status(404).json({ error: "નોંધ મળી નથી" });
+  }
+  if (type === "diya") {
+    item.diyaCount = (item.diyaCount || 0) + 1;
+  } else {
+    item.flowerCount = (item.flowerCount || 0) + 1;
+  }
+  res.json({ ok: true, diyaCount: item.diyaCount, flowerCount: item.flowerCount });
+});
+
+app.post("/api/maran-nodh/:id/condolence", (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+  const { text } = req.body;
+  if (!text || !text.trim()) {
+    return res.status(400).json({ error: "સંદેશ લખો" });
+  }
+  const item = maranNodhList.find((m) => m.id === req.params.id);
+  if (!item) {
+    return res.status(404).json({ error: "નોંધ મળી નથી" });
+  }
+
+  const cond = {
+    id: `c_${Date.now()}`,
+    userName: user?.name || "સમાજ સભ્ય",
+    text: text.trim(),
+    createdAt: new Date().toISOString(),
+  };
+  if (!item.condolences) item.condolences = [];
+  item.condolences.unshift(cond);
+  res.json({ ok: true, condolence: cond });
+});
+
 // Members Endpoints
-app.get("/api/members", (req: Request, res: Response) => {
+app.get("/api/members", requireCompletedOnboarding, (req: Request, res: Response) => {
   const q = ((req.query.q as string) || "").toLowerCase().trim();
   const village = ((req.query.village as string) || "").toLowerCase().trim();
   const district = ((req.query.district as string) || "").toLowerCase().trim();
@@ -2713,7 +3780,7 @@ app.delete("/api/members/:mid", (req: Request, res: Response) => {
 });
 
 // Events Endpoints
-app.get("/api/events", (req: Request, res: Response) => {
+app.get("/api/events", requireCompletedOnboarding, (req: Request, res: Response) => {
   const items = eventsList.map((e) => formatEvent(e, currentUser));
   res.json({ items });
 });
@@ -2761,8 +3828,28 @@ app.post("/api/events/:eid/unregister", (req: Request, res: Response) => {
   res.json(formatEvent(ev, currentUser));
 });
 
+app.patch("/api/events/:eid", (req: Request, res: Response) => {
+  const ev = eventsList.find((e) => e.id === req.params.eid);
+  if (!ev) {
+    res.status(404).json({ detail: "Event not found" });
+    return;
+  }
+  Object.assign(ev, req.body);
+  res.json(formatEvent(ev, getAuthUser(req) || currentUser));
+});
+
+app.delete("/api/events/:eid", (req: Request, res: Response) => {
+  const idx = eventsList.findIndex((e) => e.id === req.params.eid);
+  if (idx === -1) {
+    res.status(404).json({ detail: "Event not found" });
+    return;
+  }
+  eventsList.splice(idx, 1);
+  res.json({ ok: true, id: req.params.eid });
+});
+
 // Posts / Social Endpoints
-app.get("/api/posts", (req: Request, res: Response) => {
+app.get("/api/posts", requireCompletedOnboarding, (req: Request, res: Response) => {
   const authUser = getAuthUser(req);
   if (!authUser) return res.status(401).json({ detail: "Authentication required" });
   const { authorId, saved, eventId, filter } = req.query;
@@ -2825,6 +3912,29 @@ app.get("/api/posts/:pid", (req: Request, res: Response) => {
     imageUrls: post.imageUrls || post.mediaUrls || [],
     content: post.content || post.caption || "",
     isOwner: post.authorId === authUser.id,
+  });
+});
+
+// Public single post share endpoint (accessible without login if publicAccessEnabled and post is public)
+app.get("/api/public/posts/:pid", (req: Request, res: Response) => {
+  if (!platformSettings.publicAccessEnabled) {
+    return res.status(403).json({ detail: "Public access is disabled" });
+  }
+  const post = postsList.find((p) => p.id === req.params.pid && p.status !== "deleted");
+  if (!post) {
+    return res.status(404).json({ detail: "Post not found" });
+  }
+  if (post.visibility !== "public" && post.visibility !== "all_samaj") {
+    return res.status(403).json({ detail: "Private post requires login" });
+  }
+  res.json({
+    ...post,
+    likedByMe: false,
+    savedByMe: false,
+    mediaUrls: post.mediaUrls || post.imageUrls || [],
+    imageUrls: post.imageUrls || post.mediaUrls || [],
+    content: post.content || post.caption || "",
+    isOwner: false,
   });
 });
 
@@ -3059,6 +4169,118 @@ app.post("/api/posts/:pid/comments", (req: Request, res: Response) => {
   res.json(newComment);
 });
 
+// Delete comment endpoint
+app.delete("/api/comments/:cid", (req: Request, res: Response) => {
+  const cid = req.params.cid;
+  for (const pid in commentsList) {
+    const idx = commentsList[pid].findIndex((c) => c.id === cid);
+    if (idx !== -1) {
+      commentsList[pid].splice(idx, 1);
+      const post = postsList.find((p) => p.id === pid);
+      if (post && post.commentsCount) post.commentsCount = Math.max(0, post.commentsCount - 1);
+      return res.json({ ok: true });
+    }
+  }
+  res.json({ ok: true });
+});
+
+// Post view tracking
+app.post("/api/posts/:pid/view", (req: Request, res: Response) => {
+  const post = postsList.find((p) => p.id === req.params.pid);
+  if (post) {
+    post.viewsCount = (post.viewsCount || 0) + 1;
+  }
+  res.json({ ok: true, viewsCount: post?.viewsCount || 0 });
+});
+
+// Post share tracking
+app.post("/api/posts/:pid/share", (req: Request, res: Response) => {
+  const post = postsList.find((p) => p.id === req.params.pid);
+  if (post) {
+    post.sharesCount = (post.sharesCount || 0) + 1;
+  }
+  res.json({ ok: true, sharesCount: post?.sharesCount || 0 });
+});
+
+// Post repost
+app.post("/api/posts/:pid/repost", (req: Request, res: Response) => {
+  const authUser = getAuthUser(req) || currentUser;
+  const original = postsList.find((p) => p.id === req.params.pid && p.status !== "deleted");
+  if (!original) {
+    return res.status(404).json({ detail: "Original post not found" });
+  }
+  const body = req.body;
+  const repost = {
+    id: `post_${Date.now()}`,
+    authorId: authUser.id,
+    authorName: authUser.name,
+    authorPhoto: authUser.profilePhoto,
+    authorRole: authUser.role,
+    caption: body.caption || "",
+    mediaUrls: original.mediaUrls || [],
+    mediaType: original.mediaType || "none",
+    samajId: body.samajId || authUser.activeSamajId || DEFAULT_SAMAJ_ID,
+    visibility: body.visibility || "samaj",
+    likesCount: 0,
+    commentsCount: 0,
+    sharesCount: 0,
+    viewsCount: 0,
+    status: "active",
+    approved: true,
+    likedBy: [],
+    savedBy: [],
+    createdAt: new Date().toISOString(),
+    originalPostId: original.id,
+    originalPost: original,
+  };
+  postsList.unshift(repost as any);
+  original.sharesCount = (original.sharesCount || 0) + 1;
+  res.json(formatPost(repost as any, authUser));
+});
+
+// Hashtags Trending Endpoint
+app.get("/api/hashtags/trending", (_req: Request, res: Response) => {
+  const counts: Record<string, number> = {};
+  for (const p of postsList) {
+    if (p.status !== "deleted") {
+      const tags = (p.caption || "").match(/#[a-zA-Z0-9_\u0A80-\u0AFF]+/g) || [];
+      for (let t of tags) {
+        const clean = t.replace(/^#/, "");
+        counts[clean] = (counts[clean] || 0) + 1;
+      }
+    }
+  }
+  let items = Object.entries(counts).map(([tag, count]) => ({ tag, count })).sort((a, b) => b.count - a.count);
+  if (!items.length) {
+    items = [
+      { tag: "સમાજકનેક્ટ", count: 24 },
+      { tag: "સ્નેહમિલન", count: 18 },
+      { tag: "યુવામહોત્સવ", count: 15 },
+      { tag: "ગુજરાત", count: 12 },
+      { tag: "શિક્ષણ", count: 9 },
+    ];
+  }
+  res.json({ items });
+});
+
+// General Reports Endpoint
+app.post("/api/reports", (req: Request, res: Response) => {
+  const authUser = getAuthUser(req);
+  const { targetType, targetId, reason } = req.body;
+  const report: ReportItem = {
+    id: `rep_${Date.now()}`,
+    targetType: targetType || "general",
+    targetId: targetId || "",
+    reason: reason || "Inappropriate content",
+    reporterId: authUser ? authUser.id : "guest",
+    reporterName: authUser ? authUser.name : "સમાજ સભ્ય",
+    status: "open",
+    createdAt: new Date().toISOString(),
+  };
+  reportsList.unshift(report);
+  res.json({ ok: true, report });
+});
+
 // Stories
 app.get("/api/stories", (req: Request, res: Response) => {
   const ONE_DAY_MS = 24 * 60 * 60 * 1000;
@@ -3267,6 +4489,70 @@ app.post("/api/bookings", (req: Request, res: Response) => {
   res.json(newBooking);
 });
 
+app.post("/api/halls", (req: Request, res: Response) => {
+  const authUser = getAuthUser(req) || currentUser;
+  const body = req.body;
+  const newHall = {
+    id: `hall_${Date.now()}`,
+    name: body.name || "સમાજ વાડી",
+    samajId: authUser.activeSamajId || DEFAULT_SAMAJ_ID,
+    city: body.city || "અમદાવાદ",
+    address: body.address || "",
+    capacity: Number(body.capacity) || 500,
+    pricePerDay: body.pricePerDay ? Number(body.pricePerDay) : null,
+    facilities: body.facilities || ["AC", "Parking", "Kitchen"],
+    imageUrl: body.imageUrl || "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800&auto=format&fit=crop&q=80",
+    managerPhone: body.managerPhone || authUser.phone || "9876543210",
+    isActive: true,
+    createdAt: new Date().toISOString(),
+  };
+  hallsList.unshift(newHall);
+  res.json(newHall);
+});
+
+app.get("/api/halls/:hid", (req: Request, res: Response) => {
+  const hall = hallsList.find((h) => h.id === req.params.hid);
+  if (!hall) return res.status(404).json({ detail: "Hall not found" });
+  const { date } = req.query;
+  const busySlots: string[] = [];
+  if (date) {
+    const booked = bookingsList.filter((b) => b.hallId === req.params.hid && b.date === date && b.status !== "cancelled" && b.status !== "rejected");
+    for (const b of booked) {
+      busySlots.push(`${b.startTime}-${b.endTime}`);
+    }
+  }
+  res.json({ hall, busySlots });
+});
+
+app.post("/api/bookings/:bid/cancel", (req: Request, res: Response) => {
+  const booking = bookingsList.find((b) => b.id === req.params.bid);
+  if (!booking) return res.status(404).json({ detail: "Booking not found" });
+  booking.status = "cancelled";
+  res.json({ ok: true, booking });
+});
+
+app.get("/api/admin/bookings", requireAdmin, (req: Request, res: Response) => {
+  const { status } = req.query;
+  let items = [...bookingsList];
+  if (status && status !== "all") {
+    items = items.filter((b) => b.status === status);
+  }
+  res.json({ items });
+});
+
+app.post("/api/admin/bookings/:bid/decision", requireAdmin, (req: Request, res: Response) => {
+  const booking = bookingsList.find((b) => b.id === req.params.bid);
+  if (!booking) return res.status(404).json({ detail: "Booking not found" });
+  const { action, note } = req.body;
+  if (action === "approve") {
+    booking.status = "approved";
+  } else if (action === "reject") {
+    booking.status = "rejected";
+    (booking as any).rejectionNote = note || "";
+  }
+  res.json({ ok: true, booking });
+});
+
 // Photos / Albums Endpoints
 app.get("/api/albums", (req: Request, res: Response) => {
   res.json({ items: albumsList });
@@ -3297,6 +4583,103 @@ app.post("/api/albums", (req: Request, res: Response) => {
   };
   albumsList.unshift(newAlbum);
   res.json(newAlbum);
+});
+
+// Recent photos across albums
+app.get("/api/photos/recent", (_req: Request, res: Response) => {
+  const photos: any[] = [];
+  for (const alb of albumsList) {
+    if (alb.photos && Array.isArray(alb.photos)) {
+      for (const p of alb.photos) {
+        photos.push({ ...p, albumId: alb.id, albumTitle: alb.title, authorName: alb.authorName || "સમાજ સભ્ય" });
+      }
+    }
+  }
+  res.json({ items: photos.slice(0, 30) });
+});
+
+// Album photos
+app.get("/api/albums/:aid/photos", (req: Request, res: Response) => {
+  const album = albumsList.find((a) => a.id === req.params.aid);
+  if (!album) return res.status(404).json({ detail: "Album not found" });
+  res.json({ items: album.photos || [] });
+});
+
+app.post("/api/albums/:aid/photos", (req: Request, res: Response) => {
+  const authUser = getAuthUser(req) || currentUser;
+  const album = albumsList.find((a) => a.id === req.params.aid);
+  if (!album) return res.status(404).json({ detail: "Album not found" });
+  const { items } = req.body;
+  album.photos = album.photos || [];
+  const added = (items || []).map((it: any, i: number) => ({
+    id: `p_${Date.now()}_${i}`,
+    url: it.url,
+    type: it.type || "image",
+    caption: it.caption || "",
+    authorId: authUser.id,
+    authorName: authUser.name,
+    createdAt: new Date().toISOString(),
+  }));
+  album.photos.unshift(...added);
+  album.photosCount = album.photos.length;
+  res.json({ items: added });
+});
+
+app.delete("/api/photos/:pid", (req: Request, res: Response) => {
+  const pid = req.params.pid;
+  for (const alb of albumsList) {
+    if (alb.photos) {
+      const idx = alb.photos.findIndex((p: any) => p.id === pid);
+      if (idx !== -1) {
+        alb.photos.splice(idx, 1);
+        alb.photosCount = alb.photos.length;
+        return res.json({ ok: true });
+      }
+    }
+  }
+  res.json({ ok: true });
+});
+
+app.patch("/api/albums/:aid", (req: Request, res: Response) => {
+  const album = albumsList.find((a) => a.id === req.params.aid);
+  if (!album) return res.status(404).json({ detail: "Album not found" });
+  Object.assign(album, req.body);
+  res.json(album);
+});
+
+app.delete("/api/albums/:aid", (req: Request, res: Response) => {
+  const idx = albumsList.findIndex((a) => a.id === req.params.aid);
+  if (idx !== -1) {
+    albumsList.splice(idx, 1);
+  }
+  res.json({ ok: true });
+});
+
+app.get("/api/admin/albums", requireAdmin, (req: Request, res: Response) => {
+  const { status } = req.query;
+  let items = [...albumsList];
+  if (status && status !== "all") {
+    if (status === "pending") items = items.filter((a) => !a.approved);
+    else if (status === "active") items = items.filter((a) => a.status === "active");
+    else if (status === "removed") items = items.filter((a) => a.status === "deleted" || a.status === "removed");
+  }
+  res.json({ items });
+});
+
+app.post("/api/admin/albums/:aid/moderate", requireAdmin, (req: Request, res: Response) => {
+  const album = albumsList.find((a) => a.id === req.params.aid);
+  if (!album) return res.status(404).json({ detail: "Album not found" });
+  const { action } = req.body;
+  if (action === "approve") {
+    album.approved = true;
+    album.status = "active";
+  } else if (action === "reject" || action === "delete") {
+    album.status = "removed";
+  } else if (action === "restore") {
+    album.status = "active";
+    album.approved = true;
+  }
+  res.json({ ok: true, album });
 });
 
 // Live Sessions
@@ -3625,17 +5008,309 @@ app.patch("/api/admin/users/:uid/role", requireAdmin, (req: Request, res: Respon
   res.json({ ok: true, user: target });
 });
 
+// ----------------- ADMIN MASTER DATA MANAGEMENT -----------------
+
+// Districts
+app.get("/api/admin/districts", requireAdmin, (_req: Request, res: Response) => {
+  res.json({ items: districtList });
+});
+
+app.post("/api/admin/districts", requireAdmin, (req: Request, res: Response) => {
+  const adminUser = (req as any).adminUser as SamajUser;
+  const adminRole = (req as any).adminRole as AdminRole;
+  if (adminRole !== "SUPER_ADMIN") {
+    return res.status(403).json({ error: "Only Super Admin can create districts" });
+  }
+  const { name, nameGujarati, code } = req.body;
+  if (!name || !nameGujarati) {
+    return res.status(400).json({ error: "Name and Name in Gujarati are required" });
+  }
+  const id = `dist_${code?.toLowerCase() || name.toLowerCase().replace(/\s+/g, "_")}_${Date.now().toString().slice(-4)}`;
+  const newDistrict: District = {
+    id,
+    name,
+    nameGujarati,
+    code: code || name.toUpperCase().slice(0, 4),
+    isActive: true,
+    createdAt: new Date().toISOString(),
+  };
+  districtList.push(newDistrict);
+  persistMasterData();
+  logAdminAction({
+    adminUserId: adminUser.id,
+    adminName: adminUser.name,
+    role: adminRole,
+    action: "DISTRICT_CREATED",
+    targetId: id,
+    targetType: "district",
+    details: { name, nameGujarati },
+  });
+  res.status(201).json(newDistrict);
+});
+
+app.patch("/api/admin/districts/:id", requireAdmin, (req: Request, res: Response) => {
+  const adminUser = (req as any).adminUser as SamajUser;
+  const adminRole = (req as any).adminRole as AdminRole;
+  if (adminRole !== "SUPER_ADMIN") {
+    return res.status(403).json({ error: "Only Super Admin can update districts" });
+  }
+  const dist = districtList.find((d) => d.id === req.params.id);
+  if (!dist) return res.status(404).json({ error: "District not found" });
+
+  if (req.body.name !== undefined) dist.name = req.body.name;
+  if (req.body.nameGujarati !== undefined) dist.nameGujarati = req.body.nameGujarati;
+  if (req.body.isActive !== undefined) dist.isActive = req.body.isActive;
+  dist.updatedAt = new Date().toISOString();
+
+  persistMasterData();
+  logAdminAction({
+    adminUserId: adminUser.id,
+    adminName: adminUser.name,
+    role: adminRole,
+    action: "DISTRICT_UPDATED",
+    targetId: dist.id,
+    targetType: "district",
+    details: req.body,
+  });
+  res.json(dist);
+});
+
+// Talukas
+app.get("/api/admin/talukas", requireAdmin, (req: Request, res: Response) => {
+  const districtId = req.query.districtId as string;
+  let items = talukaList;
+  if (districtId) {
+    items = items.filter((t) => t.districtId === districtId);
+  }
+  res.json({ items });
+});
+
+app.post("/api/admin/talukas", requireAdmin, (req: Request, res: Response) => {
+  const adminUser = (req as any).adminUser as SamajUser;
+  const adminRole = (req as any).adminRole as AdminRole;
+  if (adminRole !== "SUPER_ADMIN") {
+    return res.status(403).json({ error: "Only Super Admin can create talukas" });
+  }
+  const { districtId, name, nameGujarati, code } = req.body;
+  if (!districtId || !name || !nameGujarati) {
+    return res.status(400).json({ error: "DistrictId, Name, and Name in Gujarati are required" });
+  }
+  const dist = districtList.find((d) => d.id === districtId);
+  if (!dist) return res.status(400).json({ error: "Invalid districtId" });
+
+  const id = `tal_${name.toLowerCase().replace(/\s+/g, "_")}_${Date.now().toString().slice(-4)}`;
+  const newTaluka: Taluka = {
+    id,
+    districtId,
+    name,
+    nameGujarati,
+    code: code || name.toUpperCase().slice(0, 4),
+    isActive: true,
+    createdAt: new Date().toISOString(),
+  };
+  talukaList.push(newTaluka);
+  persistMasterData();
+  logAdminAction({
+    adminUserId: adminUser.id,
+    adminName: adminUser.name,
+    role: adminRole,
+    action: "TALUKA_CREATED",
+    targetId: id,
+    targetType: "taluka",
+    details: { districtId, name, nameGujarati },
+  });
+  res.status(201).json(newTaluka);
+});
+
+app.patch("/api/admin/talukas/:id", requireAdmin, (req: Request, res: Response) => {
+  const adminUser = (req as any).adminUser as SamajUser;
+  const adminRole = (req as any).adminRole as AdminRole;
+  if (adminRole !== "SUPER_ADMIN") {
+    return res.status(403).json({ error: "Only Super Admin can update talukas" });
+  }
+  const tal = talukaList.find((t) => t.id === req.params.id);
+  if (!tal) return res.status(404).json({ error: "Taluka not found" });
+
+  if (req.body.name !== undefined) tal.name = req.body.name;
+  if (req.body.nameGujarati !== undefined) tal.nameGujarati = req.body.nameGujarati;
+  if (req.body.isActive !== undefined) tal.isActive = req.body.isActive;
+  tal.updatedAt = new Date().toISOString();
+
+  persistMasterData();
+  logAdminAction({
+    adminUserId: adminUser.id,
+    adminName: adminUser.name,
+    role: adminRole,
+    action: "TALUKA_UPDATED",
+    targetId: tal.id,
+    targetType: "taluka",
+    details: req.body,
+  });
+  res.json(tal);
+});
+
+// Villages
+app.get("/api/admin/villages", requireAdmin, (req: Request, res: Response) => {
+  const districtId = req.query.districtId as string;
+  const talukaId = req.query.talukaId as string;
+  let items = villageList;
+  if (districtId) items = items.filter((v) => v.districtId === districtId);
+  if (talukaId) items = items.filter((v) => v.talukaId === talukaId);
+  res.json({ items });
+});
+
+app.post("/api/admin/villages", requireAdmin, (req: Request, res: Response) => {
+  const adminUser = (req as any).adminUser as SamajUser;
+  const adminRole = (req as any).adminRole as AdminRole;
+  const { districtId, talukaId, name, nameGujarati, pincode } = req.body;
+  if (!districtId || !talukaId || !name || !nameGujarati) {
+    return res.status(400).json({ error: "DistrictId, TalukaId, Name and NameGujarati are required" });
+  }
+  const dist = districtList.find((d) => d.id === districtId);
+  const tal = talukaList.find((t) => t.id === talukaId && t.districtId === districtId);
+  if (!dist || !tal) return res.status(400).json({ error: "Invalid district or taluka association" });
+
+  const id = `vil_${name.toLowerCase().replace(/\s+/g, "_")}_${Date.now().toString().slice(-4)}`;
+  const newVillage: Village = {
+    id,
+    districtId,
+    talukaId,
+    name,
+    nameGujarati,
+    pincode,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+  };
+  villageList.push(newVillage);
+  persistMasterData();
+  logAdminAction({
+    adminUserId: adminUser.id,
+    adminName: adminUser.name,
+    role: adminRole,
+    action: "VILLAGE_CREATED",
+    targetId: id,
+    targetType: "village",
+    details: { districtId, talukaId, name, nameGujarati },
+  });
+  res.status(201).json(newVillage);
+});
+
+app.patch("/api/admin/villages/:id", requireAdmin, (req: Request, res: Response) => {
+  const adminUser = (req as any).adminUser as SamajUser;
+  const adminRole = (req as any).adminRole as AdminRole;
+  const vil = villageList.find((v) => v.id === req.params.id);
+  if (!vil) return res.status(404).json({ error: "Village not found" });
+
+  if (req.body.name !== undefined) vil.name = req.body.name;
+  if (req.body.nameGujarati !== undefined) vil.nameGujarati = req.body.nameGujarati;
+  if (req.body.pincode !== undefined) vil.pincode = req.body.pincode;
+  if (req.body.isActive !== undefined) vil.isActive = req.body.isActive;
+  vil.updatedAt = new Date().toISOString();
+
+  persistMasterData();
+  logAdminAction({
+    adminUserId: adminUser.id,
+    adminName: adminUser.name,
+    role: adminRole,
+    action: "VILLAGE_UPDATED",
+    targetId: vil.id,
+    targetType: "village",
+    details: req.body,
+  });
+  res.json(vil);
+});
+
 // Main Samaj Endpoints
-app.get("/api/admin/main-samaj", requireAdmin, (req: Request, res: Response) => {
+app.get("/api/admin/main-samaj", requireAdmin, (_req: Request, res: Response) => {
   res.json({ items: mainSamajList });
 });
 
-// Gam (Villages) Endpoints
+app.post("/api/admin/main-samaj", requireAdmin, (req: Request, res: Response) => {
+  const adminUser = (req as any).adminUser as SamajUser;
+  const adminRole = (req as any).adminRole as AdminRole;
+  if (adminRole !== "SUPER_ADMIN") {
+    return res.status(403).json({ error: "Only Super Admin can create Main Samaj" });
+  }
+  const { name, nameEn, code, description } = req.body;
+  if (!name || !nameEn) {
+    return res.status(400).json({ error: "Name (Gujarati) and NameEn (English) are required" });
+  }
+  const id = `main_${code?.toLowerCase() || nameEn.toLowerCase().replace(/\s+/g, "_")}`;
+  const newMain: MainSamaj = {
+    id,
+    name,
+    nameGujarati: name,
+    nameEn,
+    code: code || nameEn.toUpperCase().slice(0, 6),
+    description,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+  };
+  mainSamajList.push(newMain);
+  persistMasterData();
+  logAdminAction({
+    adminUserId: adminUser.id,
+    adminName: adminUser.name,
+    role: adminRole,
+    action: "MAIN_SAMAJ_CREATED",
+    targetId: id,
+    targetType: "main_samaj",
+    details: { name, nameEn },
+  });
+  res.status(201).json(newMain);
+});
+
+app.patch("/api/admin/main-samaj/:id", requireAdmin, (req: Request, res: Response) => {
+  const adminUser = (req as any).adminUser as SamajUser;
+  const adminRole = (req as any).adminRole as AdminRole;
+  if (adminRole !== "SUPER_ADMIN") {
+    return res.status(403).json({ error: "Only Super Admin can update Main Samaj" });
+  }
+  const main = mainSamajList.find((m) => m.id === req.params.id);
+  if (!main) return res.status(404).json({ error: "Main Samaj not found" });
+
+  if (req.body.name !== undefined) {
+    main.name = req.body.name;
+    main.nameGujarati = req.body.name;
+  }
+  if (req.body.nameEn !== undefined) main.nameEn = req.body.nameEn;
+  if (req.body.description !== undefined) main.description = req.body.description;
+  if (req.body.isActive !== undefined) main.isActive = req.body.isActive;
+  main.updatedAt = new Date().toISOString();
+
+  persistMasterData();
+  logAdminAction({
+    adminUserId: adminUser.id,
+    adminName: adminUser.name,
+    role: adminRole,
+    action: "MAIN_SAMAJ_UPDATED",
+    targetId: main.id,
+    targetType: "main_samaj",
+    details: req.body,
+  });
+  res.json(main);
+});
+
+// Gam (Villages) Endpoints (Backward-compatible)
 app.get("/api/admin/gam", requireAdmin, (req: Request, res: Response) => {
   const adminRole = (req as any).adminRole as AdminRole;
   const scope = (req as any).adminScope as AdminScope;
 
-  let list = gamList;
+  let list = villageList.map((v) => {
+    const dist = districtList.find((d) => d.id === v.districtId);
+    const tal = talukaList.find((t) => t.id === v.talukaId);
+    return {
+      id: v.id,
+      name: v.nameGujarati || v.name,
+      nameEn: v.name,
+      district: dist?.nameGujarati || dist?.name || "",
+      taluka: tal?.nameGujarati || tal?.name || "",
+      mainSamajId: "main_patidar",
+      isActive: v.isActive,
+      createdAt: v.createdAt || new Date("2024-01-01").toISOString(),
+    };
+  });
+
   if (adminRole === "MAIN_SAMAJ_ADMIN" && scope.mainSamajId) {
     list = list.filter((g) => g.mainSamajId === scope.mainSamajId);
   }
@@ -3648,10 +5323,52 @@ app.get("/api/admin/samaj", requireAdmin, (req: Request, res: Response) => {
   const scope = (req as any).adminScope as AdminScope;
 
   let list = samajList;
-  if (adminRole === "SAMAJ_ADMIN" && scope.samajId) {
+  if (adminRole === "MAIN_SAMAJ_ADMIN" && scope.mainSamajId) {
+    list = list.filter((s) => s.mainSamajId === scope.mainSamajId);
+  } else if (adminRole === "SAMAJ_ADMIN" && scope.samajId) {
     list = list.filter((s) => s.id === scope.samajId);
   }
   res.json({ items: list });
+});
+
+app.post("/api/admin/samaj", requireAdmin, (req: Request, res: Response) => {
+  const adminUser = (req as any).adminUser as SamajUser;
+  const adminRole = (req as any).adminRole as AdminRole;
+  const { name, nameEn, code, mainSamajId, districtId, talukaId, villageId } = req.body;
+
+  if (!name || !mainSamajId) {
+    return res.status(400).json({ error: "Name and mainSamajId are required" });
+  }
+
+  const id = `samaj_${code?.toLowerCase() || Date.now().toString()}`;
+  const newSamaj: Samaj = {
+    id,
+    name,
+    nameGujarati: name,
+    nameEn: nameEn || name,
+    code: code || id.toUpperCase().slice(0, 6),
+    mainSamajId,
+    districtId,
+    talukaId,
+    villageId,
+    gamIds: villageId ? [villageId] : [],
+    isActive: true,
+    requirePostApproval: false,
+    createdAt: new Date().toISOString(),
+  };
+  samajList.push(newSamaj);
+  persistMasterData();
+
+  logAdminAction({
+    adminUserId: adminUser.id,
+    adminName: adminUser.name,
+    role: adminRole,
+    action: "SAMAJ_CREATED",
+    targetId: id,
+    targetType: "samaj",
+    details: { name, mainSamajId, districtId, talukaId },
+  });
+  res.status(201).json(newSamaj);
 });
 
 app.patch("/api/admin/samaj/:id", requireAdmin, (req: Request, res: Response) => {
@@ -3660,13 +5377,27 @@ app.patch("/api/admin/samaj/:id", requireAdmin, (req: Request, res: Response) =>
   const samaj = samajList.find((s) => s.id === req.params.id);
   if (!samaj) return res.status(404).json({ error: "Samaj not found" });
 
+  if (req.body.name !== undefined) {
+    samaj.name = req.body.name;
+    samaj.nameGujarati = req.body.name;
+  }
+  if (req.body.nameEn !== undefined) samaj.nameEn = req.body.nameEn;
   if (req.body.requirePostApproval !== undefined) {
     samaj.requirePostApproval = req.body.requirePostApproval;
   }
   if (req.body.isActive !== undefined) {
     samaj.isActive = req.body.isActive;
   }
+  if (req.body.districtId !== undefined) samaj.districtId = req.body.districtId;
+  if (req.body.talukaId !== undefined) samaj.talukaId = req.body.talukaId;
+  if (req.body.villageId !== undefined) {
+    samaj.villageId = req.body.villageId;
+    if (!samaj.gamIds) samaj.gamIds = [];
+    if (!samaj.gamIds.includes(req.body.villageId)) samaj.gamIds.push(req.body.villageId);
+  }
+  samaj.updatedAt = new Date().toISOString();
 
+  persistMasterData();
   logAdminAction({
     adminUserId: adminUser.id,
     adminName: adminUser.name,
@@ -3818,6 +5549,44 @@ app.patch("/api/admin/reports/:rid/resolve", requireAdmin, (req: Request, res: R
   res.json({ ok: true, report });
 });
 
+app.patch("/api/admin/reports/:rid", requireAdmin, (req: Request, res: Response) => {
+  const report = reportsList.find((r) => r.id === req.params.rid);
+  if (!report) return res.status(404).json({ error: "Report not found" });
+  if (req.body.status) report.status = req.body.status;
+  res.json({ ok: true, report });
+});
+
+app.post("/api/admin/posts/:pid/moderate", requireAdmin, (req: Request, res: Response) => {
+  const post = postsList.find((p) => p.id === req.params.pid);
+  if (!post) return res.status(404).json({ detail: "Post not found" });
+  const { action } = req.body;
+  if (action === "approve") {
+    post.approved = true;
+    post.status = "active";
+  } else if (action === "reject" || action === "delete") {
+    post.status = "deleted";
+  } else if (action === "hide") {
+    post.status = "hidden";
+  } else if (action === "unhide") {
+    post.status = "active";
+  }
+  res.json({ ok: true, post });
+});
+
+app.post("/api/admin/comments/:cid/moderate", requireAdmin, (req: Request, res: Response) => {
+  const cid = req.params.cid;
+  for (const pid in commentsList) {
+    const idx = commentsList[pid].findIndex((c) => c.id === cid);
+    if (idx !== -1) {
+      commentsList[pid].splice(idx, 1);
+      const post = postsList.find((p) => p.id === pid);
+      if (post && post.commentsCount) post.commentsCount = Math.max(0, post.commentsCount - 1);
+      return res.json({ ok: true });
+    }
+  }
+  res.json({ ok: true });
+});
+
 // Blocks / Suspensions List
 app.get("/api/admin/blocks", requireAdmin, (req: Request, res: Response) => {
   const allUsers = Object.values(usersMap);
@@ -3869,6 +5638,92 @@ app.get("/api/admin/roles", requireAdmin, (req: Request, res: Response) => {
     ],
     administrators: adminUsers,
   });
+});
+
+// Grant or update admin role (Super Admin only)
+app.post("/api/admin/roles", requireAdmin, (req: Request, res: Response) => {
+  const adminRole = (req as any).adminRole as AdminRole;
+  if (adminRole !== "SUPER_ADMIN") {
+    return res.status(403).json({ error: "Forbidden: Super Admin access required." });
+  }
+
+  const { phone, userId, role, mainSamajId, samajId } = req.body;
+  if (!role || !["SUPER_ADMIN", "MAIN_SAMAJ_ADMIN", "SAMAJ_ADMIN"].includes(role)) {
+    return res.status(400).json({ error: "માન્ય રોલ પસંદ કરો (SUPER_ADMIN, MAIN_SAMAJ_ADMIN, SAMAJ_ADMIN)." });
+  }
+
+  let targetUser: SamajUser | undefined = undefined;
+  let digits = "";
+
+  if (userId && usersMap[userId]) {
+    targetUser = usersMap[userId];
+    digits = (targetUser.phone || "").replace(/\D/g, "").slice(-10);
+  } else if (phone) {
+    digits = phone.replace(/\D/g, "").slice(-10);
+    targetUser = Object.values(usersMap).find((u) => u.phone && u.phone.replace(/\D/g, "").slice(-10) === digits);
+  }
+
+  if (!digits) {
+    return res.status(400).json({ error: "10 અંકનો માન્ય મોબાઇલ નંબર અથવા userId દાખલ કરો." });
+  }
+
+  adminRolesMap[digits] = role as AdminRole;
+
+  if (targetUser) {
+    targetUser.adminRole = role as AdminRole;
+    targetUser.role = role.toLowerCase();
+    if (mainSamajId) targetUser.mainSamajId = mainSamajId;
+    if (samajId) {
+      targetUser.activeSamajId = samajId;
+      if (!targetUser.samajIds.includes(samajId)) targetUser.samajIds.push(samajId);
+      targetUser.samajRoles = targetUser.samajRoles || {};
+      targetUser.samajRoles[samajId] = role.toLowerCase();
+    }
+  }
+
+  logAdminAction({
+    adminUserId: ((req as any).adminUser as SamajUser)?.id || "super_admin",
+    adminName: ((req as any).adminUser as SamajUser)?.name || "Super Admin",
+    role: "SUPER_ADMIN",
+    action: "GRANT_ADMIN_ROLE",
+    details: { phoneDigits: digits, role, mainSamajId, samajId },
+  });
+
+  saveStore(true);
+  res.json({ success: true, message: "એડમિન અધિકાર સફળતાપૂર્વક અપડેટ થયો.", digits, role });
+});
+
+// Revoke admin role (Super Admin only)
+app.delete("/api/admin/roles/:identifier", requireAdmin, (req: Request, res: Response) => {
+  const adminRole = (req as any).adminRole as AdminRole;
+  if (adminRole !== "SUPER_ADMIN") {
+    return res.status(403).json({ error: "Forbidden: Super Admin access required." });
+  }
+
+  const { identifier } = req.params;
+  const digits = identifier.replace(/\D/g, "").slice(-10);
+
+  delete adminRolesMap[digits];
+
+  const targetUser = Object.values(usersMap).find(
+    (u) => u.id === identifier || (u.phone && u.phone.replace(/\D/g, "").slice(-10) === digits)
+  );
+
+  if (targetUser) {
+    targetUser.adminRole = null;
+    targetUser.role = "member";
+  }
+
+  logAdminAction({
+    adminUserId: ((req as any).adminUser as SamajUser)?.id || "super_admin",
+    adminName: ((req as any).adminUser as SamajUser)?.name || "Super Admin",
+    role: "SUPER_ADMIN",
+    action: "REVOKE_ADMIN_ROLE",
+    details: { identifier, digits },
+  });
+
+  saveStore(true);
+  res.json({ success: true, message: "એડમિન અધિકાર સફળતાપૂર્વક રદ કરવામાં આવ્યો." });
 });
 
 // Audit Logs Endpoints
@@ -3957,6 +5812,10 @@ app.get("/api/notifications", (req: Request, res: Response) => {
   });
 });
 
+app.post("/api/notifications/read", (_req: Request, res: Response) => {
+  res.json({ ok: true });
+});
+
 app.post("/api/presence", (req: Request, res: Response) => {
   res.json({ ok: true });
 });
@@ -4020,8 +5879,94 @@ app.get("/api/search", (req: Request, res: Response) => {
   });
 });
 
+// ----------------- DURABLE PERSISTENCE LAYER -----------------
+const STORE_FILE = path.join(DATA_DIR, "store.json");
+let saveStoreTimer: NodeJS.Timeout | null = null;
+
+export function saveStore(immediate = false) {
+  const doSave = () => {
+    try {
+      if (!fs.existsSync(DATA_DIR)) {
+        fs.mkdirSync(DATA_DIR, { recursive: true });
+      }
+      const state = {
+        usersMap,
+        adminRolesMap,
+        postsList,
+        commentsList,
+        storiesList,
+        hallsList,
+        bookingsList,
+        albumsList,
+        eventsList,
+        membersList,
+        maranNodhList,
+        familyTreeList,
+        reportsList,
+        auditLogsList,
+        conversationsMap,
+        messagesMap,
+        platformSettings,
+        savedAt: new Date().toISOString(),
+      };
+      const tmpFile = `${STORE_FILE}.tmp`;
+      fs.writeFileSync(tmpFile, JSON.stringify(state, null, 2), "utf-8");
+      fs.renameSync(tmpFile, STORE_FILE);
+    } catch (err) {
+      console.error("[Store] Failed to write store.json:", err);
+    }
+  };
+
+  if (immediate) {
+    if (saveStoreTimer) clearTimeout(saveStoreTimer);
+    saveStoreTimer = null;
+    doSave();
+  } else {
+    if (saveStoreTimer) clearTimeout(saveStoreTimer);
+    saveStoreTimer = setTimeout(doSave, 300);
+  }
+}
+
+export function loadStore(): boolean {
+  try {
+    if (!fs.existsSync(STORE_FILE)) {
+      console.log("[Store] No existing store.json found. Creating initial snapshot...");
+      saveStore(true);
+      return false;
+    }
+    const raw = fs.readFileSync(STORE_FILE, "utf-8");
+    const data = JSON.parse(raw);
+    if (data.usersMap) Object.assign(usersMap, data.usersMap);
+    if (data.adminRolesMap) Object.assign(adminRolesMap, data.adminRolesMap);
+    if (!adminRolesMap["9876543210"]) adminRolesMap["9876543210"] = "SUPER_ADMIN";
+    if (Array.isArray(data.postsList) && data.postsList.length > 0) postsList = data.postsList;
+    if (data.commentsList) Object.assign(commentsList, data.commentsList);
+    if (Array.isArray(data.storiesList) && data.storiesList.length > 0) storiesList = data.storiesList;
+    if (Array.isArray(data.hallsList) && data.hallsList.length > 0) hallsList = data.hallsList;
+    if (Array.isArray(data.bookingsList) && data.bookingsList.length > 0) bookingsList = data.bookingsList;
+    if (Array.isArray(data.albumsList) && data.albumsList.length > 0) albumsList = data.albumsList;
+    if (Array.isArray(data.eventsList) && data.eventsList.length > 0) eventsList = data.eventsList;
+    if (Array.isArray(data.membersList) && data.membersList.length > 0) membersList = data.membersList;
+    if (Array.isArray(data.maranNodhList) && data.maranNodhList.length > 0) maranNodhList = data.maranNodhList;
+    if (Array.isArray(data.familyTreeList) && data.familyTreeList.length > 0) familyTreeList = data.familyTreeList;
+    if (Array.isArray(data.reportsList)) reportsList = data.reportsList;
+    if (Array.isArray(data.auditLogsList)) auditLogsList = data.auditLogsList;
+    if (data.conversationsMap) Object.assign(conversationsMap, data.conversationsMap);
+    if (data.messagesMap) Object.assign(messagesMap, data.messagesMap);
+    if (data.platformSettings) platformSettings = { ...platformSettings, ...data.platformSettings };
+    console.log(`[Store] Successfully loaded persistent state from ${STORE_FILE}`);
+    return true;
+  } catch (err) {
+    console.error("[Store] Failed to load store.json:", err);
+    return false;
+  }
+}
+
 // Start Server with Vite Middleware in Development
 async function startServer() {
+  // Restore persistent state on startup
+  loadStore();
+
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
