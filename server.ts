@@ -1340,7 +1340,7 @@ async function resolveAuthUser(req: Request): Promise<SamajUser | null> {
   const token = authHeader.substring(7).trim();
   if (!token) return null;
 
-  if (token.startsWith("mock-token-") || token === "demo-token" || token === "admin-token") {
+  if (DEV_AUTH_ENABLED && (token.startsWith("mock-token-") || token === "demo-token" || token === "admin-token")) {
     return applyAdminRole(resolveMockUser(token));
   }
 
