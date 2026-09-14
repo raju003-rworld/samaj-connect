@@ -2059,6 +2059,101 @@ app.post("/api/samaj/:sid/activate", (req: Request, res: Response) => {
   res.json(authUser);
 });
 
+// ----------------- SAMAJ CHANGE REQUEST & APPROVAL SYSTEM (PARTS 19 & 20) -----------------
+export interface SamajChangeRequest {
+  id: string;
+  userId: string;
+  userName: string;
+  userPhone: string;
+  currentSamajId: string;
+  currentSamajName: string;
+  requestedSamajId: string;
+  requestedSamajName: string;
+  requestedMainSamajId: string;
+  requestedMainSamajName: string;
+  requestedGam: string;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  reason: string;
+  rejectionReason: string;
+  createdAt: string;
+  reviewedAt: string | null;
+  reviewedBy: string | null;
+}
+
+const samajChangeRequests: SamajChangeRequest[] = [];
+
+// Get current user's active/latest change request
+app.get("/api/samaj/change-request", (req: Request, res: Response) => {
+  const authUser = getAuthUser(req);
+  if (!authUser) return res.status(401).json({ detail: "Not authenticated" });
+  const userReqs = samajChangeRequests.filter((r) => r.userId === authUser.id);
+  const latest = userReqs.length ? userReqs[userReqs.length - 1] : null;
+  res.json({ request: latest });
+});
+
+// Submit Samaj change request (strictly pending approval; does NOT immediately change activeSamajId)
+app.post("/api/samaj/change-request", (req: Request, res: Response) => {
+  const authUser = getAuthUser(req);
+  if (!authUser) return res.status(401).json({ detail: "Not authenticated" });
+
+  const { requestedSamajId, reason = "" } = req.body;
+  if (!requestedSamajId) {
+    return res.status(400).json({ detail: "નવો સમાજ પસંદ કરવો જરૂરી છે (Please select a Samaj)" });
+  }
+
+  const targetSamaj = samajList.find((s) => s.id === requestedSamajId);
+  if (!targetSamaj) {
+    return res.status(404).json({ detail: "પસંદ કરેલ સમાજ મળ્યો નથી (Samaj not found)" });
+  }
+
+  if (targetSamaj.id === authUser.activeSamajId) {
+    return res.status(400).json({ detail: "તમે પહેલેથી આ સમાજના સક્રિય સભ્ય છો (Already active in this Samaj)" });
+  }
+
+  // Check if there is already a PENDING request
+  const existingPending = samajChangeRequests.find(
+    (r) => r.userId === authUser.id && r.status === "PENDING"
+  );
+  if (existingPending) {
+    return res.status(400).json({
+      detail: "તમારી સમાજ બદલવાની એક વિનંતી પહેલેથી પેન્ડિંગ છે (You already have a pending change request)",
+      request: existingPending,
+    });
+  }
+
+  const currentSamaj = samajList.find((s) => s.id === authUser.activeSamajId);
+  const targetMainSamaj = mainSamajList.find((m) => m.id === targetSamaj.mainSamajId);
+
+  const newRequest: SamajChangeRequest = {
+    id: `scr_${Date.now()}`,
+    userId: authUser.id,
+    userName: authUser.name,
+    userPhone: authUser.phone,
+    currentSamajId: authUser.activeSamajId || DEFAULT_SAMAJ_ID,
+    currentSamajName: currentSamaj?.name || "વર્તમાન સમાજ",
+    requestedSamajId: targetSamaj.id,
+    requestedSamajName: targetSamaj.name,
+    requestedMainSamajId: targetSamaj.mainSamajId || "",
+    requestedMainSamajName: targetMainSamaj?.name || "",
+    requestedGam: targetSamaj.village || (targetSamaj as any).gam || "",
+    status: "PENDING",
+    reason: (reason || "").trim(),
+    rejectionReason: "",
+    createdAt: new Date().toISOString(),
+    reviewedAt: null,
+    reviewedBy: null,
+  };
+
+  samajChangeRequests.push(newRequest);
+
+  // CRITICAL: authUser.activeSamajId remains UNCHANGED until Samaj Admin approves!
+  res.json({
+    ok: true,
+    request: newRequest,
+    message: "સમાજ બદલવાની વિનંતી સફળતાપૂર્વક મોકલાઈ ગઈ. સમાજ એડમિનની મંજૂરી બાદ સક્રિય થશે.",
+  });
+});
+
 // ----------------- CHAT & MESSAGING SYSTEM (POINT 1) -----------------
 
 // User Search for New Chat & Mentions
@@ -2663,7 +2758,8 @@ app.get("/api/conversations/:cid/messages", (req: Request, res: Response) => {
     const list = messagesMap[conv.id] || [];
     // Filter out messages deleted for this user or expired disappearing messages
     const visible = list.filter((m) => {
-      if (m.deletedFor.includes(user.id)) return false;
+      if (m.deleted) return false;
+      if (m.deletedFor && m.deletedFor.includes(user.id)) return false;
       if (isMessageExpired(m, conv)) return false;
       return true;
     });
@@ -5409,6 +5505,130 @@ app.patch("/api/admin/samaj/:id", requireAdmin, (req: Request, res: Response) =>
   });
 
   res.json(samaj);
+});
+
+// Admin: List Samaj Change Requests (Filtered by Admin scope)
+app.get("/api/admin/samaj/change-requests", requireAdmin, (req: Request, res: Response) => {
+  const adminRole = (req as any).adminRole as AdminRole;
+  const adminScope = (req as any).adminScope as { mainSamajId: string | null; samajId: string | null };
+
+  let filtered = [...samajChangeRequests];
+  if (adminRole === "MAIN_SAMAJ_ADMIN" && adminScope.mainSamajId) {
+    filtered = filtered.filter((r) => r.requestedMainSamajId === adminScope.mainSamajId);
+  } else if (adminRole === "SAMAJ_ADMIN" && adminScope.samajId) {
+    filtered = filtered.filter((r) => r.requestedSamajId === adminScope.samajId);
+  }
+
+  res.json({ items: filtered.reverse() });
+});
+
+// Admin: Approve Samaj Change Request
+app.post("/api/admin/samaj/change-requests/:id/approve", requireAdmin, (req: Request, res: Response) => {
+  const adminUser = (req as any).adminUser as SamajUser;
+  const adminRole = (req as any).adminRole as AdminRole;
+  const adminScope = (req as any).adminScope as { mainSamajId: string | null; samajId: string | null };
+  const request = samajChangeRequests.find((r) => r.id === req.params.id);
+
+  if (!request) {
+    return res.status(404).json({ error: "Request not found" });
+  }
+  if (request.status !== "PENDING") {
+    return res.status(400).json({ error: "Request has already been reviewed", status: request.status });
+  }
+
+  // Validate admin authority for this requested Samaj
+  if (adminRole === "SAMAJ_ADMIN" && adminScope.samajId && adminScope.samajId !== request.requestedSamajId) {
+    return res.status(403).json({ error: "Unauthorized: You can only approve requests for your assigned Samaj" });
+  }
+  if (adminRole === "MAIN_SAMAJ_ADMIN" && adminScope.mainSamajId && adminScope.mainSamajId !== request.requestedMainSamajId) {
+    return res.status(403).json({ error: "Unauthorized: You can only approve requests for your Main Samaj" });
+  }
+
+  // Find target user
+  const targetUser = usersMap[request.userId] || Object.values(usersMap).find((u) => u.id === request.userId);
+  if (!targetUser) {
+    return res.status(404).json({ error: "User not found" });
+  }
+
+  // Add/activate membership
+  if (!targetUser.samajIds) targetUser.samajIds = [];
+  if (!targetUser.samajIds.includes(request.requestedSamajId)) {
+    targetUser.samajIds.push(request.requestedSamajId);
+  }
+  // Only AFTER successful approval: update activeSamajId
+  targetUser.activeSamajId = request.requestedSamajId;
+  if (request.requestedMainSamajId) targetUser.mainSamajId = request.requestedMainSamajId;
+  if (request.requestedGam) targetUser.village = request.requestedGam;
+
+  request.status = "APPROVED";
+  request.reviewedAt = new Date().toISOString();
+  request.reviewedBy = adminUser.id;
+
+  logAdminAction({
+    adminUserId: adminUser.id,
+    adminName: adminUser.name,
+    role: adminRole,
+    action: "SAMAJ_CHANGE_APPROVED",
+    targetId: request.id,
+    targetType: "user",
+    details: {
+      userId: targetUser.id,
+      newSamajId: request.requestedSamajId,
+      newSamajName: request.requestedSamajName,
+    },
+  });
+
+  res.json({
+    ok: true,
+    request,
+    message: "સમાજ બદલવાની વિનંતી સફળતાપૂર્વક મંજૂર થઈ ગઈ. સભ્યનો સક્રિય સમાજ બદલાઈ ગયો છે.",
+  });
+});
+
+// Admin: Reject Samaj Change Request
+app.post("/api/admin/samaj/change-requests/:id/reject", requireAdmin, (req: Request, res: Response) => {
+  const adminUser = (req as any).adminUser as SamajUser;
+  const adminRole = (req as any).adminRole as AdminRole;
+  const adminScope = (req as any).adminScope as { mainSamajId: string | null; samajId: string | null };
+  const request = samajChangeRequests.find((r) => r.id === req.params.id);
+
+  if (!request) {
+    return res.status(404).json({ error: "Request not found" });
+  }
+  if (request.status !== "PENDING") {
+    return res.status(400).json({ error: "Request has already been reviewed", status: request.status });
+  }
+
+  if (adminRole === "SAMAJ_ADMIN" && adminScope.samajId && adminScope.samajId !== request.requestedSamajId) {
+    return res.status(403).json({ error: "Unauthorized: You can only reject requests for your assigned Samaj" });
+  }
+  if (adminRole === "MAIN_SAMAJ_ADMIN" && adminScope.mainSamajId && adminScope.mainSamajId !== request.requestedMainSamajId) {
+    return res.status(403).json({ error: "Unauthorized: You can only reject requests for your Main Samaj" });
+  }
+
+  request.status = "REJECTED";
+  request.rejectionReason = req.body.rejectionReason || "અમાન્ય વિગતો / વેરિફિકેશન પૂર્ણ નથી";
+  request.reviewedAt = new Date().toISOString();
+  request.reviewedBy = adminUser.id;
+
+  logAdminAction({
+    adminUserId: adminUser.id,
+    adminName: adminUser.name,
+    role: adminRole,
+    action: "SAMAJ_CHANGE_REJECTED",
+    targetId: request.id,
+    targetType: "user",
+    details: {
+      userId: request.userId,
+      reason: request.rejectionReason,
+    },
+  });
+
+  res.json({
+    ok: true,
+    request,
+    message: "સમાજ બદલવાની વિનંતી અસ્વીકાર કરવામાં આવી.",
+  });
 });
 
 // Verification Endpoints (foundation for Step 2)

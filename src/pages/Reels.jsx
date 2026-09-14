@@ -371,48 +371,67 @@ export default function Reels() {
     }
   };
 
-  return (
-    <div className="relative min-h-[calc(100vh-140px)] flex flex-col items-center justify-center">
-      {/* Top Header Actions */}
-      <div className="w-full max-w-md flex items-center justify-between px-2 mb-3">
-        <div className="flex items-center gap-2">
-          <h2 className="font-heading font-extrabold text-xl sm:text-2xl text-slate-900 tracking-tight">
-            {t("reels")}
-          </h2>
-          <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-purple-100 text-purple-800">
-            Live Community
-          </span>
-        </div>
-        <button
-          data-testid="create-reel-btn"
-          onClick={() => setCreateOpen(true)}
-          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-purple-900 hover:bg-purple-950 text-white text-xs font-semibold shadow-sm transition"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          <span>રીલ ઉમેરો</span>
-        </button>
-      </div>
+  // Touch gesture support for mobile vertical swipe
+  const touchStartY = useRef(0);
+  const handleTouchStart = (e) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+  const handleTouchEnd = (e) => {
+    const diff = touchStartY.current - e.changedTouches[0].clientY;
+    if (diff > 50) {
+      nextReel();
+    } else if (diff < -50) {
+      prevReel();
+    }
+  };
 
+  // Keyboard navigation support
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "ArrowDown" || e.key === "PageDown") {
+        nextReel();
+      } else if (e.key === "ArrowUp" || e.key === "PageUp") {
+        prevReel();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [currentIdx, reels.length]);
+
+  // Global listener to trigger create reel from bottom nav or external events
+  useEffect(() => {
+    const handleOpenCreate = () => setCreateOpen(true);
+    window.addEventListener("samaj-open-create-reel", handleOpenCreate);
+    return () => window.removeEventListener("samaj-open-create-reel", handleOpenCreate);
+  }, []);
+
+  return (
+    <div
+      className="relative w-full h-[calc(100dvh-58px)] sm:h-[calc(100vh-2rem)] flex flex-col items-center justify-center bg-black sm:bg-transparent overflow-hidden select-none"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       {loading ? (
-        <div className="w-full max-w-sm aspect-[9/16] rounded-3xl bg-slate-900/10 flex items-center justify-center animate-pulse">
+        <div className="w-full h-full sm:max-w-[400px] sm:h-full sm:max-h-[820px] sm:aspect-[9/16] sm:rounded-3xl bg-slate-900 flex items-center justify-center animate-pulse">
           <div className="text-slate-400 text-sm font-medium">{t("loading")}</div>
         </div>
       ) : reels.length === 0 ? (
-        <div className="w-full max-w-sm p-8 text-center bg-white rounded-3xl border border-slate-100 shadow-sm space-y-3">
-          <div className="w-14 h-14 mx-auto rounded-2xl bg-purple-100 text-purple-800 grid place-items-center">
-            <Sparkles className="w-7 h-7" />
+        <div className="w-full max-w-sm p-8 text-center bg-slate-900 text-white rounded-3xl border border-slate-800 shadow-2xl space-y-4 mx-4">
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-purple-900/60 text-purple-300 grid place-items-center">
+            <Sparkles className="w-8 h-8" />
           </div>
-          <h3 className="font-heading font-bold text-slate-900 text-base">હજી કોઈ રીલ્સ નથી</h3>
-          <p className="text-xs text-slate-500">તમારા સમાજ સાથે પ્રથમ વિડિયો કે રીલ શેર કરનાર બનો!</p>
+          <h3 className="font-heading font-bold text-white text-base">હજી કોઈ રીલ્સ નથી</h3>
+          <p className="text-xs text-slate-400">તમારા સમાજ સાથે પ્રથમ વિડિયો કે રીલ શેર કરનાર બનો!</p>
           <button
+            data-testid="create-reel-btn"
             onClick={() => setCreateOpen(true)}
-            className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-purple-900 text-white text-xs font-semibold"
+            className="mt-2 inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-purple-700 hover:bg-purple-600 text-white text-xs font-bold transition shadow-lg cursor-pointer"
           >
             <Plus className="w-4 h-4" /> પ્રથમ રીલ બનાવો
           </button>
         </div>
       ) : (
-        <div className="relative w-full max-w-[390px] aspect-[9/16] max-h-[78vh] rounded-3xl overflow-hidden bg-black shadow-2xl border border-slate-800 flex items-center justify-center select-none">
+        <div className="relative w-full h-full sm:max-w-[400px] sm:h-full sm:max-h-[820px] sm:aspect-[9/16] sm:rounded-3xl overflow-hidden bg-black shadow-2xl sm:border sm:border-slate-800 flex items-center justify-center select-none">
           {/* Main Video or Media Display */}
           {activeReel.mediaUrls && activeReel.mediaUrls[0] && isVideoUrl(activeReel.mediaUrls[0]) ? (
             <video
@@ -442,7 +461,7 @@ export default function Reels() {
           {!playing && (
             <div
               onClick={togglePlay}
-              className="absolute inset-0 bg-black/30 flex items-center justify-center cursor-pointer"
+              className="absolute inset-0 bg-black/30 flex items-center justify-center cursor-pointer z-15"
             >
               <div className="w-16 h-16 rounded-full bg-black/60 backdrop-blur-md grid place-items-center text-white">
                 <Play className="w-8 h-8 ml-1 fill-white" />
@@ -450,16 +469,16 @@ export default function Reels() {
             </div>
           )}
 
-          {/* Top Info Bar inside Reel */}
-          <div className="absolute top-4 left-4 right-4 flex items-center justify-between text-white z-10">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md">
+          {/* Top Info Bar inside Reel - Minimal translucent overlays */}
+          <div className="absolute top-3 left-3.5 right-3.5 flex items-center justify-between text-white z-20 pointer-events-none">
+            <div className="flex items-center gap-2 pointer-events-auto">
+              <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md border border-white/10 shadow-xs">
                 {currentIdx + 1} / {reels.length}
               </span>
               <VisibilityBadge value={activeReel.visibility} />
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 pointer-events-auto">
               {isAuthorOrAdmin && (
                 <>
                   <button
@@ -469,7 +488,7 @@ export default function Reels() {
                       e.stopPropagation();
                       setEditReelOpen(true);
                     }}
-                    className="p-2 rounded-full bg-black/40 backdrop-blur-md text-white hover:bg-black/60 transition"
+                    className="p-2 rounded-full bg-black/50 backdrop-blur-md text-white hover:bg-black/70 transition border border-white/10 cursor-pointer"
                     title="Edit Reel"
                   >
                     <Edit3 className="w-4 h-4 text-purple-300" />
@@ -481,7 +500,7 @@ export default function Reels() {
                       e.stopPropagation();
                       handleDeleteReel();
                     }}
-                    className="p-2 rounded-full bg-black/40 backdrop-blur-md text-white hover:bg-rose-900/60 transition text-rose-300"
+                    className="p-2 rounded-full bg-black/50 backdrop-blur-md text-white hover:bg-rose-900/70 transition border border-white/10 text-rose-300 cursor-pointer"
                     title="Delete Reel"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -490,9 +509,13 @@ export default function Reels() {
               )}
 
               <button
-                onClick={() => setMuted(!muted)}
-                className="p-2 rounded-full bg-black/40 backdrop-blur-md text-white hover:bg-black/60 transition"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMuted(!muted);
+                }}
+                className="p-2 rounded-full bg-black/50 backdrop-blur-md text-white hover:bg-black/70 transition border border-white/10 cursor-pointer"
                 data-testid="reel-sound-toggle"
+                title={muted ? "Unmute" : "Mute"}
               >
                 {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
               </button>
@@ -505,9 +528,9 @@ export default function Reels() {
             <button
               onClick={handleLike}
               data-testid="reel-like-btn"
-              className="flex flex-col items-center gap-1 group"
+              className="flex flex-col items-center gap-1 group cursor-pointer"
             >
-              <div className={`w-11 h-11 rounded-full grid place-items-center backdrop-blur-md transition-transform active:scale-125 ${activeReel.likedByMe ? "bg-rose-500 text-white shadow-lg shadow-rose-500/40" : "bg-black/50 text-white hover:bg-black/70"}`}>
+              <div className={`w-11 h-11 rounded-full grid place-items-center backdrop-blur-md transition-transform active:scale-125 ${activeReel.likedByMe ? "bg-rose-500 text-white shadow-lg shadow-rose-500/40" : "bg-black/50 text-white hover:bg-black/70 border border-white/10"}`}>
                 <Heart className={`w-5 h-5 ${activeReel.likedByMe ? "fill-white" : ""}`} />
               </div>
               <span className="text-[11px] font-bold text-white drop-shadow-md">
@@ -522,9 +545,9 @@ export default function Reels() {
                 setShowComments(!showComments);
               }}
               data-testid="reel-comment-btn"
-              className="flex flex-col items-center gap-1"
+              className="flex flex-col items-center gap-1 cursor-pointer"
             >
-              <div className="w-11 h-11 rounded-full bg-black/50 backdrop-blur-md text-white grid place-items-center hover:bg-black/70">
+              <div className="w-11 h-11 rounded-full bg-black/50 backdrop-blur-md text-white grid place-items-center hover:bg-black/70 border border-white/10">
                 <MessageCircle className="w-5 h-5" />
               </div>
               <span className="text-[11px] font-bold text-white drop-shadow-md">
@@ -536,9 +559,9 @@ export default function Reels() {
             <button
               onClick={handleShare}
               data-testid="reel-share-btn"
-              className="flex flex-col items-center gap-1"
+              className="flex flex-col items-center gap-1 cursor-pointer"
             >
-              <div className="w-11 h-11 rounded-full bg-black/50 backdrop-blur-md text-white grid place-items-center hover:bg-black/70">
+              <div className="w-11 h-11 rounded-full bg-black/50 backdrop-blur-md text-white grid place-items-center hover:bg-black/70 border border-white/10">
                 <Share2 className="w-5 h-5" />
               </div>
               <span className="text-[10px] font-bold text-white drop-shadow-md">{t("share")}</span>
@@ -548,9 +571,9 @@ export default function Reels() {
             <button
               onClick={handleSave}
               data-testid="reel-save-btn"
-              className="flex flex-col items-center gap-1"
+              className="flex flex-col items-center gap-1 cursor-pointer"
             >
-              <div className={`w-11 h-11 rounded-full grid place-items-center backdrop-blur-md ${activeReel.savedByMe ? "bg-purple-600 text-white" : "bg-black/50 text-white hover:bg-black/70"}`}>
+              <div className={`w-11 h-11 rounded-full grid place-items-center backdrop-blur-md border border-white/10 ${activeReel.savedByMe ? "bg-purple-600 text-white" : "bg-black/50 text-white hover:bg-black/70"}`}>
                 <Bookmark className={`w-5 h-5 ${activeReel.savedByMe ? "fill-white" : ""}`} />
               </div>
               <span className="text-[10px] font-bold text-white drop-shadow-md">{t("saved")}</span>
@@ -562,12 +585,16 @@ export default function Reels() {
             </div>
           </div>
 
+          {/* Subtle gradient scrim at bottom to ensure text readability */}
+          <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-black/95 via-black/50 to-transparent pointer-events-none z-10" />
+
           {/* Bottom Left Creator & Caption Info Overlay */}
-          <div className="absolute bottom-4 left-4 right-16 text-white z-10">
-            <div className="flex items-center gap-2 mb-2">
+          <div className="absolute bottom-3 left-3.5 right-16 text-white z-20 space-y-2 pointer-events-auto">
+            {/* Creator Row: Avatar + Name + Follow */}
+            <div className="flex items-center gap-2.5">
               <Link
                 to={`/users/${activeReel.authorId || activeReel.createdBy}`}
-                className="w-10 h-10 rounded-full border-2 border-white/80 overflow-hidden bg-purple-200 grid place-items-center shrink-0"
+                className="w-10 h-10 rounded-full border-2 border-white/80 overflow-hidden bg-purple-200 grid place-items-center shrink-0 shadow-md"
               >
                 {activeReel.authorPhoto ? (
                   <img src={activeReel.authorPhoto} alt="" className="w-full h-full object-cover" />
@@ -577,44 +604,56 @@ export default function Reels() {
                   </span>
                 )}
               </Link>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <Link
-                    to={`/users/${activeReel.authorId || activeReel.createdBy}`}
-                    className="font-semibold text-sm drop-shadow truncate hover:underline"
+              <div className="flex items-center gap-2 min-w-0">
+                <Link
+                  to={`/users/${activeReel.authorId || activeReel.createdBy}`}
+                  className="font-bold text-sm text-white drop-shadow-md truncate hover:underline"
+                >
+                  {activeReel.authorName || "સમાજ સભ્ય"}
+                </Link>
+                {activeReel.authorId !== user?.id && (
+                  <button
+                    onClick={handleFollow}
+                    data-testid="reel-follow-btn"
+                    className={`text-[11px] font-bold px-3 py-0.5 rounded-full backdrop-blur-md transition shadow-xs cursor-pointer ${
+                      activeReel.followedByMe
+                        ? "bg-white/20 text-white border border-white/40"
+                        : "bg-purple-600 text-white hover:bg-purple-700"
+                    }`}
                   >
-                    {activeReel.authorName || "સમાજ સભ્ય"}
-                  </Link>
-                  {activeReel.authorId !== user?.id && (
-                    <button
-                      onClick={handleFollow}
-                      className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full backdrop-blur-md transition ${activeReel.followedByMe ? "bg-white/20 text-white border border-white/40" : "bg-purple-600 text-white hover:bg-purple-700"}`}
-                    >
-                      {activeReel.followedByMe ? "ફોલોઇંગ" : "ફોલો"}
-                    </button>
-                  )}
-                </div>
-                {activeReel.location && (
-                  <div className="text-[11px] text-white/80 truncate drop-shadow">
-                    📍 {activeReel.location}
-                  </div>
+                    {activeReel.followedByMe ? "ફોલોઇંગ" : "ફોલો"}
+                  </button>
                 )}
               </div>
             </div>
 
+            {/* Caption */}
             {activeReel.caption && (
               <p className="text-xs text-white/95 line-clamp-2 drop-shadow font-normal leading-relaxed">
                 {activeReel.caption}
               </p>
             )}
+
+            {/* Music/audio information */}
+            <div className="flex items-center gap-2 text-[11px] text-white/90 drop-shadow">
+              <Music2 className="w-3.5 h-3.5 shrink-0 text-purple-300 animate-pulse" />
+              <div className="truncate max-w-[220px]">
+                {activeReel.audioTitle || `ઓરિજિનલ ઓડિયો • ${activeReel.authorName || 'સમાજ રીલ'}`}
+              </div>
+              {activeReel.location && (
+                <span className="text-white/70 text-[10px] truncate">
+                  • 📍 {activeReel.location}
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Navigation Arrows for desktop */}
-          <div className="hidden sm:flex flex-col gap-2 absolute -right-14 top-1/2 -translate-y-1/2">
+          <div className="hidden sm:flex flex-col gap-2 absolute -right-14 top-1/2 -translate-y-1/2 z-30">
             <button
               onClick={prevReel}
               disabled={currentIdx === 0}
-              className="p-2.5 rounded-full bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 shadow-md disabled:opacity-30 disabled:pointer-events-none transition"
+              className="p-2.5 rounded-full bg-slate-900 border border-slate-700 text-white hover:bg-slate-800 shadow-md disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer"
               title="Previous Reel"
             >
               <ChevronUp className="w-5 h-5" />
@@ -622,7 +661,7 @@ export default function Reels() {
             <button
               onClick={nextReel}
               disabled={currentIdx === reels.length - 1}
-              className="p-2.5 rounded-full bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 shadow-md disabled:opacity-30 disabled:pointer-events-none transition"
+              className="p-2.5 rounded-full bg-slate-900 border border-slate-700 text-white hover:bg-slate-800 shadow-md disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer"
               title="Next Reel"
             >
               <ChevronDown className="w-5 h-5" />

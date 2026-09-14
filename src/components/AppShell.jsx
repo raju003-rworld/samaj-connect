@@ -39,7 +39,7 @@ import { SamajSwitcher } from "@/components/SamajSwitcher";
 import { IDS } from "@/constants/testIds";
 import { api } from "@/lib/api";
 
-const MobileNavItem = ({ to, icon: Icon, label, testId, activePrefix, badge }) => {
+const MobileNavItem = ({ to, icon: Icon, label, testId, activePrefix, badge, isDark }) => {
   const location = useLocation();
   const isActive = activePrefix ? location.pathname.startsWith(activePrefix) : location.pathname === to;
   return (
@@ -47,10 +47,24 @@ const MobileNavItem = ({ to, icon: Icon, label, testId, activePrefix, badge }) =
       to={to}
       data-testid={testId}
       className={`flex flex-col items-center justify-center py-1 px-2.5 text-[10px] font-medium transition-all relative ${
-        isActive ? "text-purple-950 font-bold scale-105" : "text-slate-600 hover:text-purple-800"
+        isActive
+          ? isDark
+            ? "text-white font-bold scale-105"
+            : "text-purple-950 font-bold scale-105"
+          : isDark
+          ? "text-slate-400 hover:text-white"
+          : "text-slate-600 hover:text-purple-800"
       }`}
     >
-      <div className={`p-1 rounded-xl transition-colors relative ${isActive ? "bg-purple-100 text-purple-900" : ""}`}>
+      <div
+        className={`p-1 rounded-xl transition-colors relative ${
+          isActive
+            ? isDark
+              ? "bg-white/20 text-white"
+              : "bg-purple-100 text-purple-900"
+            : ""
+        }`}
+      >
         <Icon className="w-5 h-5" />
         {badge > 0 && (
           <span className="absolute -top-1 -right-1 min-w-[15px] h-[15px] px-1 bg-rose-500 text-white text-[9px] font-bold rounded-full grid place-items-center">
@@ -373,6 +387,10 @@ export default function AppShell({ children }) {
 
   // Open existing post composer
   const handleAddPost = () => {
+    if (location.pathname.startsWith("/reels")) {
+      window.dispatchEvent(new CustomEvent("samaj-open-create-reel"));
+      return;
+    }
     if (location.pathname === "/home") {
       window.dispatchEvent(new CustomEvent("samaj-open-compose"));
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -382,106 +400,143 @@ export default function AppShell({ children }) {
   };
 
   const isMessagesPage = location.pathname.startsWith("/messages");
+  const isReelsPage = location.pathname.startsWith("/reels");
 
   return (
-    <div className="min-h-screen bg-slate-50/80">
-      {/* TOP HEADER */}
-      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl border-b border-slate-200/80 shadow-xs">
-        <div className="max-w-7xl mx-auto flex items-center justify-between px-3 sm:px-6 h-15">
-          {/* Logo & Brand */}
-          <button
-            data-testid="header-logo"
-            onClick={() => nav("/home")}
-            className="flex items-center gap-2.5 group text-left"
-          >
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-800 to-indigo-700 grid place-items-center text-white font-extrabold shadow-md shadow-purple-900/20 group-hover:scale-105 transition">
-              SC
-            </div>
-            <div>
-              <div className="font-heading font-extrabold text-base tracking-tight text-slate-900 leading-none">
-                SAMAJ CONNECT
-              </div>
-              <div className="text-[10px] font-semibold text-purple-700 tracking-wide mt-0.5">
-                {t("tagline_short")}
-              </div>
-            </div>
-          </button>
-
-          {/* Center / Right Header Actions */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            {/* Current Samaj Selector Chip */}
+    <div className={`min-h-screen ${isReelsPage ? "bg-black" : "bg-slate-50/80"}`}>
+      {/* TOP HEADER - Hidden on Reels starting/landing screen */}
+      {!isReelsPage && (
+        <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl border-b border-slate-200/80 shadow-xs">
+          <div className="max-w-7xl mx-auto flex items-center justify-between px-3 sm:px-6 h-15">
+            {/* Logo & Brand */}
             <button
-              data-testid="header-samaj-chip"
-              onClick={() => setSamajOpen(true)}
-              className="flex items-center gap-1.5 text-xs font-semibold text-purple-900 bg-purple-50 hover:bg-purple-100 border border-purple-200/80 px-3 py-1.5 rounded-full max-w-[150px] sm:max-w-[200px] truncate transition shadow-xs"
+              data-testid="header-logo"
+              onClick={() => nav("/home")}
+              className="flex items-center gap-2.5 group text-left"
             >
-              <Building2 className="w-3.5 h-3.5 text-purple-700 shrink-0" />
-              <span className="truncate">
-                {(lang === "en" && activeSamaj?.nameEn) || activeSamaj?.name || "સમાજ પસંદ કરો"}
-              </span>
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-800 to-indigo-700 grid place-items-center text-white font-extrabold shadow-md shadow-purple-900/20 group-hover:scale-105 transition">
+                SC
+              </div>
+              <div>
+                <div className="font-heading font-extrabold text-base tracking-tight text-slate-900 leading-none">
+                  SAMAJ CONNECT
+                </div>
+                <div className="text-[10px] font-semibold text-purple-700 tracking-wide mt-0.5">
+                  {t("tagline_short")}
+                </div>
+              </div>
             </button>
 
-            {/* Search Icon */}
-            <button
-              data-testid="header-search"
-              onClick={() => nav("/search")}
-              className="p-2 rounded-full hover:bg-slate-100 text-slate-700 transition"
-              title="Search"
-            >
-              <Search className="w-5 h-5" />
-            </button>
-
-            {/* Notifications Icon with Badge */}
-            <button
-              data-testid="header-notifications"
-              onClick={() => nav("/notifications")}
-              className="p-2 rounded-full hover:bg-slate-100 text-slate-700 relative transition"
-              title="Notifications"
-            >
-              <Bell className="w-5 h-5" />
-              {unread > 0 && (
-                <span
-                  data-testid="notif-badge"
-                  className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[10px] font-bold rounded-full grid place-items-center shadow-xs"
-                >
-                  {unread > 99 ? "99+" : unread}
+            {/* Center / Right Header Actions */}
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              {/* Current Samaj Display Badge (Display Only - Samaj change allowed only in Profile) */}
+              <div
+                data-testid="header-samaj-chip"
+                data-header-samaj-badge="true"
+                onClick={() => nav("/profile")}
+                title="સક્રિય સમાજ (સમાજ બદલવા માટે પ્રોફાઇલમાં જાઓ)"
+                className="flex items-center gap-1.5 text-xs font-semibold text-purple-900 bg-purple-50/90 hover:bg-purple-100/80 border border-purple-200/80 px-3 py-1.5 rounded-full max-w-[150px] sm:max-w-[200px] truncate transition shadow-xs cursor-pointer select-none"
+              >
+                <Building2 className="w-3.5 h-3.5 text-purple-700 shrink-0" />
+                <span className="truncate">
+                  {(lang === "en" && activeSamaj?.nameEn) || activeSamaj?.name || "સમાજ"}
                 </span>
-              )}
-            </button>
+              </div>
 
-            {/* User Profile Avatar */}
-            <button
-              data-testid="header-avatar"
-              onClick={() => nav("/profile")}
-              className="w-9 h-9 rounded-full bg-purple-100 text-purple-900 grid place-items-center font-bold border-2 border-purple-200 overflow-hidden shadow-xs hover:ring-2 hover:ring-purple-400 transition"
-              title="Profile"
-            >
-              {user?.profilePhoto ? (
-                <img src={user.profilePhoto} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <span>{initial}</span>
-              )}
-            </button>
+              {/* Search Icon */}
+              <button
+                data-testid="header-search"
+                onClick={() => nav("/search")}
+                className="p-2 rounded-full hover:bg-slate-100 text-slate-700 transition"
+                title="Search"
+              >
+                <Search className="w-5 h-5" />
+              </button>
 
-            {/* More Menu Trigger Button */}
-            <button
-              data-testid={IDS.navMenu || "header-menu"}
-              onClick={() => setMoreOpen(true)}
-              className="p-2 rounded-full hover:bg-purple-50 text-slate-700 hover:text-purple-900 transition flex items-center justify-center"
-              title="More Menu"
-            >
-              <MenuIcon className="w-5 h-5" />
-            </button>
+              {/* Notifications Icon with Badge */}
+              <button
+                data-testid="header-notifications"
+                onClick={() => nav("/notifications")}
+                className="p-2 rounded-full hover:bg-slate-100 text-slate-700 relative transition"
+                title="Notifications"
+              >
+                <Bell className="w-5 h-5" />
+                {unread > 0 && (
+                  <span
+                    data-testid="notif-badge"
+                    className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[10px] font-bold rounded-full grid place-items-center shadow-xs"
+                  >
+                    {unread > 99 ? "99+" : unread}
+                  </span>
+                )}
+              </button>
+
+              {/* User Profile Avatar */}
+              <button
+                data-testid="header-avatar"
+                onClick={() => nav("/profile")}
+                className="w-9 h-9 rounded-full bg-purple-100 text-purple-900 grid place-items-center font-bold border-2 border-purple-200 overflow-hidden shadow-xs hover:ring-2 hover:ring-purple-400 transition"
+                title="Profile"
+              >
+                {user?.profilePhoto ? (
+                  <img src={user.profilePhoto} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <span>{initial}</span>
+                )}
+              </button>
+
+              {/* More Menu Trigger Button */}
+              <button
+                data-testid={IDS.navMenu || "header-menu"}
+                onClick={() => setMoreOpen(true)}
+                className="p-2 rounded-full hover:bg-purple-50 text-slate-700 hover:text-purple-900 transition flex items-center justify-center"
+                title="More Menu"
+              >
+                <MenuIcon className="w-5 h-5" />
+              </button>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
+      )}
 
       {/* MAIN LAYOUT WRAPPER: DESKTOP SIDEBARS + CENTER CONTENT */}
-      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-4 flex gap-6 justify-center">
+      <div
+        className={`mx-auto flex justify-center ${
+          isReelsPage
+            ? "w-full h-[100dvh] md:h-screen p-0 m-0 overflow-hidden lg:max-w-7xl lg:px-6 lg:py-4 lg:gap-8"
+            : "max-w-7xl px-2 sm:px-4 lg:px-6 py-4 gap-6 min-h-[calc(100vh-60px)]"
+        }`}
+      >
         {/* DESKTOP LEFT SIDEBAR (STICKY) */}
-        <aside className="hidden lg:flex flex-col w-64 shrink-0 space-y-5 sticky top-20 self-start">
+        <aside
+          className={`hidden lg:flex flex-col w-64 shrink-0 space-y-5 sticky self-start ${
+            isReelsPage ? "top-4" : "top-20"
+          }`}
+        >
           {/* Main Navigation links */}
-          <div className="bg-white rounded-3xl p-3 border border-slate-100 shadow-sm space-y-1">
+          <div
+            className={`rounded-3xl p-3 border shadow-sm space-y-1 ${
+              isReelsPage
+                ? "bg-slate-900/90 border-slate-800 text-white"
+                : "bg-white border-slate-100"
+            }`}
+          >
+            {isReelsPage && (
+              <button
+                onClick={() => nav("/home")}
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-left group mb-2 hover:opacity-90 transition cursor-pointer"
+              >
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-purple-800 to-indigo-700 grid place-items-center text-white font-extrabold text-xs shadow-md">
+                  SC
+                </div>
+                <div>
+                  <div className="font-heading font-extrabold text-sm tracking-tight text-white leading-none">
+                    SAMAJ CONNECT
+                  </div>
+                </div>
+              </button>
+            )}
+
             {desktopNavItems.map((it) => {
               const isActive = it.matchExact
                 ? location.pathname === it.to
@@ -493,10 +548,12 @@ export default function AppShell({ children }) {
                   className={`flex items-center gap-3.5 px-4 py-3 rounded-2xl font-semibold text-sm transition-all ${
                     isActive
                       ? "bg-purple-900 text-white shadow-md shadow-purple-900/20"
+                      : isReelsPage
+                      ? "text-slate-300 hover:bg-slate-800/60 hover:text-white"
                       : "text-slate-700 hover:bg-purple-50 hover:text-purple-950"
                   }`}
                 >
-                  <it.icon className={`w-5 h-5 ${isActive ? "text-white" : "text-purple-700"}`} />
+                  <it.icon className={`w-5 h-5 ${isActive ? "text-white" : isReelsPage ? "text-purple-400" : "text-purple-700"}`} />
                   <span>{it.label}</span>
                 </NavLink>
               );
@@ -505,9 +562,13 @@ export default function AppShell({ children }) {
             {/* More Modules Trigger */}
             <button
               onClick={() => setMoreOpen(true)}
-              className="w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl font-semibold text-sm text-slate-700 hover:bg-purple-50 hover:text-purple-950 transition"
+              className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl font-semibold text-sm transition cursor-pointer ${
+                isReelsPage
+                  ? "text-slate-300 hover:bg-slate-800/60 hover:text-white"
+                  : "text-slate-700 hover:bg-purple-50 hover:text-purple-950"
+              }`}
             >
-              <Grid className="w-5 h-5 text-purple-700" />
+              <Grid className={`w-5 h-5 ${isReelsPage ? "text-purple-400" : "text-purple-700"}`} />
               <span>વધુ સુવિધાઓ (More)</span>
             </button>
           </div>
@@ -518,13 +579,17 @@ export default function AppShell({ children }) {
             className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-purple-800 to-indigo-700 hover:from-purple-900 hover:to-indigo-800 text-white font-semibold text-sm shadow-md shadow-purple-900/25 flex items-center justify-center gap-2 transition active:scale-98 cursor-pointer"
           >
             <Plus className="w-5 h-5" />
-            <span>નવી પોસ્ટ બનાવો</span>
+            <span>{isReelsPage ? "નવી રીલ ઉમેરો" : "નવી પોસ્ટ બનાવો"}</span>
           </button>
 
           {/* Current User Mini Badge */}
           <div
             onClick={() => nav("/profile")}
-            className="bg-white rounded-3xl p-3.5 border border-slate-100 shadow-sm flex items-center gap-3 cursor-pointer hover:bg-purple-50/50 transition"
+            className={`rounded-3xl p-3.5 border shadow-sm flex items-center gap-3 cursor-pointer transition ${
+              isReelsPage
+                ? "bg-slate-900/90 border-slate-800 hover:bg-slate-800/70"
+                : "bg-white border-slate-100 hover:bg-purple-50/50"
+            }`}
           >
             <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-900 grid place-items-center font-extrabold overflow-hidden border border-purple-200 shrink-0">
               {user?.profilePhoto ? (
@@ -534,25 +599,29 @@ export default function AppShell({ children }) {
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="font-heading font-bold text-sm text-slate-900 truncate">
+              <div className={`font-heading font-bold text-sm truncate ${isReelsPage ? "text-white" : "text-slate-900"}`}>
                 {user?.name || "સભ્ય"}
               </div>
-              <div className="text-[11px] text-slate-500 truncate">{user?.phone}</div>
+              <div className={`text-[11px] truncate ${isReelsPage ? "text-slate-400" : "text-slate-500"}`}>{user?.phone}</div>
             </div>
           </div>
         </aside>
 
-        {/* CENTER / MAIN CONTENT (Fuller width for Messages, focused max-w-2xl for Home feed) */}
+        {/* CENTER / MAIN CONTENT */}
         <main
-          className={`flex-1 min-w-0 pb-24 md:pb-12 ${
-            isMessagesPage ? "max-w-5xl" : "max-w-2xl"
+          className={`flex-1 min-w-0 ${
+            isReelsPage
+              ? "p-0 m-0 h-full w-full flex justify-center items-center"
+              : isMessagesPage
+              ? "max-w-5xl pb-24 md:pb-12"
+              : "max-w-2xl pb-24 md:pb-12"
           }`}
         >
           {children}
         </main>
 
         {/* DESKTOP RIGHT SIDEBAR (STICKY ON XL SCREENS FOR FEED/HOME) */}
-        {!isMessagesPage && (
+        {!isMessagesPage && !isReelsPage && (
           <div className="hidden xl:block">
             <DesktopRightSidebar />
           </div>
@@ -561,7 +630,13 @@ export default function AppShell({ children }) {
 
       {/* BOTTOM MOBILE NAVIGATION: Reels | Messages | + Add Post (Center) | Photos | More */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 md:hidden pointer-events-none">
-        <div className="max-w-md mx-auto pointer-events-auto bg-white/95 backdrop-blur-xl border-t border-purple-100/90 px-3 pt-1.5 pb-2 flex items-center justify-between shadow-[0_-6px_25px_-5px_rgba(91,33,182,0.14)] relative">
+        <div
+          className={`max-w-md mx-auto pointer-events-auto px-3 pt-1.5 pb-2 flex items-center justify-between relative transition-colors ${
+            isReelsPage
+              ? "bg-black/90 backdrop-blur-xl border-t border-white/10 text-white shadow-[0_-6px_25px_-5px_rgba(0,0,0,0.8)]"
+              : "bg-white/95 backdrop-blur-xl border-t border-purple-100/90 text-slate-700 shadow-[0_-6px_25px_-5px_rgba(91,33,182,0.14)]"
+          }`}
+        >
           {/* 1. Reels */}
           <MobileNavItem
             to="/reels"
@@ -569,6 +644,7 @@ export default function AppShell({ children }) {
             label="રીલ્સ"
             testId="nav-item-reels"
             activePrefix="/reels"
+            isDark={isReelsPage}
           />
 
           {/* 2. Messages */}
@@ -578,6 +654,7 @@ export default function AppShell({ children }) {
             label="સંદેશા"
             testId="nav-item-messages"
             activePrefix="/messages"
+            isDark={isReelsPage}
           />
 
           {/* 4. Large prominent "+ Add Post" button in the center */}
@@ -591,7 +668,11 @@ export default function AppShell({ children }) {
             >
               <Plus className="w-7 h-7 stroke-[2.75] group-hover:rotate-90 transition-transform duration-200" />
             </button>
-            <span className="mt-1 text-[10px] font-extrabold text-purple-950 tracking-tight leading-none">
+            <span
+              className={`mt-1 text-[10px] font-extrabold tracking-tight leading-none ${
+                isReelsPage ? "text-slate-300" : "text-purple-950"
+              }`}
+            >
               + પોસ્ટ
             </span>
           </div>
@@ -603,6 +684,7 @@ export default function AppShell({ children }) {
             label="ફોટોઝ"
             testId="nav-item-photos"
             activePrefix="/photos"
+            isDark={isReelsPage}
           />
 
           {/* 5. More */}
@@ -611,10 +693,12 @@ export default function AppShell({ children }) {
             data-testid={IDS.navMenu}
             onClick={() => setMoreOpen(true)}
             aria-label="વધુ સેવાઓ (More Menu)"
-            className="flex flex-col items-center justify-center py-1 px-2.5 text-[10px] font-medium text-slate-600 hover:text-purple-800 transition-all cursor-pointer"
+            className={`flex flex-col items-center justify-center py-1 px-2.5 text-[10px] font-medium transition-all cursor-pointer ${
+              isReelsPage ? "text-slate-400 hover:text-white" : "text-slate-600 hover:text-purple-800"
+            }`}
           >
-            <div className="p-1 rounded-xl hover:bg-purple-50 transition-colors">
-              <Grid className="w-5 h-5 text-slate-700" />
+            <div className={`p-1 rounded-xl transition-colors ${isReelsPage ? "hover:bg-white/10" : "hover:bg-purple-50"}`}>
+              <Grid className={`w-5 h-5 ${isReelsPage ? "text-slate-300" : "text-slate-700"}`} />
             </div>
             <span className="mt-0.5 tracking-tight font-medium leading-none">વધુ</span>
           </button>
@@ -623,9 +707,6 @@ export default function AppShell({ children }) {
 
       {/* Side / More Menu Sheet */}
       <MoreMenuSheet open={moreOpen} onOpenChange={setMoreOpen} />
-
-      {/* Samaj Switcher Modal */}
-      <SamajSwitcher open={samajOpen} onOpenChange={setSamajOpen} />
 
       <Toaster position="top-center" richColors />
     </div>

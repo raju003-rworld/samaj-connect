@@ -82,7 +82,7 @@ export default function Onboarding() {
 
         if (status?.onboardingCompleted && !allowChange) {
           toast.success("તમારું સમાજ રજીસ્ટ્રેશન પહેલેથી પૂર્ણ થયેલ છે!");
-          nav("/home", { replace: true });
+          nav("/reels", { replace: true });
           return;
         }
 
@@ -358,8 +358,8 @@ export default function Onboarding() {
       if (res.data?.ok || res.data?.onboardingCompleted) {
         toast.success("તમારું સમાજ રજીસ્ટ્રેશન સફળતાપૂર્વક પૂર્ણ થયું છે!");
         await refreshUser();
-        // Redirect directly to Home
-        nav("/home", { replace: true });
+        // Redirect directly to Reels (default landing)
+        nav("/reels", { replace: true });
       } else {
         toast.error(res.data?.detail || "રજીસ્ટ્રેશન સાચવવામાં સમસ્યા આવી.");
       }

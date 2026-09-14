@@ -18,7 +18,7 @@ export default function Splash() {
         if (!user.onboardingCompleted && !isAdmin) {
           nav("/onboarding", { replace: true });
         } else {
-          nav("/home", { replace: true });
+          nav("/reels", { replace: true });
         }
       }
     }, 1400);

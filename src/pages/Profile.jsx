@@ -26,6 +26,9 @@ import {
   Phone,
   MapPin,
   X,
+  Clock,
+  XCircle,
+  AlertCircle,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { useApp } from "@/context/AppContext";
@@ -33,6 +36,7 @@ import { IDS } from "@/constants/testIds";
 import { MediaUploader, isVideoUrl } from "@/components/MediaUploader";
 import { PostCard } from "@/components/social/PostCard";
 import { UserListModal } from "@/components/social/UserListModal";
+import ChangeSamajModal from "@/components/profile/ChangeSamajModal";
 
 export default function Profile() {
   const { user, updateUser, logout, t, isMod, activeSamaj } = useApp();
@@ -119,8 +123,21 @@ export default function Profile() {
       /* ignore */
     }
   };
+
+  const [changeReq, setChangeReq] = useState(null);
+  const [changeModalOpen, setChangeModalOpen] = useState(false);
+  const loadChangeRequest = async () => {
+    try {
+      const res = await api.get("/samaj/change-request");
+      setChangeReq(res.data?.request || null);
+    } catch {
+      /* ignore */
+    }
+  };
+
   useEffect(() => {
     loadVerif();
+    loadChangeRequest();
   }, [user?.id]);
   const submitVerification = async () => {
     try {
@@ -199,10 +216,20 @@ export default function Profile() {
                 </div>
               </div>
 
-              {/* Samaj Badge */}
-              <div className="inline-flex items-center justify-center gap-1 px-3 py-1 rounded-full bg-purple-50 border border-purple-200 text-purple-900 text-xs font-semibold self-center sm:self-auto">
-                <Building2 className="w-3.5 h-3.5 text-purple-700" />
-                <span className="truncate max-w-[140px]">{activeSamaj?.name || "સમાજ"}</span>
+              {/* Samaj Badge & Change Samaj Button */}
+              <div className="flex flex-wrap items-center gap-2 self-center sm:self-auto">
+                <div className="inline-flex items-center justify-center gap-1 px-3 py-1 rounded-full bg-purple-50 border border-purple-200 text-purple-900 text-xs font-semibold">
+                  <Building2 className="w-3.5 h-3.5 text-purple-700" />
+                  <span className="truncate max-w-[140px]">{activeSamaj?.name || "સમાજ"}</span>
+                </div>
+                <button
+                  type="button"
+                  data-testid="profile-change-samaj-btn"
+                  onClick={() => setChangeModalOpen(true)}
+                  className="text-[11px] font-bold text-purple-800 hover:text-purple-950 bg-white hover:bg-purple-50 border border-purple-200 px-2.5 py-1 rounded-full shadow-2xs transition cursor-pointer"
+                >
+                  સમાજ બદલો
+                </button>
               </div>
             </div>
 
@@ -274,6 +301,56 @@ export default function Profile() {
             </div>
           </div>
         </div>
+
+        {/* Samaj Change Request Status (Part 19 & Part 20) */}
+        {changeReq && changeReq.status === "PENDING" && (
+          <div data-testid="samaj-change-pending-card" className="mt-4 rounded-2xl border border-purple-200 bg-purple-50/70 p-3.5 text-xs">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0 mt-0.5">
+                <Clock className="w-4 h-4" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="font-bold text-purple-950 flex items-center gap-1.5 flex-wrap">
+                  <span>સમાજ બદલવાની વિનંતી પેન્ડિંગ છે</span>
+                  <span className="text-[10px] bg-purple-200/80 text-purple-900 px-2 py-0.5 rounded-full font-semibold">
+                    Pending Approval
+                  </span>
+                </div>
+                <p className="text-purple-900/90 mt-1 leading-relaxed">
+                  તમે <strong className="font-bold text-purple-950">{changeReq.requestedSamajName}</strong> માં જોડાવા વિનંતી મોકલી છે. જ્યાં સુધી સંબંધિત સમાજ એડમિન મંજૂર ન કરે ત્યાં સુધી તમારો વર્તમાન સમાજ ({activeSamaj?.name}) જ સક્રિય રહેશે.
+                </p>
+                <div className="text-[11px] text-purple-700 mt-1 font-medium">
+                  તારીખ: {new Date(changeReq.createdAt).toLocaleDateString("gu-IN")}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {changeReq && changeReq.status === "REJECTED" && (
+          <div data-testid="samaj-change-rejected-card" className="mt-4 rounded-2xl border border-rose-200 bg-rose-50/70 p-3.5 text-xs">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center shrink-0 mt-0.5">
+                  <XCircle className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="font-bold text-rose-950">સમાજ બદલવાની વિનંતી અસ્વીકાર થઈ હતી</div>
+                  <p className="text-rose-800/90 mt-0.5 leading-relaxed">
+                    કારણ: "{changeReq.rejectionReason || "વિગતો અમાન્ય છે"}"
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setChangeModalOpen(true)}
+                className="shrink-0 px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-2xs transition cursor-pointer"
+              >
+                નવી વિનંતી
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Profile Verification (Task 4) */}
         {verif && (
@@ -719,6 +796,14 @@ export default function Profile() {
           type={userListType}
         />
       )}
+
+      {/* Samaj Change Modal (Part 19: Profile -> Change Samaj) */}
+      <ChangeSamajModal
+        open={changeModalOpen}
+        onOpenChange={setChangeModalOpen}
+        onSuccess={loadChangeRequest}
+        currentPending={changeReq?.status === "PENDING" ? changeReq : null}
+      />
     </div>
   );
 }

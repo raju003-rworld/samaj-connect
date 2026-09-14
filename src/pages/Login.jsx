@@ -41,7 +41,7 @@ export default function Login() {
       nav("/onboarding", { replace: true });
     } else {
       toast.success(`${t("hello")}!`);
-      nav("/home", { replace: true });
+      nav("/reels", { replace: true });
     }
   };
 

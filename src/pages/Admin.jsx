@@ -29,6 +29,7 @@ import {
   XCircle,
   ToggleLeft,
   ToggleRight,
+  ArrowLeftRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
@@ -65,6 +66,9 @@ export default function Admin() {
   const [rolesData, setRolesData] = useState(null);
   const [auditLogs, setAuditLogs] = useState([]);
   const [auditQuery, setAuditQuery] = useState("");
+
+  const [samajRequests, setSamajRequests] = useState([]);
+  const [samajRequestsLoading, setSamajRequestsLoading] = useState(false);
 
   // Fetch Stats
   const loadStats = useCallback(async () => {
@@ -190,11 +194,50 @@ export default function Admin() {
     } catch {}
   };
 
+  const loadSamajRequests = async () => {
+    setSamajRequestsLoading(true);
+    try {
+      const res = await api.get("/admin/samaj/change-requests");
+      setSamajRequests(res.data.items || []);
+    } catch {
+      toast.error("સમાજ બદલવાની વિનંતીઓ લોડ કરવામાં ત્રુટિ.");
+    } finally {
+      setSamajRequestsLoading(false);
+    }
+  };
+
+  const handleApproveSamajRequest = async (id) => {
+    try {
+      const res = await api.post(`/admin/samaj/change-requests/${id}/approve`);
+      toast.success(res.data.message || "વિનંતી સફળતાપૂર્વક મંજૂર થઈ ગઈ.");
+      await loadSamajRequests();
+      loadStats();
+    } catch (err) {
+      toast.error(err.response?.data?.error || "મંજૂરી અસફળ રહી.");
+    }
+  };
+
+  const handleRejectSamajRequest = async (id) => {
+    const reason = window.prompt("અસ્વીકાર કરવાનું કારણ (Rejection reason):", "");
+    if (reason === null) return;
+    try {
+      const res = await api.post(`/admin/samaj/change-requests/${id}/reject`, {
+        rejectionReason: reason.trim(),
+      });
+      toast.success(res.data.message || "વિનંતી અસ્વીકાર કરવામાં આવી.");
+      await loadSamajRequests();
+      loadStats();
+    } catch (err) {
+      toast.error(err.response?.data?.error || "અસ્વીકાર અસફળ રહ્યો.");
+    }
+  };
+
   useEffect(() => {
     if (currentTab === "users") loadUsers();
     if (currentTab === "main_samaj") loadMainSamaj();
     if (currentTab === "gam") loadGam();
     if (currentTab === "samaj") loadSamaj();
+    if (currentTab === "samaj_requests") loadSamajRequests();
     if (currentTab === "verification") loadVerification();
     if (currentTab === "posts") loadPosts();
     if (currentTab === "reels") loadReels();
@@ -256,6 +299,14 @@ export default function Admin() {
     { id: "main_samaj", label: "Main Samaj", guLabel: "મુખ્ય સમાજ", icon: Globe, badge: stats.mainSamaj },
     { id: "gam", label: "Gam (Villages)", guLabel: "ગામ", icon: MapPin, badge: stats.gam },
     { id: "samaj", label: "Samaj Chapters", guLabel: "સમાજ શાખાઓ", icon: Building2, badge: stats.samaj },
+    {
+      id: "samaj_requests",
+      label: "Samaj Requests",
+      guLabel: "સમાજ બદલવા વિનંતીઓ",
+      icon: ArrowLeftRight,
+      badge: samajRequests.filter((r) => r.status === "PENDING").length,
+      alert: samajRequests.some((r) => r.status === "PENDING"),
+    },
     { id: "verification", label: "Verification", guLabel: "વેરિફિકેશન", icon: UserCheck, badge: stats.pendingVerification, alert: stats.pendingVerification > 0 },
     { id: "posts", label: "Posts", guLabel: "પોસ્ટ્સ", icon: FileText, badge: stats.posts },
     { id: "reels", label: "Reels", guLabel: "રીલ્સ", icon: Film, badge: stats.reels },
@@ -898,6 +949,128 @@ export default function Admin() {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================= */}
+          {/* TAB: SAMAJ CHANGE REQUESTS (PART 20 SAMAJ ADMIN APPROVAL) */}
+          {/* ========================================================= */}
+          {currentTab === "samaj_requests" && (
+            <div className="space-y-4">
+              <div className="bg-slate-900 border border-purple-800/40 rounded-3xl p-5 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-purple-500/10 text-purple-400 flex items-center justify-center shrink-0">
+                    <ArrowLeftRight className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white">સમાજ બદલવાની વિનંતીઓ (Change Samaj Requests)</h3>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      સભ્યો દ્વારા અન્ય સમાજ શાખામાં જોડાવા માટે કરાયેલ વિનંતીઓની સમીક્ષા કરો. મંજૂરી બાદ જ સભ્યનો સક્રિય સમાજ (Active Samaj) બદલાશે.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {samajRequests.length === 0 ? (
+                  <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center text-slate-400 text-xs">
+                    હાલમાં કોઈ સમાજ બદલવાની વિનંતીઓ નથી.
+                  </div>
+                ) : (
+                  samajRequests.map((req) => (
+                    <div
+                      key={req.id}
+                      className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm space-y-3"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                        <div>
+                          <div className="text-xs font-bold text-white flex items-center gap-2">
+                            <span>{req.userName || "અજ્ઞાત સભ્ય"}</span>
+                            <span className="text-[10px] font-mono text-slate-400 font-normal">
+                              ({req.userPhone || "—"})
+                            </span>
+                          </div>
+                          <div className="text-[10px] text-slate-400 mt-0.5">
+                            તારીખ: {new Date(req.createdAt).toLocaleString("gu-IN")}
+                          </div>
+                        </div>
+
+                        <div>
+                          {req.status === "PENDING" && (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/30">
+                              <Clock className="w-3.5 h-3.5" />
+                              પેન્ડિંગ (Pending Review)
+                            </span>
+                          )}
+                          {req.status === "APPROVED" && (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              મંજૂર થયેલ (Approved)
+                            </span>
+                          )}
+                          {req.status === "REJECTED" && (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-rose-500/10 text-rose-300 border border-rose-500/30">
+                              <XCircle className="w-3.5 h-3.5" />
+                              અસ્વીકાર (Rejected)
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+                        <div>
+                          <span className="text-[10px] text-slate-400 block font-semibold">વર્તમાન સમાજ:</span>
+                          <span className="text-slate-200 font-medium">{req.currentSamajName || req.currentSamajId}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-purple-300 block font-semibold">વિનંતી કરેલ નવો સમાજ:</span>
+                          <span className="text-white font-bold">{req.requestedSamajName || req.requestedSamajId}</span>
+                          {(req.requestedMainSamajName || req.requestedGam) && (
+                            <div className="text-[10px] text-slate-400 mt-0.5">
+                              {[req.requestedMainSamajName, req.requestedGam].filter(Boolean).join(" • ")}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {req.reason && (
+                        <div className="text-xs text-slate-300 bg-slate-800/40 p-2.5 rounded-lg border border-slate-800">
+                          <span className="text-[10px] text-slate-400 block font-semibold mb-0.5">સભ્યની નોંધ / કારણ:</span>
+                          "{req.reason}"
+                        </div>
+                      )}
+
+                      {req.status === "REJECTED" && req.rejectionReason && (
+                        <div className="text-xs text-rose-300 bg-rose-950/30 p-2.5 rounded-lg border border-rose-900/40">
+                          <span className="text-[10px] text-rose-400 block font-semibold mb-0.5">અસ્વીકારનું કારણ:</span>
+                          "{req.rejectionReason}"
+                        </div>
+                      )}
+
+                      {req.status === "PENDING" && (
+                        <div className="flex items-center justify-end gap-2 pt-2">
+                          <button
+                            type="button"
+                            onClick={() => handleRejectSamajRequest(req.id)}
+                            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/40 text-rose-300 text-xs font-semibold transition cursor-pointer"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                            <span>અસ્વીકાર (Reject)</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleApproveSamajRequest(req.id)}
+                            className="flex items-center gap-1 px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition shadow-sm cursor-pointer"
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                            <span>મંજૂર કરો (Approve & Switch)</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           )}

@@ -51,7 +51,7 @@ const OnboardingRoute = () => {
   const isAdmin = ["super_admin", "admin", "main_samaj_admin", "samaj_admin"].includes(user?.role) || Boolean(user?.adminRole);
   const isChangeRequested = new URLSearchParams(location.search).get("change") === "1";
   if (user.onboardingCompleted && !isAdmin && !isChangeRequested) {
-    return <Navigate to="/home" replace />;
+    return <Navigate to="/reels" replace />;
   }
   return <Onboarding />;
 };
