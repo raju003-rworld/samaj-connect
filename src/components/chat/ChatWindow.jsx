@@ -248,13 +248,25 @@ const Bubble = ({
           </div>
         ) : (
           <>
-            {m.type === "image" && (
+            {m.type === "image" && m.mediaUrl && (
               <img src={m.mediaUrl} alt="" className="rounded-xl max-h-72 object-contain mb-1.5 border border-black/5" />
             )}
-            {m.type === "video" && (
-              <video src={m.mediaUrl} controls className="rounded-xl max-h-72 mb-1.5 border border-black/5" />
+            {m.type === "video" && m.mediaUrl && (
+              <video
+                src={m.mediaUrl}
+                controls
+                onError={(e) => { e.currentTarget.style.display = "none"; }}
+                className="rounded-xl max-h-72 mb-1.5 border border-black/5"
+              />
             )}
-            {m.type === "voice" && <audio src={m.mediaUrl} controls className="mb-1.5 max-w-full" />}
+            {m.type === "voice" && m.mediaUrl && (
+              <audio
+                src={m.mediaUrl}
+                controls
+                onError={(e) => { e.currentTarget.style.display = "none"; }}
+                className="mb-1.5 max-w-full"
+              />
+            )}
             {m.type === "location" && (
               <a
                 href={m.mediaUrl || `https://www.google.com/maps?q=${encodeURIComponent(m.text || "")}`}
@@ -760,7 +772,7 @@ export function ChatWindow({ cid, onBack }) {
 
   if (!conv) {
     return (
-      <div className="flex flex-col items-center justify-center h-[calc(100vh-9rem)] bg-white rounded-3xl p-8 border border-slate-100">
+      <div className="flex flex-col items-center justify-center h-full w-full min-h-[60vh] bg-white rounded-none md:rounded-3xl p-8 border-0 md:border md:border-slate-100">
         <div className="w-10 h-10 border-4 border-purple-800 border-t-transparent rounded-full animate-spin mb-3" />
         <p className="text-sm text-slate-500 font-medium">વાતચીત લોડ થઈ રહી છે...</p>
       </div>
@@ -770,7 +782,11 @@ export function ChatWindow({ cid, onBack }) {
   const currentTheme = conv.theme || "default";
   const themeConfig = CHAT_THEMES[currentTheme] || CHAT_THEMES.default;
 
-  const title = conv.type === "group" ? conv.name : conv.members?.[otherId]?.name || "સમાજ સભ્ય";
+  const otherName = conv.members?.[otherId]?.name?.replace(/\(Admin\)|\(Ahmedabad Samaj Admin\)/gi, "").trim();
+  const title =
+    conv.type === "group"
+      ? conv.name || "ગ્રુપ ચેટ"
+      : otherName || conv.members?.[otherId]?.phone || (otherId?.startsWith("user_") ? `+91 ${otherId.replace(/^user_/, "")}` : "સમાજ સભ્ય");
   const typingNames = Object.entries(conv.typing || {})
     .filter(([k, v]) => v && k !== user.id)
     .map(([k]) => conv.members?.[k]?.name)
@@ -797,7 +813,7 @@ export function ChatWindow({ cid, onBack }) {
 
   return (
     <div
-      className={`flex flex-col h-[calc(100vh-9rem)] md:h-[calc(100vh-8rem)] ${themeConfig.bgClass} rounded-3xl overflow-hidden border border-slate-200/80 shadow-sm relative transition-colors duration-300`}
+      className={`flex flex-col h-full w-full ${themeConfig.bgClass} rounded-none md:rounded-3xl overflow-hidden border-0 md:border md:border-slate-200/80 shadow-none md:shadow-sm relative transition-colors duration-300`}
       data-testid="chat-window"
     >
       {/* Top Bar Header (WhatsApp / Instagram DM Quality) */}
@@ -1298,7 +1314,7 @@ export function ChatWindow({ cid, onBack }) {
         </div>
       ) : (
         /* Modern Composer: [＋] [Message લખો...] [😊] [🎤/➤] */
-        <div className="bg-white/95 backdrop-blur-md p-2 sm:p-2.5 flex items-center gap-1.5 sm:gap-2 border-t border-slate-200/80">
+        <div className="bg-white/95 backdrop-blur-md p-2 sm:p-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] flex items-center gap-1.5 sm:gap-2 border-t border-slate-200/80 shrink-0">
           {/* [＋] Attachment Toggle */}
           <button
             type="button"

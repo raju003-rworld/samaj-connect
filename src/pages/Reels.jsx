@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Heart, MessageCircle, Share2, Bookmark, Volume2, VolumeX, Plus, Play, Pause, ChevronUp, ChevronDown, Music2, UserCheck, UserPlus, Sparkles, X, Edit3, Trash2, MoreVertical } from "lucide-react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Heart, MessageCircle, Share2, Bookmark, Volume2, VolumeX, Plus, Play, Pause, ChevronUp, ChevronDown, Music2, UserCheck, UserPlus, Sparkles, X, Edit3, Trash2, MoreVertical, Flame } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { useApp } from "@/context/AppContext";
@@ -16,23 +16,49 @@ function CreateReelDialog({ open, onOpenChange, onCreated }) {
   const [vis, setVis] = useState("samaj");
   const [busy, setBusy] = useState(false);
 
+  useEffect(() => {
+    if (open) {
+      setCaption("");
+      setMedia([]);
+      setVis("samaj");
+      setBusy(false);
+    }
+  }, [open]);
+
   const submit = async () => {
-    if (!media.length) return toast.error("કૃપા કરીને એક વિડિયો અપલોડ કરો");
+    if (!media.length) return toast.error("કૃપા કરીને એક વિડિયો અપલોડ કરો (Please select a video)");
     setBusy(true);
     try {
-      const { data } = await api.post("/posts", {
-        caption,
+      const payload = {
+        caption: caption.trim(),
+        content: caption.trim(),
         mediaUrls: media,
+        imageUrls: media,
         mediaType: "reel",
         visibility: vis,
-      });
+      };
+
+      // Strict backend creation — backend/database is the single source of truth
+      const { data } = await api.post("/posts", payload);
+      if (!data || !data.id) {
+        throw new Error("સર્વર તરફથી અમાન્ય પ્રતિસાદ મળ્યો (Invalid server response)");
+      }
+
       onCreated(data);
       onOpenChange(false);
       setCaption("");
       setMedia([]);
+      setVis("samaj");
       toast.success("રીલ સફળતાપૂર્વક અપલોડ થઈ ગઈ!");
     } catch (e) {
-      toast.error(e?.response?.data?.detail || "રીલ અપલોડ કરવામાં નિષ્ફળતા");
+      console.error("Reel creation failed:", e);
+      const errDetail =
+        e?.response?.data?.detail ||
+        e?.response?.data?.message ||
+        (e?.response?.status ? `સર્વર ક્ષતિ (${e.response.status})` : e?.message) ||
+        "રીલ અપલોડ કરવામાં નિષ્ફળતા";
+      toast.error(`રીલ અપલોડ નિષ્ફળ: ${errDetail}`);
+      // Do NOT create a fake Reel, do NOT report success, keep video in dialog so user can retry
     } finally {
       setBusy(false);
     }
@@ -40,9 +66,13 @@ function CreateReelDialog({ open, onOpenChange, onCreated }) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md rounded-3xl" data-testid="create-reel-dialog">
+      <DialogContent
+        className="max-w-md w-[95vw] rounded-3xl max-h-[90vh] overflow-y-auto p-4 sm:p-6"
+        data-testid="create-reel-dialog"
+        style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom, 0px))" }}
+      >
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-purple-900">
+          <DialogTitle className="flex items-center gap-2 text-purple-900 font-bold">
             <Sparkles className="w-5 h-5 text-purple-600" />
             નવી રીલ ઉમેરો (Create Reel)
           </DialogTitle>
@@ -65,7 +95,12 @@ function CreateReelDialog({ open, onOpenChange, onCreated }) {
           <div className="flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-dashed border-purple-200 bg-purple-50/50">
             {media.length > 0 ? (
               <div className="relative w-full max-h-48 rounded-xl overflow-hidden bg-black flex items-center justify-center">
-                <video src={media[0]} className="max-h-48 w-full object-contain" controls />
+                <video
+                  src={media[0]}
+                  className="max-h-48 w-full object-contain"
+                  controls
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                />
                 <button
                   type="button"
                   onClick={() => setMedia([])}
@@ -79,12 +114,12 @@ function CreateReelDialog({ open, onOpenChange, onCreated }) {
                 <MediaUploader
                   multiple={false}
                   accept="video/*"
-                  kind="posts"
+                  kind={vis === "only_me" || vis === "private" ? "only_me" : "posts"}
                   onDone={(urls) => setMedia(urls)}
                   label="વિડિયો પસંદ કરો (Select Video)"
                   testId="reel-video-upload"
                 />
-                <p className="text-[11px] text-slate-500 mt-1">MP4, MOV અથવા WebM ફોર્મેટ</p>
+                <p className="text-[11px] text-slate-500 mt-1">MP4, MOV અથવા WebM ફોર્મેટ (મહત્તમ 100MB)</p>
               </div>
             )}
           </div>
@@ -93,7 +128,7 @@ function CreateReelDialog({ open, onOpenChange, onCreated }) {
           <div className="pt-1">
             <PrivacySelector
               value={vis}
-              onChange={setVis}
+              onChange={(newVis) => setVis(newVis)}
               testIdPrefix="create-reel-privacy"
             />
           </div>
@@ -102,7 +137,7 @@ function CreateReelDialog({ open, onOpenChange, onCreated }) {
             data-testid="submit-reel-btn"
             onClick={submit}
             disabled={busy || !media.length}
-            className="w-full py-3 rounded-2xl bg-purple-900 hover:bg-purple-950 text-white font-semibold shadow-md transition disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full py-3 rounded-2xl bg-purple-900 hover:bg-purple-950 text-white font-semibold shadow-md transition disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
           >
             {busy ? "અપલોડ થઈ રહ્યું છે..." : "રીલ પોસ્ટ કરો"}
           </button>
@@ -149,7 +184,11 @@ function EditReelDialog({ open, onOpenChange, reel, onSaved }) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md rounded-3xl" data-testid="edit-reel-dialog">
+      <DialogContent
+        className="max-w-md w-[95vw] rounded-3xl max-h-[90vh] overflow-y-auto p-4 sm:p-6"
+        data-testid="edit-reel-dialog"
+        style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom, 0px))" }}
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-purple-900 font-bold">
             <Edit3 className="w-5 h-5 text-purple-700" />
@@ -227,25 +266,54 @@ export default function Reels() {
   const [showComments, setShowComments] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [editReelOpen, setEditReelOpen] = useState(false);
+  const [mediaError, setMediaError] = useState(false);
   const videoRef = useRef(null);
+
+  const location = useLocation();
 
   const loadReels = async () => {
     setLoading(true);
     try {
-      // First try to load reels
-      const { data } = await api.get("/posts", { params: { limit: 30 } });
-      const items = data.items || [];
-      // Prioritize posts that have video or are marked as reel
-      const videoItems = items.filter((p) => p.mediaType === "reel" || (p.mediaUrls && p.mediaUrls.some(isVideoUrl)));
-      if (videoItems.length > 0) {
-        setReels(videoItems);
-      } else if (items.length > 0) {
-        // Fallback to all posts so screen is never empty
-        setReels(items);
-      } else {
-        setReels([]);
+      // Clear any legacy unsaved local reel cache from previous sessions
+      try {
+        localStorage.removeItem("sc_local_reels");
+      } catch {}
+
+      // Fetch verified posts directly from the backend API (single source of truth)
+      const { data } = await api.get("/posts", { params: { limit: 60 } });
+      const remoteItems = data?.items || [];
+
+      // Include reels, video posts, and memorial posts (Maran Nodh / Shraddhanjali)
+      const relevantItems = remoteItems.filter(
+        (p) =>
+          p.mediaType === "reel" ||
+          p.isReel ||
+          p.isMemorial ||
+          p.category === "memorial" ||
+          Boolean(p.maranNodhId) ||
+          (p.mediaUrls && p.mediaUrls.some(isVideoUrl))
+      );
+      const finalReels = relevantItems.length > 0 ? relevantItems : remoteItems;
+
+      setReels(finalReels);
+
+      // Deep link to a specific reel or memorial entry if requested
+      const params = new URLSearchParams(location.search);
+      const targetMaranId = params.get("maranId");
+      const targetId = params.get("id");
+      if (targetMaranId) {
+        const foundIdx = finalReels.findIndex(
+          (r) =>
+            r.maranNodhId === targetMaranId ||
+            r.id === `post_memorial_${targetMaranId}` ||
+            r.id === targetMaranId
+        );
+        if (foundIdx !== -1) setCurrentIdx(foundIdx);
+      } else if (targetId) {
+        const foundIdx = finalReels.findIndex((r) => r.id === targetId);
+        if (foundIdx !== -1) setCurrentIdx(foundIdx);
       }
-    } catch (e) {
+    } catch {
       toast.error("રીલ્સ લોડ કરવામાં ભૂલ આવી");
     } finally {
       setLoading(false);
@@ -254,9 +322,20 @@ export default function Reels() {
 
   useEffect(() => {
     loadReels();
-  }, [activeSamaj?.id]);
+  }, [activeSamaj?.id, location.search]);
+
+  useEffect(() => {
+    setMediaError(false);
+  }, [currentIdx]);
 
   const activeReel = reels[currentIdx];
+
+  const isMemorial = Boolean(
+    activeReel?.isMemorial ||
+    activeReel?.category === "memorial" ||
+    activeReel?.maranNodhId ||
+    activeReel?.id?.startsWith("post_memorial_")
+  );
 
   const isAuthorOrAdmin =
     activeReel &&
@@ -282,15 +361,73 @@ export default function Reels() {
     }
   };
 
-  const handleLike = async (e) => {
-    e.stopPropagation();
+  const handleMemorialTribute = async (type = "diya") => {
     if (!activeReel) return;
+    const maranId =
+      activeReel.maranNodhId ||
+      (activeReel.id?.startsWith("post_memorial_")
+        ? activeReel.id.replace("post_memorial_", "")
+        : null);
+
+    if (maranId) {
+      try {
+        const { data } = await api.post(`/maran-nodh/${maranId}/tribute`, { type });
+        toast.success(
+          type === "diya"
+            ? "દિવંગત આત્મા માટે દીવો પ્રગટાવવામાં આવ્યો 🪔"
+            : "પુષ્પાંજલિ અર્પણ કરવામાં આવી 🌸"
+        );
+        setReels((prev) =>
+          prev.map((r, idx) => {
+            if (idx === currentIdx) {
+              const prevData = r.maranNodhData || {};
+              return {
+                ...r,
+                likedByMe: true,
+                likesCount: (r.likesCount || 0) + 1,
+                maranNodhData: {
+                  ...prevData,
+                  diyaCount: data.diyaCount ?? ((prevData.diyaCount || 0) + 1),
+                  flowerCount: data.flowerCount ?? (prevData.flowerCount || 0),
+                },
+              };
+            }
+            return r;
+          })
+        );
+        return;
+      } catch {
+        // Continue to regular like fallback
+      }
+    }
+
+    // Fallback if no specific maranId
+    try {
+      const { data } = await api.post(`/posts/${activeReel.id}/like`);
+      toast.success(type === "diya" ? "દીવો પ્રગટાવવામાં આવ્યો 🪔" : "શ્રદ્ધાંજલિ નોંધાઈ 🌸");
+      setReels((prev) =>
+        prev.map((r, idx) =>
+          idx === currentIdx ? { ...r, likedByMe: true, likesCount: data.likesCount } : r
+        )
+      );
+    } catch {
+      toast.error("શ્રદ્ધાંજલિ નોંધવામાં ક્ષતિ આવી");
+    }
+  };
+
+  const handleLike = async (e) => {
+    e?.stopPropagation?.();
+    if (!activeReel) return;
+    if (isMemorial) {
+      handleMemorialTribute("diya");
+      return;
+    }
     try {
       const { data } = await api.post(`/posts/${activeReel.id}/like`);
       setReels((prev) =>
         prev.map((r, idx) => (idx === currentIdx ? { ...r, likedByMe: data.liked, likesCount: data.likesCount } : r))
       );
-    } catch (err) {
+    } catch {
       toast.error("લાઇક કરવામાં ક્ષતિ આવી");
     }
   };
@@ -304,7 +441,7 @@ export default function Reels() {
         prev.map((r, idx) => (idx === currentIdx ? { ...r, savedByMe: data.saved } : r))
       );
       toast.success(data.saved ? "રીલ સેવ થઈ" : "રીલ અનસેવ થઈ");
-    } catch (err) {
+    } catch {
       toast.error("સેવ કરવામાં ક્ષતિ આવી");
     }
   };
@@ -312,12 +449,33 @@ export default function Reels() {
   const handleShare = async (e) => {
     e.stopPropagation();
     if (!activeReel) return;
-    const url = `${window.location.origin}/social?post=${activeReel.id}`;
+    const maranId =
+      activeReel.maranNodhId ||
+      (activeReel.id?.startsWith("post_memorial_")
+        ? activeReel.id.replace("post_memorial_", "")
+        : null);
+    const url = maranId
+      ? `${window.location.origin}/reels?maranId=${maranId}`
+      : `${window.location.origin}/reels?id=${activeReel.id}`;
+
+    const deceasedName =
+      activeReel.maranNodhData?.deceasedName ||
+      activeReel.caption?.replace(/^🕊️ ભાવભીની શ્રદ્ધાંજલિ:?\s*/, "") ||
+      "સ્વર્ગસ્થ સભ્ય";
+
+    const shareTitle = isMemorial
+      ? `🕊️ શ્રદ્ધાંજલિ: સ્વ. ${deceasedName}`
+      : "SAMAJ CONNECT Reel";
+
+    const shareText = isMemorial
+      ? `🕊️ ભાવભીની શ્રદ્ધાંજલિ: સ્વ. ${deceasedName}\nબેસણું: ${activeReel.maranNodhData?.besnuDate || "જાહેર થશે"}${activeReel.maranNodhData?.besnuVenue ? " (" + activeReel.maranNodhData.besnuVenue + ")" : ""}\nસમાજ રીલ પર શ્રદ્ધાંજલિ આપો:\n${url}`
+      : (activeReel.caption || "Check out this reel on SAMAJ CONNECT!");
+
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "SAMAJ CONNECT Reel",
-          text: activeReel.caption || "Check out this reel on SAMAJ CONNECT!",
+          title: shareTitle,
+          text: shareText,
           url,
         });
       } catch {
@@ -365,7 +523,7 @@ export default function Reels() {
       if (playing) {
         videoRef.current.pause();
       } else {
-        videoRef.current.play();
+        videoRef.current.play()?.catch(() => {});
       }
       setPlaying(!playing);
     }
@@ -407,7 +565,7 @@ export default function Reels() {
 
   return (
     <div
-      className="relative w-full h-[calc(100dvh-58px)] sm:h-[calc(100vh-2rem)] flex flex-col items-center justify-center bg-black sm:bg-transparent overflow-hidden select-none"
+      className="relative w-full h-[calc(100dvh-64px-env(safe-area-inset-bottom,0px))] sm:h-[calc(100vh-2rem)] flex flex-col items-center justify-center bg-black sm:bg-transparent overflow-hidden select-none"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
@@ -432,8 +590,119 @@ export default function Reels() {
         </div>
       ) : (
         <div className="relative w-full h-full sm:max-w-[400px] sm:h-full sm:max-h-[820px] sm:aspect-[9/16] sm:rounded-3xl overflow-hidden bg-black shadow-2xl sm:border sm:border-slate-800 flex items-center justify-center select-none">
-          {/* Main Video or Media Display */}
-          {activeReel.mediaUrls && activeReel.mediaUrls[0] && isVideoUrl(activeReel.mediaUrls[0]) ? (
+          {/* Main Video, Memorial Tribute, or Media Display */}
+          {isMemorial ? (
+            <div className="relative w-full h-full bg-gradient-to-b from-stone-950 via-amber-950/80 to-stone-950 flex flex-col items-center justify-between p-4 py-8 text-white select-none overflow-y-auto">
+              {/* Spiritual Top Accent Header */}
+              <div className="flex flex-col items-center text-center space-y-1 z-10">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-200 text-xs font-bold tracking-wide shadow-md">
+                  <span>🕊️</span>
+                  <span>ભાવભીની શ્રદ્ધાંજલિ • ૐ શાંતિ</span>
+                </div>
+                <div className="text-[11px] text-amber-100/70">સમાજ મરણ નોંધ અને પ્રાર્થના સભા</div>
+              </div>
+
+              {/* Centered Dignified Photo in Memorial Frame */}
+              <div className="flex flex-col items-center my-auto py-2 z-10 w-full max-w-[290px]">
+                <div className="relative p-1.5 rounded-3xl bg-gradient-to-tr from-amber-600 via-amber-300 to-amber-500 shadow-2xl ring-4 ring-amber-500/30">
+                  <div className="w-36 h-44 sm:w-40 sm:h-48 rounded-2xl overflow-hidden bg-stone-900 grid place-items-center">
+                    {activeReel.mediaUrls?.[0] ? (
+                      <img
+                        src={activeReel.mediaUrls[0]}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="text-center p-3 text-amber-200/60">
+                        <div className="text-4xl mb-1">🕊️</div>
+                        <div className="text-xs font-bold">ઓમ શાંતિ</div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-stone-950 border border-amber-400 text-amber-300 text-[11px] font-bold shadow-lg whitespace-nowrap">
+                    સ્વર્ગસ્થ • ૐ શાંતિ 🕊️
+                  </div>
+                </div>
+
+                {/* Name & Age */}
+                <h2 className="mt-4 font-heading font-extrabold text-xl sm:text-2xl text-amber-100 text-center tracking-wide drop-shadow-md">
+                  સ્વ. {activeReel.maranNodhData?.deceasedName || activeReel.maranNodhData?.name || activeReel.caption?.replace(/^🕊️ ભાવભીની શ્રદ્ધાંજલિ:?\s*/, "")}
+                </h2>
+                {activeReel.maranNodhData?.age && (
+                  <div className="text-xs text-amber-200/90 font-medium mt-0.5">
+                    ઉંમર: {activeReel.maranNodhData.age} વર્ષ
+                  </div>
+                )}
+
+                <div className="text-xs text-stone-300 mt-1 flex items-center justify-center gap-2 flex-wrap">
+                  {activeReel.maranNodhData?.village && (
+                    <span>વતન: <strong className="text-amber-200">{activeReel.maranNodhData.village}</strong></span>
+                  )}
+                  {activeReel.maranNodhData?.currentCity && (
+                    <span>• હાલ: <strong className="text-amber-200">{activeReel.maranNodhData.currentCity}</strong></span>
+                  )}
+                </div>
+
+                {/* Besnu (Prayer meeting) info badge */}
+                {(activeReel.maranNodhData?.besnuDate || activeReel.maranNodhData?.besnuVenue) && (
+                  <div className="mt-3 w-full bg-stone-900/80 backdrop-blur-md border border-amber-400/40 rounded-2xl p-2.5 text-center text-xs space-y-1 shadow-lg">
+                    <div className="text-amber-300 font-bold flex items-center justify-center gap-1.5 text-[11px]">
+                      <span>📅 બેસણું (પ્રાર્થના સભા):</span>
+                      <span>{activeReel.maranNodhData.besnuDate || "જાહેર થશે"}</span>
+                    </div>
+                    {activeReel.maranNodhData.besnuTime && (
+                      <div className="text-[11px] text-stone-300">
+                        ⏰ સમય: {activeReel.maranNodhData.besnuTime}
+                      </div>
+                    )}
+                    {activeReel.maranNodhData.besnuVenue && (
+                      <div className="text-[11px] text-stone-300 line-clamp-1">
+                        📍 સ્થળ: {activeReel.maranNodhData.besnuVenue}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Direct Tribute Action Buttons on Reel */}
+                <div className="flex items-center gap-2 mt-3 w-full justify-center">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleMemorialTribute("diya");
+                    }}
+                    className="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-stone-950 font-bold text-xs flex items-center justify-center gap-1.5 shadow-lg active:scale-95 transition-all cursor-pointer"
+                  >
+                    <span>🪔</span> દીવો પ્રગટાવો
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleMemorialTribute("flower");
+                    }}
+                    className="flex-1 py-2 px-3 rounded-xl bg-stone-800/90 hover:bg-stone-700/90 border border-amber-400/50 text-amber-200 font-bold text-xs flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all cursor-pointer"
+                  >
+                    <span>🌸</span> પુષ્પાંજલિ
+                  </button>
+                </div>
+
+                {/* Link to Full Obituary page */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    nav("/maran-nodh");
+                  }}
+                  className="mt-2 text-[11px] text-amber-300/90 hover:text-amber-200 underline cursor-pointer"
+                >
+                  સંપૂર્ણ મરણ નોંધ અને સાંત્વના સંદેશ જુઓ →
+                </button>
+              </div>
+
+              {/* Decorative bottom prayer message */}
+              <div className="text-[10px] text-stone-400 text-center italic z-10">
+                પ્રભુ દિવંગત આત્માને પરમ શાંતિ અર્પે • ૐ શાંતિ
+              </div>
+            </div>
+          ) : !mediaError && activeReel.mediaUrls && activeReel.mediaUrls[0] && isVideoUrl(activeReel.mediaUrls[0]) ? (
             <video
               ref={videoRef}
               src={activeReel.mediaUrls[0]}
@@ -443,6 +712,7 @@ export default function Reels() {
               playsInline
               muted={muted}
               onClick={togglePlay}
+              onError={() => setMediaError(true)}
             />
           ) : activeReel.mediaUrls && activeReel.mediaUrls[0] ? (
             <img
@@ -457,8 +727,8 @@ export default function Reels() {
             </div>
           )}
 
-          {/* Play/Pause Overlay Animation Indicator */}
-          {!playing && (
+          {/* Play/Pause Overlay Animation Indicator (for video) */}
+          {!isMemorial && !playing && (
             <div
               onClick={togglePlay}
               className="absolute inset-0 bg-black/30 flex items-center justify-center cursor-pointer z-15"
@@ -524,18 +794,33 @@ export default function Reels() {
 
           {/* Right Floating Interaction Bar */}
           <div className="absolute right-3 bottom-20 flex flex-col items-center gap-4 z-20">
-            {/* Like */}
+            {/* Like / Diya */}
             <button
-              onClick={handleLike}
+              onClick={isMemorial ? () => handleMemorialTribute("diya") : handleLike}
               data-testid="reel-like-btn"
               className="flex flex-col items-center gap-1 group cursor-pointer"
             >
-              <div className={`w-11 h-11 rounded-full grid place-items-center backdrop-blur-md transition-transform active:scale-125 ${activeReel.likedByMe ? "bg-rose-500 text-white shadow-lg shadow-rose-500/40" : "bg-black/50 text-white hover:bg-black/70 border border-white/10"}`}>
-                <Heart className={`w-5 h-5 ${activeReel.likedByMe ? "fill-white" : ""}`} />
+              <div
+                className={`w-11 h-11 rounded-full grid place-items-center backdrop-blur-md transition-transform active:scale-125 ${
+                  isMemorial
+                    ? "bg-gradient-to-tr from-amber-600 to-amber-400 text-stone-950 shadow-lg shadow-amber-500/50"
+                    : activeReel.likedByMe
+                    ? "bg-rose-500 text-white shadow-lg shadow-rose-500/40"
+                    : "bg-black/50 text-white hover:bg-black/70 border border-white/10"
+                }`}
+              >
+                {isMemorial ? (
+                  <Flame className="w-5 h-5 fill-amber-300 text-amber-950" />
+                ) : (
+                  <Heart className={`w-5 h-5 ${activeReel.likedByMe ? "fill-white" : ""}`} />
+                )}
               </div>
               <span className="text-[11px] font-bold text-white drop-shadow-md">
-                {activeReel.likesCount || 0}
+                {isMemorial
+                  ? (activeReel.maranNodhData?.diyaCount || activeReel.likesCount || 0)
+                  : (activeReel.likesCount || 0)}
               </span>
+              {isMemorial && <span className="text-[9px] text-amber-300 font-semibold">દીવો</span>}
             </button>
 
             {/* Comment */}
@@ -553,6 +838,7 @@ export default function Reels() {
               <span className="text-[11px] font-bold text-white drop-shadow-md">
                 {activeReel.commentsCount || 0}
               </span>
+              {isMemorial && <span className="text-[9px] text-white/80 font-medium">સાંત્વના</span>}
             </button>
 
             {/* Share */}
@@ -579,74 +865,84 @@ export default function Reels() {
               <span className="text-[10px] font-bold text-white drop-shadow-md">{t("saved")}</span>
             </button>
 
-            {/* Music disc animation */}
-            <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 border-2 border-white/60 grid place-items-center animate-spin [animation-duration:4s]">
-              <Music2 className="w-4 h-4 text-white" />
+            {/* Music / Spiritual disc animation */}
+            <div
+              className={`w-9 h-9 rounded-full border-2 border-white/60 grid place-items-center animate-spin [animation-duration:4s] ${
+                isMemorial
+                  ? "bg-gradient-to-tr from-amber-600 to-stone-800 text-amber-200"
+                  : "bg-gradient-to-tr from-purple-600 to-indigo-600 text-white"
+              }`}
+            >
+              {isMemorial ? <span className="text-xs">🕊️</span> : <Music2 className="w-4 h-4 text-white" />}
             </div>
           </div>
 
           {/* Subtle gradient scrim at bottom to ensure text readability */}
-          <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-black/95 via-black/50 to-transparent pointer-events-none z-10" />
+          {!isMemorial && (
+            <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-black/95 via-black/50 to-transparent pointer-events-none z-10" />
+          )}
 
-          {/* Bottom Left Creator & Caption Info Overlay */}
-          <div className="absolute bottom-3 left-3.5 right-16 text-white z-20 space-y-2 pointer-events-auto">
-            {/* Creator Row: Avatar + Name + Follow */}
-            <div className="flex items-center gap-2.5">
-              <Link
-                to={`/users/${activeReel.authorId || activeReel.createdBy}`}
-                className="w-10 h-10 rounded-full border-2 border-white/80 overflow-hidden bg-purple-200 grid place-items-center shrink-0 shadow-md"
-              >
-                {activeReel.authorPhoto ? (
-                  <img src={activeReel.authorPhoto} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <span className="font-extrabold text-purple-900 text-sm">
-                    {(activeReel.authorName?.[0] || "?").toUpperCase()}
-                  </span>
-                )}
-              </Link>
-              <div className="flex items-center gap-2 min-w-0">
+          {/* Bottom Left Creator & Caption Info Overlay (for standard reels) */}
+          {!isMemorial && (
+            <div className="absolute bottom-3 left-3.5 right-16 text-white z-20 space-y-2 pointer-events-auto">
+              {/* Creator Row: Avatar + Name + Follow */}
+              <div className="flex items-center gap-2.5">
                 <Link
                   to={`/users/${activeReel.authorId || activeReel.createdBy}`}
-                  className="font-bold text-sm text-white drop-shadow-md truncate hover:underline"
+                  className="w-10 h-10 rounded-full border-2 border-white/80 overflow-hidden bg-purple-200 grid place-items-center shrink-0 shadow-md"
                 >
-                  {activeReel.authorName || "સમાજ સભ્ય"}
+                  {activeReel.authorPhoto ? (
+                    <img src={activeReel.authorPhoto} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="font-extrabold text-purple-900 text-sm">
+                      {(activeReel.authorName?.[0] || "?").toUpperCase()}
+                    </span>
+                  )}
                 </Link>
-                {activeReel.authorId !== user?.id && (
-                  <button
-                    onClick={handleFollow}
-                    data-testid="reel-follow-btn"
-                    className={`text-[11px] font-bold px-3 py-0.5 rounded-full backdrop-blur-md transition shadow-xs cursor-pointer ${
-                      activeReel.followedByMe
-                        ? "bg-white/20 text-white border border-white/40"
-                        : "bg-purple-600 text-white hover:bg-purple-700"
-                    }`}
+                <div className="flex items-center gap-2 min-w-0">
+                  <Link
+                    to={`/users/${activeReel.authorId || activeReel.createdBy}`}
+                    className="font-bold text-sm text-white drop-shadow-md truncate hover:underline"
                   >
-                    {activeReel.followedByMe ? "ફોલોઇંગ" : "ફોલો"}
-                  </button>
+                    {activeReel.authorName || "સમાજ સભ્ય"}
+                  </Link>
+                  {activeReel.authorId !== user?.id && (
+                    <button
+                      onClick={handleFollow}
+                      data-testid="reel-follow-btn"
+                      className={`text-[11px] font-bold px-3 py-0.5 rounded-full backdrop-blur-md transition shadow-xs cursor-pointer ${
+                        activeReel.followedByMe
+                          ? "bg-white/20 text-white border border-white/40"
+                          : "bg-purple-600 text-white hover:bg-purple-700"
+                      }`}
+                    >
+                      {activeReel.followedByMe ? "ફોલોઇંગ" : "ફોલો"}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Caption */}
+              {activeReel.caption && (
+                <p className="text-xs text-white/95 line-clamp-2 drop-shadow font-normal leading-relaxed">
+                  {activeReel.caption}
+                </p>
+              )}
+
+              {/* Music/audio information */}
+              <div className="flex items-center gap-2 text-[11px] text-white/90 drop-shadow">
+                <Music2 className="w-3.5 h-3.5 shrink-0 text-purple-300 animate-pulse" />
+                <div className="truncate max-w-[220px]">
+                  {activeReel.audioTitle || `ઓરિજિનલ ઓડિયો • ${activeReel.authorName || 'સમાજ રીલ'}`}
+                </div>
+                {activeReel.location && (
+                  <span className="text-white/70 text-[10px] truncate">
+                    • 📍 {activeReel.location}
+                  </span>
                 )}
               </div>
             </div>
-
-            {/* Caption */}
-            {activeReel.caption && (
-              <p className="text-xs text-white/95 line-clamp-2 drop-shadow font-normal leading-relaxed">
-                {activeReel.caption}
-              </p>
-            )}
-
-            {/* Music/audio information */}
-            <div className="flex items-center gap-2 text-[11px] text-white/90 drop-shadow">
-              <Music2 className="w-3.5 h-3.5 shrink-0 text-purple-300 animate-pulse" />
-              <div className="truncate max-w-[220px]">
-                {activeReel.audioTitle || `ઓરિજિનલ ઓડિયો • ${activeReel.authorName || 'સમાજ રીલ'}`}
-              </div>
-              {activeReel.location && (
-                <span className="text-white/70 text-[10px] truncate">
-                  • 📍 {activeReel.location}
-                </span>
-              )}
-            </div>
-          </div>
+          )}
 
           {/* Navigation Arrows for desktop */}
           <div className="hidden sm:flex flex-col gap-2 absolute -right-14 top-1/2 -translate-y-1/2 z-30">

@@ -1,0 +1,24 @@
+{
+  "short_name": "Samaj Connect",
+  "name": "સમાજ કનેક્ટ (Samaj Connect)",
+  "description": "સમાજને જોડતું ડિજિટલ પ્લેટફોર્મ — રીલ્સ, મેસેજ, ડિરેક્ટરી અને ઇવેન્ટ્સ",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#581C87",
+  "background_color": "#09090B",
+  "lang": "gu"
+}

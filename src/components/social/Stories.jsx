@@ -346,6 +346,7 @@ export function Stories() {
                 autoPlay
                 playsInline
                 onEnded={next}
+                onError={() => next()}
                 style={{
                   filter: getFilterCss(currentStory.filter),
                   transform: `rotate(${currentStory.rotation || 0}deg)`,
@@ -356,6 +357,7 @@ export function Stories() {
               <img
                 src={currentStory.mediaUrl}
                 alt=""
+                onError={() => next()}
                 style={{
                   filter: getFilterCss(currentStory.filter),
                   transform: `rotate(${currentStory.rotation || 0}deg)`,

@@ -3,14 +3,14 @@ import { Clock, ShieldCheck, Check } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 const OPTIONS = [
-  { id: "off", title: "બંધ (Off)", desc: "મેસેજ આપમેળે ડિલીટ થશે નહીં" },
-  { id: "10s", title: "10 સેકન્ડ (10 Seconds)", desc: "વાંચ્યા પછી ફક્ત 10 સેકન્ડમાં ડિલીટ થશે (ઝડપી ટેસ્ટ)" },
-  { id: "30s", title: "30 સેકન્ડ (30 Seconds)", desc: "વાંચ્યા પછી 30 સેકન્ડમાં આપમેળે ડિલીટ થશે" },
-  { id: "1m", title: "1 મિનિટ (1 Minute)", desc: "સામેવાળો વાંચે પછી 1 મિનિટમાં ડિલીટ થશે" },
-  { id: "5m", title: "5 મિનિટ (5 Minutes)", desc: "સામેવાળો વાંચે પછી 5 મિનિટમાં ડિલીટ થશે" },
-  { id: "1h", title: "1 કલાક (1 Hour)", desc: "સામેવાળો વાંચે પછી 1 કલાકમાં ડિલીટ થશે" },
-  { id: "1d", title: "24 કલાક (1 Day)", desc: "સામેવાળો વાંચે પછી 24 કલાકમાં ડિલીટ થશે" },
-  { id: "7d", title: "7 દિવસ (7 Days)", desc: "સામેવાળો વાંચે પછી 7 દિવસમાં ડિલીટ થશે" },
+  { id: "off", title: "બંધ (Off)", label: "બંધ (Off)" },
+  { id: "10s", title: "10 સેકન્ડ", label: "10 સેકન્ડ" },
+  { id: "30s", title: "30 સેકન્ડ", label: "30 સેકન્ડ" },
+  { id: "1m", title: "1 મિનિટ", label: "1 મિનિટ" },
+  { id: "5m", title: "5 મિનિટ", label: "5 મિનિટ" },
+  { id: "1h", title: "1 કલાક", label: "1 કલાક" },
+  { id: "1d", title: "24 કલાક", label: "24 કલાક" },
+  { id: "7d", title: "7 દિવસ", label: "7 દિવસ" },
 ];
 
 export function DisappearingModal({ open, onOpenChange, currentDuration = "off", onSelectDuration }) {
@@ -29,38 +29,45 @@ export function DisappearingModal({ open, onOpenChange, currentDuration = "off",
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm rounded-3xl" data-testid="disappearing-modal">
-        <DialogHeader>
-          <div className="w-10 h-10 rounded-2xl bg-purple-100 text-purple-900 grid place-items-center mb-1">
-            <Clock className="w-5 h-5" />
+      <DialogContent
+        className="w-[92vw] max-w-sm max-h-[88vh] flex flex-col p-4 sm:p-5 rounded-3xl gap-3 overflow-hidden shadow-2xl"
+        data-testid="disappearing-modal"
+      >
+        <DialogHeader className="space-y-1 shrink-0 text-left">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-900 grid place-items-center shrink-0">
+              <Clock className="w-4 h-4" />
+            </div>
+            <DialogTitle className="text-base font-bold text-slate-900">
+              અદ્રશ્ય સંદેશા (Disappearing)
+            </DialogTitle>
           </div>
-          <DialogTitle className="text-base font-bold text-slate-900">
-            અદ્રશ્ય થતા સંદેશા (Disappearing Messages)
-          </DialogTitle>
-          <DialogDescription className="text-xs text-slate-600 leading-relaxed">
-            જ્યારે આ સેટિંગ ચાલુ હોય, ત્યારે સામેવાળો સભ્ય મેસેજ <strong>વાંચે (Read કરે)</strong> તે પછીથી ટાઈમર શરૂ થશે અને બંને બાજુથી આપમેળે મેસેજ ડિલીટ થશે.
+          <DialogDescription className="text-xs text-slate-500 leading-normal pt-0.5">
+            મેસેજ વાંચ્યા પછી આપમેળે ડિલીટ થશે.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-2 py-2">
+        <div className="flex-1 overflow-y-auto min-h-0 space-y-1.5 py-1 pr-0.5">
           {OPTIONS.map((opt) => {
             const isSel = selected === opt.id;
             return (
               <button
                 key={opt.id}
+                type="button"
                 data-testid={`disappearing-opt-${opt.id}`}
                 onClick={() => setSelected(opt.id)}
-                className={`w-full flex items-center justify-between p-3 rounded-2xl border text-left transition-all ${
-                  isSel ? "border-purple-800 bg-purple-50" : "border-slate-200 hover:border-slate-300"
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                  isSel
+                    ? "border-purple-800 bg-purple-50/90 text-purple-950 font-semibold"
+                    : "border-slate-200/90 hover:border-slate-300 text-slate-800 bg-white"
                 }`}
               >
-                <div>
-                  <div className="text-sm font-semibold text-slate-800">{opt.title}</div>
-                  <div className="text-[11px] text-slate-500">{opt.desc}</div>
-                </div>
+                <span className="text-sm font-medium">{opt.label || opt.title}</span>
                 <div
-                  className={`w-5 h-5 rounded-full border grid place-items-center ${
-                    isSel ? "border-purple-900 bg-purple-900 text-white" : "border-slate-300 bg-white"
+                  className={`w-5 h-5 rounded-full border grid place-items-center transition-colors shrink-0 ${
+                    isSel
+                      ? "border-purple-900 bg-purple-900 text-white"
+                      : "border-slate-300 bg-white"
                   }`}
                 >
                   {isSel && <Check className="w-3 h-3 stroke-[3]" />}
@@ -70,24 +77,26 @@ export function DisappearingModal({ open, onOpenChange, currentDuration = "off",
           })}
         </div>
 
-        <div className="flex items-center gap-1.5 text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-xl">
-          <ShieldCheck className="w-4 h-4 text-purple-800 shrink-0" />
-          <span>સર્વર અને બંને ડિવાઇસ પરથી આપમેળે સુરક્ષિત રીતે દૂર કરવામાં આવે છે.</span>
+        <div className="flex items-center gap-1.5 text-[11px] text-slate-500 bg-slate-50 px-3 py-2 rounded-xl shrink-0">
+          <ShieldCheck className="w-3.5 h-3.5 text-purple-800 shrink-0" />
+          <span>બંને ડિવાઇસ પરથી સુરક્ષિત રીતે દૂર થશે.</span>
         </div>
 
-        <div className="flex gap-2 pt-1">
+        <div className="flex gap-2 pt-0.5 shrink-0">
           <button
+            type="button"
             onClick={() => onOpenChange(false)}
-            className="flex-1 py-2.5 rounded-2xl border border-slate-200 text-slate-700 text-sm font-semibold hover:bg-slate-50"
+            className="flex-1 py-2 rounded-xl border border-slate-200 text-slate-700 text-sm font-semibold hover:bg-slate-50 transition cursor-pointer"
           >
             રદ કરો
           </button>
           <button
+            type="button"
             data-testid="save-disappearing-btn"
             onClick={handleSave}
-            className="flex-1 py-2.5 rounded-2xl bg-purple-900 text-white text-sm font-semibold hover:bg-purple-800 shadow-sm"
+            className="flex-1 py-2 rounded-xl bg-purple-900 text-white text-sm font-semibold hover:bg-purple-800 transition shadow-sm cursor-pointer"
           >
-            લાગુ કરો (Apply)
+            લાગુ કરો
           </button>
         </div>
       </DialogContent>

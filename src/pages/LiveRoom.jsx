@@ -24,7 +24,7 @@ function Player({ live }) {
     const url = live.replayUrl || pb?.playbackUrl;
     if (!url) return <div className="aspect-video grid place-items-center text-white/70 text-sm">રિપ્લે ઉપલબ્ધ નથી</div>;
     const id = ytId(url);
-    return id ? <iframe title="replay" className="w-full aspect-video" src={`https://www.youtube.com/embed/${id}`} allowFullScreen allow="autoplay; encrypted-media" /> : <video src={url} controls className="w-full aspect-video" />;
+    return id ? <iframe title="replay" className="w-full aspect-video" src={`https://www.youtube.com/embed/${id}`} allowFullScreen allow="autoplay; encrypted-media" /> : <video src={url} controls onError={(e) => { e.currentTarget.style.display = 'none'; }} className="w-full aspect-video" />;
   }
   if (live.status !== "live" || !pb) return (
     <div className="aspect-video grid place-items-center text-white text-center p-6">
@@ -33,7 +33,7 @@ function Player({ live }) {
   );
   if (pb.playbackType === "youtube") return <iframe title="live" className="w-full aspect-video" src={`https://www.youtube.com/embed/${ytId(pb.playbackUrl)}?autoplay=1`} allowFullScreen allow="autoplay; encrypted-media" />;
   if (pb.playbackType === "facebook") return <iframe title="live" className="w-full aspect-video" src={`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(pb.playbackUrl)}&autoplay=1`} allowFullScreen allow="autoplay; encrypted-media" />;
-  if (pb.playbackType === "hls") return <video ref={videoRef} controls autoPlay playsInline className="w-full aspect-video" />;
+  if (pb.playbackType === "hls") return <video ref={videoRef} controls autoPlay playsInline onError={(e) => e.preventDefault()} className="w-full aspect-video" />;
   if (pb.playbackType === "webrtc") return <div className="aspect-video grid place-items-center text-white text-sm p-6 text-center">WebRTC room: {pb.room}<br /><span className="text-xs opacity-70">Provider SDK player configured via LIVE_PROVIDER</span></div>;
   return <iframe title="live" className="w-full aspect-video" src={pb.playbackUrl} allowFullScreen allow="autoplay; encrypted-media" />;
 }

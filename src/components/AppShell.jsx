@@ -77,10 +77,11 @@ const MobileNavItem = ({ to, icon: Icon, label, testId, activePrefix, badge, isD
   );
 };
 
-// "More" Menu Drawer showcasing all secondary community modules
+// "More" Menu Drawer showcasing all secondary community modules, user profile, active samaj, search and notifications
 const MoreMenuSheet = ({ open, onOpenChange }) => {
   const { user, t, toggleLang, logout, lang, isMod, activeSamaj, unread } = useApp();
   const nav = useNavigate();
+  const initial = (user?.name || "?").trim().charAt(0).toUpperCase();
 
   const sections = [
     {
@@ -140,15 +141,126 @@ const MoreMenuSheet = ({ open, onOpenChange }) => {
               </div>
               <div>
                 <div className="font-heading font-extrabold text-base tracking-tight">SAMAJ CONNECT</div>
-                <div className="text-[11px] text-purple-200">{activeSamaj?.name || "એક સમાજ... એક પરિવાર"}</div>
+                <div className="text-[11px] text-purple-200">{t("tagline_short") || "એક સમાજ... એક પરિવાર..."}</div>
               </div>
             </div>
             <button
               data-testid="side-menu-close"
               onClick={() => onOpenChange(false)}
-              className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition"
+              className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition cursor-pointer"
             >
               <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* User Profile, Active Samaj & Quick Tools (Search, Notifications) */}
+        <div className="p-4 space-y-3 bg-slate-50/80 border-b border-slate-200/80">
+          {/* User Profile Card */}
+          <div
+            data-testid="more-menu-profile-card"
+            onClick={() => {
+              nav("/profile");
+              onOpenChange(false);
+            }}
+            className="bg-white rounded-2xl p-3.5 border border-purple-100 shadow-xs flex items-center justify-between gap-3 hover:border-purple-300 hover:shadow-sm transition cursor-pointer group"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-12 h-12 rounded-full bg-purple-100 text-purple-950 grid place-items-center font-bold text-lg border-2 border-purple-200 overflow-hidden shadow-xs shrink-0 group-hover:ring-2 group-hover:ring-purple-400 transition">
+                {user?.profilePhoto ? (
+                  <img src={user.profilePhoto} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <span>{initial}</span>
+                )}
+              </div>
+              <div className="min-w-0">
+                <div className="font-heading font-bold text-slate-900 text-sm truncate flex items-center gap-1.5">
+                  <span className="truncate">{user?.name || "સમાજ સભ્ય"}</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 shrink-0">
+                    {isMod ? "એડમિન" : "સભ્ય"}
+                  </span>
+                </div>
+                <div className="text-xs text-slate-500 truncate mt-0.5">
+                  {user?.phone || user?.email || "પ્રોફાઇલ જુઓ & સેટિંગ્સ"}
+                </div>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-purple-700 transition shrink-0" />
+          </div>
+
+          {/* Active Samaj Display Badge */}
+          <div
+            data-testid="more-menu-samaj-card"
+            onClick={() => {
+              nav("/profile");
+              onOpenChange(false);
+            }}
+            className="bg-purple-50/90 border border-purple-200/80 rounded-2xl p-3 flex items-center justify-between gap-2.5 cursor-pointer hover:bg-purple-100/70 transition"
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-xl bg-purple-200/80 text-purple-900 grid place-items-center shrink-0">
+                <Building2 className="w-4 h-4 text-purple-800" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-purple-700">સક્રિય સમાજ</div>
+                <div className="font-heading font-bold text-slate-900 text-xs truncate">
+                  {(lang === "en" && activeSamaj?.nameEn) || activeSamaj?.name || "સમાજ"}
+                </div>
+              </div>
+            </div>
+            <span className="text-[10px] font-semibold text-purple-800 bg-white px-2 py-1 rounded-lg border border-purple-200 shadow-2xs shrink-0">
+              બદલો
+            </span>
+          </div>
+
+          {/* Quick Shortcuts: Search & Notifications */}
+          <div className="grid grid-cols-2 gap-2 pt-0.5">
+            {/* Search Button */}
+            <button
+              type="button"
+              data-testid="more-menu-search"
+              onClick={() => {
+                nav("/search");
+                onOpenChange(false);
+              }}
+              className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-slate-200/80 hover:bg-purple-50 hover:border-purple-200 text-slate-700 hover:text-purple-900 transition shadow-2xs cursor-pointer group"
+            >
+              <div className="w-7 h-7 rounded-lg bg-slate-100 group-hover:bg-purple-100 grid place-items-center shrink-0 transition-colors">
+                <Search className="w-4 h-4 text-slate-600 group-hover:text-purple-800" />
+              </div>
+              <div className="text-left min-w-0">
+                <div className="text-xs font-bold leading-tight">શોધો</div>
+                <div className="text-[10px] text-slate-400 truncate">Search</div>
+              </div>
+            </button>
+
+            {/* Notifications Button */}
+            <button
+              type="button"
+              data-testid="more-menu-notifications"
+              onClick={() => {
+                nav("/notifications");
+                onOpenChange(false);
+              }}
+              className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-slate-200/80 hover:bg-purple-50 hover:border-purple-200 text-slate-700 hover:text-purple-900 transition shadow-2xs cursor-pointer group relative"
+            >
+              <div className="w-7 h-7 rounded-lg bg-slate-100 group-hover:bg-purple-100 grid place-items-center shrink-0 transition-colors relative">
+                <Bell className="w-4 h-4 text-slate-600 group-hover:text-purple-800" />
+                {unread > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[15px] h-[15px] px-0.5 bg-rose-500 text-white text-[9px] font-bold rounded-full grid place-items-center">
+                    {unread > 99 ? "99+" : unread}
+                  </span>
+                )}
+              </div>
+              <div className="text-left min-w-0">
+                <div className="text-xs font-bold leading-tight flex items-center gap-1">
+                  <span>સૂચનાઓ</span>
+                  {unread > 0 && (
+                    <span className="text-[10px] font-bold text-rose-600">({unread})</span>
+                  )}
+                </div>
+                <div className="text-[10px] text-slate-400 truncate">Updates</div>
+              </div>
             </button>
           </div>
         </div>
@@ -400,13 +512,14 @@ export default function AppShell({ children }) {
   };
 
   const isMessagesPage = location.pathname.startsWith("/messages");
+  const isChatActive = Boolean(location.pathname.match(/^\/messages\/[^/]+/));
   const isReelsPage = location.pathname.startsWith("/reels");
 
   return (
-    <div className={`min-h-screen ${isReelsPage ? "bg-black" : "bg-slate-50/80"}`}>
-      {/* TOP HEADER - Hidden on Reels starting/landing screen */}
-      {!isReelsPage && (
-        <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl border-b border-slate-200/80 shadow-xs">
+    <div className={`min-h-screen ${isReelsPage ? "bg-black" : isChatActive ? "bg-white md:bg-slate-50/80" : "bg-slate-50/80"}`}>
+      {/* TOP HEADER - Hidden on mobile (< md), Reels screen, and inside active Chat */}
+      {!isReelsPage && !isChatActive && (
+        <header className="hidden md:block sticky top-0 z-30 bg-white/95 backdrop-blur-xl border-b border-slate-200/80 shadow-xs">
           <div className="max-w-7xl mx-auto flex items-center justify-between px-3 sm:px-6 h-15">
             {/* Logo & Brand */}
             <button
@@ -504,13 +617,15 @@ export default function AppShell({ children }) {
         className={`mx-auto flex justify-center ${
           isReelsPage
             ? "w-full h-[100dvh] md:h-screen p-0 m-0 overflow-hidden lg:max-w-7xl lg:px-6 lg:py-4 lg:gap-8"
+            : isChatActive
+            ? "w-full h-[100dvh] md:h-screen p-0 m-0 overflow-hidden lg:max-w-7xl lg:px-6 lg:py-4 lg:gap-6"
             : "max-w-7xl px-2 sm:px-4 lg:px-6 py-4 gap-6 min-h-[calc(100vh-60px)]"
         }`}
       >
         {/* DESKTOP LEFT SIDEBAR (STICKY) */}
         <aside
           className={`hidden lg:flex flex-col w-64 shrink-0 space-y-5 sticky self-start ${
-            isReelsPage ? "top-4" : "top-20"
+            isReelsPage || isChatActive ? "top-4" : "top-20"
           }`}
         >
           {/* Main Navigation links */}
@@ -612,9 +727,11 @@ export default function AppShell({ children }) {
           className={`flex-1 min-w-0 ${
             isReelsPage
               ? "p-0 m-0 h-full w-full flex justify-center items-center"
+              : isChatActive
+              ? "p-0 m-0 h-full w-full flex flex-col overflow-hidden"
               : isMessagesPage
-              ? "max-w-5xl pb-24 md:pb-12"
-              : "max-w-2xl pb-24 md:pb-12"
+              ? "w-full max-w-5xl min-w-0 overflow-x-hidden pb-24 md:pb-12"
+              : "w-full max-w-2xl min-w-0 pb-24 md:pb-12"
           }`}
         >
           {children}
@@ -629,81 +746,89 @@ export default function AppShell({ children }) {
       </div>
 
       {/* BOTTOM MOBILE NAVIGATION: Reels | Messages | + Add Post (Center) | Photos | More */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 md:hidden pointer-events-none">
-        <div
-          className={`max-w-md mx-auto pointer-events-auto px-3 pt-1.5 pb-2 flex items-center justify-between relative transition-colors ${
+      {!isChatActive && (
+        <nav
+          className={`fixed bottom-0 left-0 right-0 z-40 md:hidden transition-colors border-t pointer-events-auto ${
             isReelsPage
-              ? "bg-black/90 backdrop-blur-xl border-t border-white/10 text-white shadow-[0_-6px_25px_-5px_rgba(0,0,0,0.8)]"
-              : "bg-white/95 backdrop-blur-xl border-t border-purple-100/90 text-slate-700 shadow-[0_-6px_25px_-5px_rgba(91,33,182,0.14)]"
+              ? "bg-black/95 backdrop-blur-xl border-white/10 text-white shadow-[0_-6px_25px_-5px_rgba(0,0,0,0.8)]"
+              : "bg-white/95 backdrop-blur-xl border-purple-100/90 text-slate-700 shadow-[0_-6px_25px_-5px_rgba(91,33,182,0.14)]"
           }`}
+          style={{
+            paddingBottom: "max(10px, env(safe-area-inset-bottom, 0px))",
+            boxSizing: "border-box",
+          }}
         >
-          {/* 1. Reels */}
-          <MobileNavItem
-            to="/reels"
-            icon={Film}
-            label="રીલ્સ"
-            testId="nav-item-reels"
-            activePrefix="/reels"
-            isDark={isReelsPage}
-          />
+          <div className="max-w-md mx-auto px-2 pt-2 pb-1 flex items-center justify-between relative">
+            {/* 1. Reels */}
+            <MobileNavItem
+              to="/reels"
+              icon={Film}
+              label="રીલ્સ"
+              testId="nav-item-reels"
+              activePrefix="/reels"
+              isDark={isReelsPage}
+            />
 
-          {/* 2. Messages */}
-          <MobileNavItem
-            to="/messages"
-            icon={MessageCircle}
-            label="સંદેશા"
-            testId="nav-item-messages"
-            activePrefix="/messages"
-            isDark={isReelsPage}
-          />
+            {/* 2. Messages */}
+            <MobileNavItem
+              to="/messages"
+              icon={MessageCircle}
+              label="સંદેશા"
+              testId="nav-item-messages"
+              activePrefix="/messages"
+              isDark={isReelsPage}
+            />
 
-          {/* 4. Large prominent "+ Add Post" button in the center */}
-          <div className="relative -mt-6 flex flex-col items-center">
+            {/* 3. Large prominent "+ Add Post" button in the center */}
+            <div className="relative -mt-7 flex flex-col items-center">
+              <button
+                type="button"
+                data-testid={IDS.navFab}
+                onClick={handleAddPost}
+                aria-label="નવી પોસ્ટ બનાવો (+ Add Post)"
+                className={`w-14 h-14 rounded-full bg-gradient-to-tr from-purple-900 via-purple-700 to-indigo-600 text-white flex items-center justify-center shadow-xl shadow-purple-900/40 ring-4 ${
+                  isReelsPage ? "ring-black" : "ring-white"
+                } hover:scale-105 active:scale-95 transition-all duration-150 group cursor-pointer`}
+              >
+                <Plus className="w-7 h-7 stroke-[2.75] group-hover:rotate-90 transition-transform duration-200" />
+              </button>
+              <span
+                className={`mt-1 text-[10px] font-extrabold tracking-tight leading-none ${
+                  isReelsPage ? "text-slate-300" : "text-purple-950"
+                }`}
+              >
+                + પોસ્ટ
+              </span>
+            </div>
+
+            {/* 4. Photos */}
+            <MobileNavItem
+              to="/photos"
+              icon={Images}
+              label="ફોટોઝ"
+              testId="nav-item-photos"
+              activePrefix="/photos"
+              isDark={isReelsPage}
+            />
+
+            {/* 5. More */}
             <button
               type="button"
-              data-testid={IDS.navFab}
-              onClick={handleAddPost}
-              aria-label="નવી પોસ્ટ બનાવો (+ Add Post)"
-              className="w-14 h-14 rounded-full bg-gradient-to-tr from-purple-900 via-purple-700 to-indigo-600 text-white flex items-center justify-center shadow-xl shadow-purple-900/40 ring-4 ring-white hover:scale-105 active:scale-95 transition-all duration-150 group cursor-pointer"
-            >
-              <Plus className="w-7 h-7 stroke-[2.75] group-hover:rotate-90 transition-transform duration-200" />
-            </button>
-            <span
-              className={`mt-1 text-[10px] font-extrabold tracking-tight leading-none ${
-                isReelsPage ? "text-slate-300" : "text-purple-950"
+              data-testid={IDS.navMenu}
+              onClick={() => setMoreOpen(true)}
+              aria-label="વધુ સેવાઓ (More Menu)"
+              className={`flex flex-col items-center justify-center py-1 px-2.5 text-[10px] font-medium transition-all cursor-pointer ${
+                isReelsPage ? "text-slate-400 hover:text-white" : "text-slate-600 hover:text-purple-800"
               }`}
             >
-              + પોસ્ટ
-            </span>
+              <div className={`p-1 rounded-xl transition-colors ${isReelsPage ? "hover:bg-white/10" : "hover:bg-purple-50"}`}>
+                <Grid className={`w-5 h-5 ${isReelsPage ? "text-slate-300" : "text-slate-700"}`} />
+              </div>
+              <span className="mt-0.5 tracking-tight font-medium leading-none whitespace-nowrap">વધુ</span>
+            </button>
           </div>
-
-          {/* 3. Photos */}
-          <MobileNavItem
-            to="/photos"
-            icon={Images}
-            label="ફોટોઝ"
-            testId="nav-item-photos"
-            activePrefix="/photos"
-            isDark={isReelsPage}
-          />
-
-          {/* 5. More */}
-          <button
-            type="button"
-            data-testid={IDS.navMenu}
-            onClick={() => setMoreOpen(true)}
-            aria-label="વધુ સેવાઓ (More Menu)"
-            className={`flex flex-col items-center justify-center py-1 px-2.5 text-[10px] font-medium transition-all cursor-pointer ${
-              isReelsPage ? "text-slate-400 hover:text-white" : "text-slate-600 hover:text-purple-800"
-            }`}
-          >
-            <div className={`p-1 rounded-xl transition-colors ${isReelsPage ? "hover:bg-white/10" : "hover:bg-purple-50"}`}>
-              <Grid className={`w-5 h-5 ${isReelsPage ? "text-slate-300" : "text-slate-700"}`} />
-            </div>
-            <span className="mt-0.5 tracking-tight font-medium leading-none">વધુ</span>
-          </button>
-        </div>
-      </nav>
+        </nav>
+      )}
 
       {/* Side / More Menu Sheet */}
       <MoreMenuSheet open={moreOpen} onOpenChange={setMoreOpen} />

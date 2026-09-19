@@ -31,6 +31,7 @@ import FamilyTree from "@/pages/FamilyTree";
 import MaranNodh from "@/pages/MaranNodh";
 import GlobalCallReceiver from "@/components/chat/GlobalCallReceiver";
 import Onboarding from "@/pages/Onboarding";
+import AndroidCapacitorBridge from "@/components/AndroidCapacitorBridge";
 
 const Protected = ({ children }) => {
   const { user, booting } = useApp();
@@ -96,12 +97,13 @@ function AppRoutes() {
 
 function App() {
   return (
-    <AppProvider>
-      <BrowserRouter>
+    <BrowserRouter>
+      <AppProvider>
+        <AndroidCapacitorBridge />
         <GlobalCallReceiver />
         <AppRoutes />
-      </BrowserRouter>
-    </AppProvider>
+      </AppProvider>
+    </BrowserRouter>
   );
 }
 

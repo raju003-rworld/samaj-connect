@@ -697,7 +697,7 @@ export function CallOverlay({
       data-testid="call-overlay"
     >
       {/* Hidden real-time WebRTC remote audio playback element */}
-      <audio ref={remoteAudioRef} autoPlay playsInline />
+      <audio ref={remoteAudioRef} autoPlay playsInline onError={(e) => e.preventDefault()} />
 
       {/* Top Bar */}
       <div className="w-full max-w-md flex items-center justify-between pt-2">
@@ -744,6 +744,7 @@ export function CallOverlay({
               ref={remoteVideoRef}
               autoPlay
               playsInline
+              onError={(e) => e.preventDefault()}
               className={`w-full h-full object-cover transition-opacity duration-300 ${
                 hasRemoteVideo ? "opacity-100" : "opacity-0 absolute"
               }`}
@@ -780,6 +781,7 @@ export function CallOverlay({
                   autoPlay
                   playsInline
                   muted
+                  onError={(e) => e.preventDefault()}
                   className="w-full h-full object-cover -scale-x-100"
                 />
               ) : (

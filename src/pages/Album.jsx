@@ -53,7 +53,15 @@ export default function Album() {
       <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-1.5" data-testid="album-photos">
         {photos.map((p, i) => (
           <button key={p.id} data-testid={`photo-${p.id}`} onClick={() => setIdx(i)} className="aspect-square rounded-xl overflow-hidden bg-slate-100 relative group">
-            {p.type === "video" ? <video src={p.url} className="w-full h-full object-cover" /> : <img src={p.url} alt="" loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />}
+            {p.type === "video" && p.url ? (
+              <video
+                src={p.url}
+                className="w-full h-full object-cover"
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+              />
+            ) : (
+              <img src={p.url} alt="" loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+            )}
           </button>
         ))}
       </div>
@@ -72,7 +80,17 @@ export default function Album() {
             </div>
           </div>
           <div className="flex-1 grid place-items-center relative">
-            {cur.type === "video" ? <video src={cur.url} controls autoPlay className="max-h-[80vh] max-w-[95vw]" /> : <img src={cur.url} alt="" className="max-h-[80vh] max-w-[95vw] object-contain" />}
+            {cur.type === "video" && cur.url ? (
+              <video
+                src={cur.url}
+                controls
+                autoPlay
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                className="max-h-[80vh] max-w-[95vw]"
+              />
+            ) : (
+              <img src={cur.url} alt="" className="max-h-[80vh] max-w-[95vw] object-contain" />
+            )}
             <button onClick={() => setIdx((idx - 1 + photos.length) % photos.length)} className="absolute left-3 text-white bg-white/10 rounded-full p-2"><ChevronLeft className="w-6 h-6" /></button>
             <button onClick={() => setIdx((idx + 1) % photos.length)} className="absolute right-3 text-white bg-white/10 rounded-full p-2"><ChevronRight className="w-6 h-6" /></button>
           </div>

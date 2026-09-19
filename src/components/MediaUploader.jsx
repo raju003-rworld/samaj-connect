@@ -10,15 +10,38 @@ export const MediaUploader = ({ onDone, accept = "image/*,video/*", multiple = t
   const pick = async (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
+
+    // Validate size and format
+    for (const f of files) {
+      if (f.size > 100 * 1024 * 1024) {
+        toast.error(`ફાઈલ સાઈઝ વધુ છે (${Math.round(f.size / (1024 * 1024))}MB). 100MB મર્યાદા છે.`);
+        e.target.value = "";
+        return;
+      }
+      if (accept === "video/*" && !f.type.startsWith("video/") && !/\.(mp4|mov|webm|m4v|3gp|mkv)$/i.test(f.name)) {
+        toast.error("કૃપા કરીને માન્ય વિડિયો ફાઈલ (MP4, MOV, WebM) પસંદ કરો");
+        e.target.value = "";
+        return;
+      }
+    }
+
     setProgress(0);
     try {
       const urls = [];
       for (let i = 0; i < files.length; i++) {
-        urls.push(await uploadFile(files[i], kind, (p) => setProgress(Math.round((i * 100 + p) / files.length))));
+        const url = await uploadFile(files[i], kind, (p) => {
+          setProgress(Math.round((i * 100 + p) / files.length));
+        });
+        urls.push(url);
       }
       onDone(urls, files);
-    } catch (err) { toast.error("અપલોડ નિષ્ફળ: " + err.message); }
-    finally { setProgress(null); e.target.value = ""; }
+    } catch (err) {
+      console.error("Media upload error:", err);
+      toast.error("અપલોડ નિષ્ફળ: " + (err?.message || "નેટવર્ક ક્ષતિ આવી"));
+    } finally {
+      setProgress(null);
+      e.target.value = "";
+    }
   };
   return (
     <>
@@ -35,7 +58,15 @@ export const MediaPreview = ({ urls, onRemove, onEdit }) => urls.length ? (
   <div className="flex gap-2 flex-wrap mt-2">
     {urls.map((u, i) => (
       <div key={i} className="relative w-24 h-24 rounded-xl overflow-hidden border border-slate-200 bg-black group">
-        {/\.(mp4|webm|mov)(\?|$)/i.test(u) || u.includes("video") ? <video src={u} className="w-full h-full object-cover" /> : <img src={u} alt="" className="w-full h-full object-cover" />}
+        {/\.(mp4|webm|mov)(\?|$)/i.test(u) || u.includes("video") ? (
+          <video
+            src={u}
+            className="w-full h-full object-cover"
+            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+          />
+        ) : (
+          <img src={u} alt="" className="w-full h-full object-cover" />
+        )}
         {onRemove && <button onClick={() => onRemove(i)} className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 hover:bg-black transition"><X className="w-3 h-3" /></button>}
         {onEdit && (
           <button

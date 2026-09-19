@@ -81,8 +81,10 @@ export const PostMusicBanner = ({ music }) => {
 
 export const Media = ({ urls, filter, rotation, textOverlays = [], emojiOverlays = [] }) => {
   const [i, setI] = useState(0);
+  const [videoError, setVideoError] = useState(false);
   if (!urls?.length) return null;
   const u = urls[i];
+  if (!u) return null;
   const filterCss = getFilterCss(filter);
   const rotStyle = rotation ? { transform: `rotate(${rotation}deg)` } : {};
   const filterStyle = filterCss ? { filter: filterCss } : {};
@@ -90,7 +92,7 @@ export const Media = ({ urls, filter, rotation, textOverlays = [], emojiOverlays
   return (
     <div className="relative mt-3 rounded-2xl overflow-hidden border border-slate-100 bg-black">
       <div className="relative flex items-center justify-center overflow-hidden">
-        {isVideoUrl(u) ? (
+        {isVideoUrl(u) && !videoError ? (
           <video
             src={u}
             controls
@@ -99,6 +101,7 @@ export const Media = ({ urls, filter, rotation, textOverlays = [], emojiOverlays
             style={{ ...rotStyle, ...filterStyle }}
             className="w-full max-h-[70vh] object-contain transition-transform"
             data-testid="post-video"
+            onError={() => setVideoError(true)}
           />
         ) : (
           <img
@@ -107,6 +110,10 @@ export const Media = ({ urls, filter, rotation, textOverlays = [], emojiOverlays
             loading="lazy"
             style={{ ...rotStyle, ...filterStyle }}
             className="w-full max-h-[70vh] object-contain transition-transform"
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&auto=format&fit=crop&q=80";
+            }}
           />
         )}
 

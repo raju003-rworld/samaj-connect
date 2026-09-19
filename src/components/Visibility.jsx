@@ -1,5 +1,5 @@
 import React from "react";
-import { Globe, Users, Lock, Building2, UserCheck, ShieldCheck } from "lucide-react";
+import { Globe, Users, Lock, Building2, UserCheck, ShieldCheck, Check } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 
 export const VIS = {
@@ -107,7 +107,8 @@ export const PrivacySelector = ({
     ...(isAdmin ? [{ key: "all_samaj", isDefault: false }] : []),
   ];
 
-  const curValue = value === "private" ? "only_me" : value;
+  // Normalize legacy private value
+  const curValue = value === "private" ? "only_me" : (value || "samaj");
 
   return (
     <div className={`space-y-1.5 ${className}`}>
@@ -121,41 +122,53 @@ export const PrivacySelector = ({
         </span>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2" role="radiogroup" aria-label="Privacy settings">
         {options.map(({ key, isDefault }) => {
-          const item = VIS[key];
+          const item = VIS[key] || VIS.samaj;
           const isSelected = curValue === key;
           const Icon = item.icon;
           return (
             <button
               key={key}
               type="button"
+              role="radio"
+              aria-checked={isSelected}
               data-testid={`${testIdPrefix}-${key}`}
-              onClick={() => onChange(key)}
-              className={`flex flex-col items-start text-left p-2 rounded-xl border transition-all ${
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (onChange) onChange(key);
+              }}
+              className={`w-full flex flex-col items-start text-left p-2.5 rounded-2xl border transition-all cursor-pointer touch-manipulation select-none relative ${
                 isSelected
-                  ? "border-purple-600 bg-purple-50/80 shadow-sm ring-1 ring-purple-500"
-                  : "border-slate-200 bg-white hover:bg-slate-50 text-slate-600"
+                  ? "border-2 border-purple-700 bg-purple-100/90 text-purple-950 shadow-md ring-2 ring-purple-600/30"
+                  : "border-slate-200 bg-white hover:bg-slate-50 text-slate-700 shadow-sm"
               }`}
             >
-              <div className="flex items-center justify-between w-full mb-1">
+              <div className="flex items-center justify-between w-full mb-1.5 pointer-events-none">
                 <div
-                  className={`w-6 h-6 rounded-lg grid place-items-center ${
-                    isSelected ? "bg-purple-600 text-white" : "bg-slate-100 text-slate-600"
+                  className={`w-7 h-7 rounded-xl grid place-items-center transition-colors ${
+                    isSelected ? "bg-purple-700 text-white shadow-sm" : "bg-slate-100 text-slate-600"
                   }`}
                 >
-                  <Icon className="w-3.5 h-3.5" />
+                  <Icon className="w-4 h-4" />
                 </div>
-                {isDefault && (
-                  <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-purple-200 text-purple-900">
+                {isSelected ? (
+                  <div className="w-5 h-5 rounded-full bg-purple-700 text-white grid place-items-center shadow-xs">
+                    <Check className="w-3 h-3 stroke-[3]" />
+                  </div>
+                ) : isDefault ? (
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-900 border border-purple-200">
                     ડિફૉલ્ટ
                   </span>
+                ) : (
+                  <div className="w-4 h-4 rounded-full border-2 border-slate-300" />
                 )}
               </div>
-              <span className={`text-xs font-bold leading-tight ${isSelected ? "text-purple-950" : "text-slate-800"}`}>
+              <span className={`text-xs font-bold leading-tight pointer-events-none ${isSelected ? "text-purple-950" : "text-slate-800"}`}>
                 {item[lang] || item.gu}
               </span>
-              <span className="text-[10px] text-slate-500 leading-snug line-clamp-1 mt-0.5">
+              <span className="text-[10px] text-slate-500 leading-snug line-clamp-1 mt-0.5 pointer-events-none">
                 {item.desc}
               </span>
             </button>

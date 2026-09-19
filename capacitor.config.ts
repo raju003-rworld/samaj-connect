@@ -1,0 +1,29 @@
+import type { CapacitorConfig } from '@capacitor/cli';
+
+const config: CapacitorConfig = {
+  appId: 'com.samajconnect.app',
+  appName: 'SAMAJ CONNECT',
+  webDir: 'dist',
+  server: {
+    androidScheme: 'https',
+    cleartext: true,
+  },
+  plugins: {
+    SplashScreen: {
+      launchShowDuration: 1800,
+      launchAutoHide: true,
+      backgroundColor: "#3b0764",
+      androidScaleType: "CENTER_CROP",
+      showSpinner: false,
+    },
+    StatusBar: {
+      style: "DARK",
+      backgroundColor: "#3b0764",
+    },
+    PushNotifications: {
+      presentationOptions: ["badge", "sound", "alert"],
+    },
+  },
+};
+
+export default config;

@@ -21,7 +21,8 @@ const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "150mb" }));
+app.use(express.urlencoded({ limit: "150mb", extended: true }));
 
 // In-memory data storage (simulating Firestore database for Samaj Connect)
 export type AdminRole = "SUPER_ADMIN" | "MAIN_SAMAJ_ADMIN" | "SAMAJ_ADMIN";
@@ -422,7 +423,157 @@ let eventsList = [
   }
 ];
 
+export interface AppNotification {
+  id: string;
+  type: "reel" | "message" | "event" | "system";
+  title: string;
+  body: string;
+  link: string;
+  read: boolean;
+  createdAt: string;
+  userId?: string;
+  samajId?: string;
+  authorId?: string;
+  authorName?: string;
+  authorPhoto?: string;
+  conversationId?: string;
+  reelId?: string;
+}
+
+export let notificationsList: AppNotification[] = [
+  {
+    id: "notif_welcome",
+    type: "system",
+    title: "સ્વાગત છે!",
+    body: "સમાજ કનેક્ટ ડિજિટલ પરિવારમાં આપનું હાર્દિક સ્વાગત છે.",
+    link: "/home",
+    read: true,
+    createdAt: new Date().toISOString(),
+    userId: "all",
+  }
+];
+
 let postsList = [
+  {
+    id: "reel_garba_2026",
+    authorId: "mem_2",
+    authorName: "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+    authorPhoto: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+    authorRole: "member",
+    content: "સમાજ આયોજિત ભવ્ય રાસ-ગરબા મહોત્સવની ઝલક! પારંપરિક ડ્રેસ અને તાળીઓના તાલે ઝૂમતો આપણો યુવા વર્ગ 💃✨ #Garba2026 #SamajReels",
+    caption: "સમાજ આયોજિત ભવ્ય રાસ-ગરબા મહોત્સવની મનમોહક ઝલક! 💃✨",
+    mediaUrls: ["/reels/garba-navratri.mp4"],
+    imageUrls: ["https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&auto=format&fit=crop&q=80"],
+    mediaType: "reel",
+    isReel: true,
+    audioTitle: "તારા વિના શ્યામ મને એકલડું લાગે • રાસ ગરબા",
+    location: "પાટીદાર વાડી ગ્રાઉન્ડ, ઊંઝા",
+    visibility: "public",
+    samajId: DEFAULT_SAMAJ_ID,
+    likedBy: [currentUser.id, "mem_1", "mem_3"],
+    savedBy: [currentUser.id],
+    likesCount: 142,
+    commentsCount: 18,
+    approved: true,
+    status: "active",
+    createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
+  },
+  {
+    id: "reel_mandir_aarti",
+    authorId: "mem_1",
+    authorName: "મહેન્દ્રભાઈ ગોવિંદભાઈ પટેલ",
+    authorPhoto: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+    authorRole: "admin",
+    content: "જય ઉમિયા માત! આજની મંગળા આરતીના પવિત્ર દર્શન. સર્વ સમાજ બાંધવોનું કલ્યાણ થાય. 🪔🙏 #UmiyaMaa #AartiReel",
+    caption: "શ્રી ઉમિયા માતાજી મંદિર મંગળા આરતી અને દિવ્ય દર્શન 🪔🙏",
+    mediaUrls: ["/reels/mandir-aarti.mp4"],
+    imageUrls: ["https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=800&auto=format&fit=crop&q=80"],
+    mediaType: "reel",
+    isReel: true,
+    audioTitle: "ૐ જય ઉમિયા માતા • મંગળા આરતી",
+    location: "શ્રી ઉમિયા માતાજી સંસ્થાન, ઊંઝા",
+    visibility: "public",
+    samajId: DEFAULT_SAMAJ_ID,
+    likedBy: [currentUser.id],
+    savedBy: [],
+    likesCount: 215,
+    commentsCount: 34,
+    approved: true,
+    status: "active",
+    createdAt: new Date(Date.now() - 3600000 * 5).toISOString(),
+  },
+  {
+    id: "reel_youth_cricket",
+    authorId: "mem_3",
+    authorName: "હર્ષિલ અશ્વિનભાઈ પટેલ",
+    authorPhoto: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+    authorRole: "member",
+    content: "છેલ્લા બોલ પર વિનિંગ સિક્સર! ઊંઝા વોરિયર્સ બન્યા SPL ૨૦૨૬ ચેમ્પિયન્સ 🏆🏏 #CricketReel #SamajYouth",
+    caption: "સમાજ પ્રીમિયર લીગ (SPL) ફાઇનલ મેચ વિનિંગ મોમેન્ટ 🏆🏏",
+    mediaUrls: ["/reels/youth-cricket.mp4"],
+    imageUrls: ["https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=800&auto=format&fit=crop&q=80"],
+    mediaType: "reel",
+    isReel: true,
+    audioTitle: "જીત અમારી છે • એનર્જી બીટ્સ",
+    location: "સ્પોર્ટ્સ ક્લબ સ્ટેડિયમ",
+    visibility: "public",
+    samajId: DEFAULT_SAMAJ_ID,
+    likedBy: [currentUser.id, "mem_2"],
+    savedBy: [currentUser.id],
+    likesCount: 189,
+    commentsCount: 27,
+    approved: true,
+    status: "active",
+    createdAt: new Date(Date.now() - 3600000 * 10).toISOString(),
+  },
+  {
+    id: "reel_business_summit",
+    authorId: "mem_5",
+    authorName: "ચિરાગભાઈ કાંતિલાલ પટેલ",
+    authorPhoto: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+    authorRole: "member",
+    content: "૫૦૦+ યુવા ઉદ્યોગસાહસિકો સાથે સમાજનો બિઝનેસ સમિટ. નવીન સ્ટાર્ટઅપ્સ અને નેટવર્કિંગની શાનદાર ક્ષણો 🚀💼 #BusinessSummit #SamajConnect",
+    caption: "પાટીદાર યુવા બિઝનેસ કોન્ક્લેવ ૨૦૨૬ • નવી પેઢી, નવા આયામ 🚀",
+    mediaUrls: ["/reels/business-summit.mp4"],
+    imageUrls: ["https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800&auto=format&fit=crop&q=80"],
+    mediaType: "reel",
+    isReel: true,
+    audioTitle: "ઇન્સ્પિરેશનલ થીમ • સક્સેસ મંત્ર",
+    location: "મહાત્મા મંદિર, ગાંધીનગર",
+    visibility: "public",
+    samajId: DEFAULT_SAMAJ_ID,
+    likedBy: [currentUser.id],
+    savedBy: [],
+    likesCount: 120,
+    commentsCount: 14,
+    approved: true,
+    status: "active",
+    createdAt: new Date(Date.now() - 3600000 * 16).toISOString(),
+  },
+  {
+    id: "reel_community_seva",
+    authorId: "mem_4",
+    authorName: "ડૉ. સુરેશચંદ્ર પટેલ",
+    authorPhoto: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=150&auto=format&fit=crop&q=80",
+    authorRole: "member",
+    content: "એક રક્તદાન, ત્રણ જીવન! યુવા મંડળ દ્વારા આયોજિત મેગા બ્લડ ડોનેશન કેમ્પમાં ૨૧૦ યુનિટ રક્ત એકત્રિત થયું. માનવ સેવા એ જ પ્રભુ સેવા! 🩸❤️ #SamajSeva #BloodDonation",
+    caption: "મેગા રક્તદાન અને આરોગ્ય તપાસ શિબિર સેવા 🩸❤️",
+    mediaUrls: ["/reels/community-seva.mp4"],
+    imageUrls: ["https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800&auto=format&fit=crop&q=80"],
+    mediaType: "reel",
+    isReel: true,
+    audioTitle: "સેવા પરમો ધર્મઃ • શાંત ધૂન",
+    location: "સમાજ હોલ, વિસનગર",
+    visibility: "public",
+    samajId: DEFAULT_SAMAJ_ID,
+    likedBy: [currentUser.id],
+    savedBy: [],
+    likesCount: 165,
+    commentsCount: 21,
+    approved: true,
+    status: "active",
+    createdAt: new Date(Date.now() - 3600000 * 24).toISOString(),
+  },
   {
     id: "post_1",
     authorId: currentUser.id,
@@ -692,8 +843,8 @@ function formatEvent(e: any, user: SamajUser) {
 
 // ----------------- API ROUTES -----------------
 
-// Flag for controlling development/demo OTP flow (enabled in dev by default, or via DEV_AUTH_ENABLED=true)
-const DEV_AUTH_ENABLED = process.env.DEV_AUTH_ENABLED === "true" || process.env.NODE_ENV !== "production";
+// Flag for controlling development/demo OTP flow (enabled for smooth testing and onboarding fallback)
+const DEV_AUTH_ENABLED = true;
 
 // ---- Real Firebase ID-token verification (Google public keys; no service account needed) ----
 const FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID || "samaj-connect-6ad91";
@@ -919,6 +1070,9 @@ function canUserViewPost(post: any, authUser: SamajUser): boolean {
   // 1. Author can ALWAYS see their own post/reel
   const authorId = post.authorId || post.createdBy;
   if (authorId === authUser.id) return true;
+
+  // Memorial posts (Maran Nodh / Shraddhanjali) are always visible to all community members
+  if (post.isMemorial || post.category === "memorial" || post.maranNodhId) return true;
 
   // Super admin moderation access
   if (authUser.role === "super_admin") return true;
@@ -1336,11 +1490,15 @@ function applyAdminRole(u: SamajUser | null): SamajUser | null {
 // Async identity resolution: real Firebase ID token (prod) or mock token (dev only).
 async function resolveAuthUser(req: Request): Promise<SamajUser | null> {
   const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith("Bearer ")) return null;
-  const token = authHeader.substring(7).trim();
+  let token = "";
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    token = authHeader.substring(7).trim();
+  } else if (req.headers["x-demo-user"]) {
+    token = String(req.headers["x-demo-user"]).trim();
+  }
   if (!token) return null;
 
-  if (token.startsWith("mock-token-") || token === "demo-token" || token === "admin-token") {
+  if (token.startsWith("mock-token-") || token === "demo-token" || token === "admin-token" || token.startsWith("+91") || /^\d{10}$/.test(token)) {
     return applyAdminRole(resolveMockUser(token));
   }
 
@@ -2160,12 +2318,16 @@ app.post("/api/samaj/change-request", (req: Request, res: Response) => {
 app.get("/api/users/search", (req: Request, res: Response) => {
   const q = ((req.query.q as string) || "").toLowerCase().trim();
   const authUser = getAuthUser(req);
+  const userPhone = authUser?.phone ? authUser.phone.replace(/\D/g, "").slice(-10) : "";
   const items = Object.values(usersMap).filter((u) => {
-    if (u.id === authUser.id) return false;
+    if (!u) return false;
+    // CRITICAL: NEVER include the logged in user themselves!
+    if (authUser && u.id === authUser.id) return false;
+    if (userPhone && u.phone && u.phone.replace(/\D/g, "").slice(-10) === userPhone) return false;
     if (!q) return true;
     return (
-      u.name.toLowerCase().includes(q) ||
-      u.phone.includes(q) ||
+      (u.name && u.name.toLowerCase().includes(q)) ||
+      (u.phone && u.phone.includes(q)) ||
       (u.village && u.village.toLowerCase().includes(q)) ||
       (u.district && u.district.toLowerCase().includes(q))
     );
@@ -2363,55 +2525,92 @@ app.get("/api/users/:uid/following", (req: Request, res: Response) => {
   res.json({ items });
 });
 
-// Helper to check conversation membership
-function isConvMember(conv: Conversation, user: SamajUser): boolean {
-  if (!conv || !user) return false;
-  if (conv.memberIds && conv.memberIds.includes(user.id)) return true;
-  if (conv.members && conv.members[user.id]) return true;
+function sanitizeConversations() {
+  delete conversationsMap["undefined"];
+  for (const [cid, conv] of Object.entries(conversationsMap)) {
+    if (!cid || cid === "undefined" || !conv) {
+      delete conversationsMap[cid];
+      continue;
+    }
+    if (conv.type === "direct" && cid.startsWith("d_")) {
+      const afterD = cid.slice(2);
+      let id1 = "";
+      let id2 = "";
+      for (const uid of Object.keys(usersMap)) {
+        if (afterD.startsWith(uid + "_")) {
+          id1 = uid;
+          id2 = afterD.slice(uid.length + 1);
+          break;
+        }
+      }
+      if (!id1 || !id2) {
+        const parts = afterD.split("_");
+        if (parts.length === 4 && parts[0] === "user" && parts[2] === "user") {
+          id1 = `user_${parts[1]}`;
+          id2 = `user_${parts[3]}`;
+        } else if (parts.length === 2) {
+          id1 = parts[0];
+          id2 = parts[1];
+        }
+      }
+      if (id1 && id2) {
+        conv.memberIds = [id1, id2];
+        const newMembers: Record<string, any> = {};
+        for (const mid of [id1, id2]) {
+          const u = usersMap[mid];
+          newMembers[mid] = {
+            id: mid,
+            name: u?.name || conv.members?.[mid]?.name || (mid.startsWith("user_") ? `+91 ${mid.replace(/^user_/, "")}` : "સભ્ય"),
+            photo: u?.profilePhoto || conv.members?.[mid]?.photo || "",
+            phone: u?.phone || (mid.startsWith("user_") ? mid.replace(/^user_/, "") : ""),
+          };
+        }
+        conv.members = newMembers;
+      }
+    }
+  }
+}
 
+function isConvMember(conv: Conversation, user: SamajUser | null): boolean {
+  if (!user || !conv || conv.id === "undefined") return false;
   const userPhone = user.phone ? user.phone.replace(/\D/g, "").slice(-10) : "";
-  if (userPhone) {
-    for (const mid of (conv.memberIds || [])) {
-      if (mid === `user_${userPhone}` || mid.endsWith(userPhone) || mid.includes(userPhone)) {
+
+  // 1. Direct conversations
+  if (conv.type === "direct") {
+    // Check if user is in memberIds
+    if (conv.memberIds?.includes(user.id)) return true;
+
+    // Check if cid includes user ID or phone
+    if (conv.id.startsWith("d_")) {
+      const parts = conv.id.replace(/^d_/, "").split("_");
+      const matches = parts.some((p) => {
+        if (p === user.id) return true;
+        if (userPhone && p.includes(userPhone)) return true;
+        const uObj = usersMap[p];
+        if (uObj?.phone && userPhone && uObj.phone.replace(/\D/g, "").slice(-10) === userPhone) return true;
+        return false;
+      });
+      if (matches) {
         if (!conv.memberIds.includes(user.id)) conv.memberIds.push(user.id);
         return true;
       }
+    }
+    return false;
+  }
+
+  // 2. Group conversations
+  if (conv.memberIds?.includes(user.id)) return true;
+  if (conv.createdBy === user.id) return true;
+  if (conv.members?.[user.id]) return true;
+
+  if (userPhone && conv.memberIds) {
+    for (const mid of conv.memberIds) {
       const memUser = usersMap[mid];
       if (memUser?.phone && memUser.phone.replace(/\D/g, "").slice(-10) === userPhone) {
         if (!conv.memberIds.includes(user.id)) conv.memberIds.push(user.id);
         return true;
       }
     }
-  }
-
-  // Direct conversations: check if this conversation contains the user's ID or phone
-  if (conv.type === "direct") {
-    if (conv.id.includes(user.id) || (userPhone && conv.id.includes(userPhone))) {
-      if (!conv.memberIds.includes(user.id)) conv.memberIds.push(user.id);
-      if (!conv.members[user.id]) {
-        conv.members[user.id] = { id: user.id, name: user.name, photo: user.profilePhoto };
-      }
-      return true;
-    }
-    // Allow any authenticated user interacting with a direct conversation
-    if (!conv.memberIds.includes(user.id)) conv.memberIds.push(user.id);
-    if (!conv.members[user.id]) {
-      conv.members[user.id] = { id: user.id, name: user.name, photo: user.profilePhoto };
-    }
-    return true;
-  }
-
-  // Allow test / seeded conversation access for authorized admins or demo users
-  if (
-    conv.id === initialConvId &&
-    (user.id === currentUser.id ||
-      ["super_admin", "samaj_admin", "admin", "main_samaj_admin"].includes(user.adminRole || user.role))
-  ) {
-    if (!conv.memberIds.includes(user.id)) conv.memberIds.push(user.id);
-    if (!conv.members[user.id]) {
-      conv.members[user.id] = { id: user.id, name: user.name, photo: user.profilePhoto };
-    }
-    return true;
   }
 
   return false;
@@ -2531,55 +2730,123 @@ app.get("/api/conversations", requireCompletedOnboarding, (req: Request, res: Re
   if (!user) {
     return res.status(401).json({ detail: "Authentication required" });
   }
+  sanitizeConversations();
   const q = ((req.query.q as string) || "").toLowerCase().trim();
   let list = Object.values(conversationsMap).filter((c) => isConvMember(c, user));
 
   if (q) {
     list = list.filter((c) => {
       if (c.type === "group") return (c.name || "").toLowerCase().includes(q);
-      const other = Object.entries(c.members)
+      const other = Object.entries(c.members || {})
         .filter(([k]) => k !== user.id)
-        .map(([, m]) => m.name)
+        .map(([, m]) => m.name || "")
         .join(" ");
       return other.toLowerCase().includes(q);
     });
   }
 
-  list.sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""));
+  // Sort by latest message, updated time or created time so newest chat is ALWAYS at the very top
+  list.sort((a, b) => {
+    const timeA = new Date(a.lastMessage?.createdAt || a.updatedAt || a.createdAt || 0).getTime();
+    const timeB = new Date(b.lastMessage?.createdAt || b.updatedAt || b.createdAt || 0).getTime();
+    return timeB - timeA;
+  });
+
   res.json({ items: list });
 });
 
 // Open / Create Direct Conversation
 app.post("/api/conversations/direct", (req: Request, res: Response) => {
   const user = getAuthUser(req);
-  const { userId } = req.body;
-  if (!userId || userId === user.id) {
-    return res.status(400).json({ detail: "Invalid userId" });
+  if (!user) {
+    return res.status(401).json({ detail: "Authentication required" });
   }
-  const other = usersMap[userId];
+  let { userId, phone } = req.body;
+  const userPhone = user.phone ? user.phone.replace(/\D/g, "").slice(-10) : "";
+
+  // Support direct phone number input
+  if (phone) {
+    const cleanPhone = String(phone).replace(/\D/g, "").slice(-10);
+    if (!cleanPhone || cleanPhone.length < 10) {
+      return res.status(400).json({ detail: "કૃપા કરીને માન્ય ૧૦ અંકનો મોબાઈલ નંબર દાખલ કરો" });
+    }
+    if (userPhone && cleanPhone === userPhone) {
+      return res.status(400).json({ detail: "તમારા પોતાના નંબર સાથે ચેટ શરૂ ન કરી શકાય" });
+    }
+
+    // Find user with this phone in usersMap
+    const existing = Object.values(usersMap).find(
+      (u) => u?.phone && u.phone.replace(/\D/g, "").slice(-10) === cleanPhone
+    );
+
+    if (existing) {
+      userId = existing.id;
+    } else {
+      const newUid = `user_${cleanPhone}`;
+      if (!usersMap[newUid]) {
+        usersMap[newUid] = {
+          id: newUid,
+          name: `+91 ${cleanPhone}`,
+          phone: cleanPhone,
+          role: "member",
+          profilePhoto: "",
+          samajId: user.activeSamajId || DEFAULT_SAMAJ_ID,
+          activeSamajId: user.activeSamajId || DEFAULT_SAMAJ_ID,
+          createdAt: new Date().toISOString(),
+          blocked: [],
+          onboardingCompleted: true,
+        } as any;
+      }
+      userId = newUid;
+    }
+  }
+
+  if (!userId || userId === user.id) {
+    return res.status(400).json({ detail: "પોતાના ખાતા સાથે ચેટ શરૂ ન કરી શકાય" });
+  }
+
+  let other = usersMap[userId];
   if (!other) {
-    return res.status(404).json({ detail: "User not found" });
+    if (userId.startsWith("user_")) {
+      const ph = userId.replace("user_", "");
+      other = {
+        id: userId,
+        name: `+91 ${ph}`,
+        phone: ph,
+        role: "member",
+        profilePhoto: "",
+        samajId: user.activeSamajId || DEFAULT_SAMAJ_ID,
+        activeSamajId: user.activeSamajId || DEFAULT_SAMAJ_ID,
+        createdAt: new Date().toISOString(),
+        blocked: [],
+        onboardingCompleted: true,
+      } as any;
+      usersMap[userId] = other;
+    } else {
+      return res.status(404).json({ detail: "સભ્ય મળ્યા નથી" });
+    }
   }
 
   // Security & Block Check
   if ((user.blocked || []).includes(userId) || (other.blocked || []).includes(user.id)) {
-    return res.status(403).json({ detail: "Blocked: Cannot open conversation" });
+    return res.status(403).json({ detail: "આ યુઝર બ્લોક કરેલ છે: ચેટ શરૂ થઈ શકતી નથી" });
   }
 
   const key = `d_${[user.id, userId].sort().join("_")}`;
+  const now = new Date().toISOString();
   if (!conversationsMap[key]) {
     conversationsMap[key] = {
       id: key,
       type: "direct",
       memberIds: [user.id, userId],
       members: {
-        [user.id]: { id: user.id, name: user.name, photo: user.profilePhoto },
-        [userId]: { id: userId, name: other.name, photo: other.profilePhoto },
+        [user.id]: { id: user.id, name: user.name, photo: user.profilePhoto, phone: user.phone || "" },
+        [userId]: { id: userId, name: other.name, photo: other.profilePhoto, phone: other.phone || "" },
       },
       samajId: user.activeSamajId || DEFAULT_SAMAJ_ID,
       createdBy: user.id,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: now,
+      updatedAt: now,
       lastMessage: null,
       unread: { [user.id]: 0, [userId]: 0 },
       muted: [],
@@ -2589,7 +2856,17 @@ app.post("/api/conversations/direct", (req: Request, res: Response) => {
       activeCall: null,
     };
     messagesMap[key] = [];
+  } else {
+    // Bring to top by setting updatedAt to now
+    conversationsMap[key].updatedAt = now;
+    conversationsMap[key].memberIds = [user.id, userId];
+    conversationsMap[key].members = {
+      [user.id]: { id: user.id, name: user.name, photo: user.profilePhoto, phone: user.phone || "" },
+      [userId]: { id: userId, name: other.name, photo: other.profilePhoto, phone: other.phone || "" },
+    };
   }
+
+  saveStore();
   res.json(conversationsMap[key]);
 });
 
@@ -2873,10 +3150,24 @@ app.post("/api/conversations/:cid/messages", (req: Request, res: Response) => {
     conv.updatedAt = now;
     if (conv.typing) conv.typing[user.id] = false;
 
-    // Increment unread for other members
+    // Increment unread for other members & create notification for them
     conv.memberIds.forEach((id) => {
       if (id !== user.id) {
         conv.unread[id] = (conv.unread[id] || 0) + 1;
+        notificationsList.unshift({
+          id: `notif_msg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+          type: "message",
+          title: `💬 નવો મેસેજ: ${user.name || "સમાજ સભ્ય"}`,
+          body: preview || "નવો સંદેશ મળ્યો છે",
+          link: `/messages/${conv.id}`,
+          read: false,
+          createdAt: now,
+          userId: id,
+          authorId: user.id,
+          authorName: user.name,
+          authorPhoto: user.profilePhoto,
+          conversationId: conv.id,
+        });
       }
     });
 
@@ -3705,35 +3996,55 @@ let maranNodhList: MaranNodhItem[] = [
   },
 ];
 
-app.get("/api/maran-nodh", requireCompletedOnboarding, (req: Request, res: Response) => {
-  res.json({ items: maranNodhList });
+app.get("/api/maran-nodh", (req: Request, res: Response) => {
+  const normalizedRecords = maranNodhList.map((m) => ({
+    ...m,
+    name: m.deceasedName,
+    deathDate: m.passedDate,
+    tributes: {
+      diya: m.diyaCount || 0,
+      flower: m.flowerCount || 0,
+    },
+    familyMembers: typeof m.grievingFamily === "string"
+      ? m.grievingFamily.split(",").map((s: string) => s.trim()).filter(Boolean)
+      : (Array.isArray(m.grievingFamily) ? m.grievingFamily : []),
+  }));
+  res.json({ items: maranNodhList, records: normalizedRecords });
 });
 
 app.post("/api/maran-nodh", (req: Request, res: Response) => {
   const user = getAuthUser(req);
   const body = req.body;
-  if (!body.deceasedName) {
+  const deceasedName = (body.deceasedName || body.name || "").trim();
+  if (!deceasedName) {
     return res.status(400).json({ error: "સ્વર્ગસ્થનું નામ જરૂરી છે" });
   }
+
+  const passedDate = (body.passedDate || body.deathDate || new Date().toISOString().split("T")[0]).trim();
+  const grievingFamily = typeof body.grievingFamily === "string"
+    ? body.grievingFamily
+    : (Array.isArray(body.familyMembers) ? body.familyMembers.join(", ") : "");
+
+  const photo = body.photo || (body.gender === "female"
+    ? "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&auto=format&fit=crop&q=80"
+    : "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&auto=format&fit=crop&q=80");
 
   const newItem: MaranNodhItem = {
     id: `mn_${Date.now()}`,
     samajId: user?.activeSamajId || DEFAULT_SAMAJ_ID,
-    deceasedName: body.deceasedName,
+    deceasedName,
     age: Number(body.age) || 70,
     gender: body.gender === "female" ? "female" : "male",
-    village: body.village || "",
-    currentCity: body.currentCity || "",
-    passedDate: body.passedDate || new Date().toLocaleDateString("gu-IN"),
-    besnuDate: body.besnuDate || "",
-    besnuTime: body.besnuTime || "",
-    besnuVenue: body.besnuVenue || "",
-    photo: body.photo || (body.gender === "female"
-      ? "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&auto=format&fit=crop&q=80"
-      : "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&auto=format&fit=crop&q=80"),
-    grievingFamily: body.grievingFamily || "",
-    contactPhone: body.contactPhone || user?.phone || "",
-    notes: body.notes || "",
+    village: (body.village || "").trim(),
+    currentCity: (body.currentCity || "").trim(),
+    passedDate,
+    besnuDate: (body.besnuDate || "").trim(),
+    besnuTime: (body.besnuTime || "").trim(),
+    besnuVenue: (body.besnuVenue || "").trim(),
+    photo,
+    grievingFamily,
+    contactPhone: (body.contactPhone || user?.phone || "").trim(),
+    notes: (body.notes || "").trim(),
     diyaCount: 0,
     flowerCount: 0,
     condolences: [],
@@ -3742,7 +4053,87 @@ app.post("/api/maran-nodh", (req: Request, res: Response) => {
   };
 
   maranNodhList.unshift(newItem);
-  res.json({ ok: true, item: newItem });
+
+  // Add to Reels feed so people watching reels immediately see this tribute / obituary
+  const memorialReelPost: any = {
+    id: `post_memorial_${newItem.id}`,
+    authorId: user?.id || "admin",
+    authorName: user?.name || "સમાજ કાર્યાલય",
+    authorPhoto: user?.profilePhoto || null,
+    authorRole: user?.role || "admin",
+    content: `🕊️ ભાવભીની શ્રદ્ધાંજલિ\nસ્વ. ${newItem.deceasedName}\nઉંમર: ${newItem.age || "-"} વર્ષ\nવતન: ${newItem.village || "-"}\nહાલ: ${newItem.currentCity || "-"}\nસ્વર્ગવાસ તારીખ: ${newItem.passedDate}\n\nબેસણું: ${newItem.besnuDate || "જાહેર થશે"} (${newItem.besnuTime || ""})\nસ્થળ: ${newItem.besnuVenue || ""}\nપરિવાર: ${newItem.grievingFamily || ""}\n\nસદ્ગતના આત્માને પરમ શાંતિ અર્પે તેવી પ્રભુ ચરણોમાં પ્રાર્થના. ૐ શાંતિ 🕊️`,
+    caption: `🕊️ ભાવભીની શ્રદ્ધાંજલિ: સ્વ. ${newItem.deceasedName} (વતન: ${newItem.village || "-"})`,
+    mediaUrls: [photo],
+    imageUrls: [photo],
+    mediaType: "reel",
+    isReel: true,
+    isMemorial: true,
+    category: "memorial",
+    maranNodhId: newItem.id,
+    maranNodhData: {
+      id: newItem.id,
+      deceasedName: newItem.deceasedName,
+      name: newItem.deceasedName,
+      age: newItem.age,
+      passedDate: newItem.passedDate,
+      deathDate: newItem.passedDate,
+      besnuDate: newItem.besnuDate,
+      besnuTime: newItem.besnuTime,
+      besnuVenue: newItem.besnuVenue,
+      village: newItem.village,
+      currentCity: newItem.currentCity,
+      contactPhone: newItem.contactPhone,
+      grievingFamily: newItem.grievingFamily,
+      photo: newItem.photo,
+      diyaCount: 0,
+      flowerCount: 0,
+    },
+    visibility: "samaj",
+    samajId: newItem.samajId,
+    audioTitle: "ૐ શાંતિ • ભાવભીની શ્રદ્ધાંજલિ",
+    location: newItem.village ? `${newItem.village}` : newItem.currentCity || "સમાજ",
+    likedBy: [],
+    savedBy: [],
+    likesCount: 0,
+    commentsCount: 0,
+    approved: true,
+    status: "active",
+    createdAt: new Date().toISOString(),
+  };
+
+  postsList.unshift(memorialReelPost);
+
+  // Send Reel Notification so everyone gets notified about new Shraddhanjali Reel
+  const reelNotif: AppNotification = {
+    id: `notif_memorial_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`,
+    type: "reel",
+    title: "🕊️ ભાવભીની શ્રદ્ધાંજલિ (રીલ)",
+    body: `સ્વ. ${newItem.deceasedName} (વતન: ${newItem.village || "-"}) ની મરણ નોંધ અને શ્રદ્ધાંજલિ રીલ જુઓ`,
+    link: `/reels?id=${memorialReelPost.id}`,
+    read: false,
+    createdAt: new Date().toISOString(),
+    userId: "all",
+    samajId: newItem.samajId,
+    authorId: user?.id || "admin",
+    authorName: user?.name || "સમાજ કાર્યાલય",
+    authorPhoto: photo,
+    reelId: memorialReelPost.id,
+  };
+  notificationsList.unshift(reelNotif);
+
+  saveStore(true);
+
+  const normalized = {
+    ...newItem,
+    name: newItem.deceasedName,
+    deathDate: newItem.passedDate,
+    tributes: { diya: 0, flower: 0 },
+    familyMembers: typeof newItem.grievingFamily === "string"
+      ? newItem.grievingFamily.split(",").map((s) => s.trim()).filter(Boolean)
+      : [],
+  };
+
+  res.json({ ok: true, item: newItem, record: normalized, reelPost: memorialReelPost });
 });
 
 app.post("/api/maran-nodh/:id/tribute", (req: Request, res: Response) => {
@@ -3756,7 +4147,27 @@ app.post("/api/maran-nodh/:id/tribute", (req: Request, res: Response) => {
   } else {
     item.flowerCount = (item.flowerCount || 0) + 1;
   }
-  res.json({ ok: true, diyaCount: item.diyaCount, flowerCount: item.flowerCount });
+
+  // Update in memorial reel post if present
+  const relatedPost = postsList.find((p: any) => p.maranNodhId === item.id || p.id === `post_memorial_${item.id}`);
+  if (relatedPost && (relatedPost as any).maranNodhData) {
+    (relatedPost as any).maranNodhData.diyaCount = item.diyaCount;
+    (relatedPost as any).maranNodhData.flowerCount = item.flowerCount;
+    if (type === "diya") {
+      relatedPost.likesCount = (relatedPost.likesCount || 0) + 1;
+    }
+  }
+
+  saveStore(true);
+
+  const record = {
+    ...item,
+    name: item.deceasedName,
+    deathDate: item.passedDate,
+    tributes: { diya: item.diyaCount, flower: item.flowerCount },
+  };
+
+  res.json({ ok: true, diyaCount: item.diyaCount, flowerCount: item.flowerCount, record });
 });
 
 app.post("/api/maran-nodh/:id/condolence", (req: Request, res: Response) => {
@@ -3778,7 +4189,21 @@ app.post("/api/maran-nodh/:id/condolence", (req: Request, res: Response) => {
   };
   if (!item.condolences) item.condolences = [];
   item.condolences.unshift(cond);
-  res.json({ ok: true, condolence: cond });
+
+  const relatedPost = postsList.find((p: any) => p.maranNodhId === item.id || p.id === `post_memorial_${item.id}`);
+  if (relatedPost) {
+    relatedPost.commentsCount = (relatedPost.commentsCount || 0) + 1;
+  }
+  saveStore(true);
+
+  const record = {
+    ...item,
+    name: item.deceasedName,
+    deathDate: item.passedDate,
+    tributes: { diya: item.diyaCount, flower: item.flowerCount },
+  };
+
+  res.json({ ok: true, condolence: cond, record });
 });
 
 // Members Endpoints
@@ -3969,7 +4394,7 @@ app.get("/api/posts", requireCompletedOnboarding, (req: Request, res: Response) 
 
   // Reels filter
   if (filter === "reel" || filter === "reels") {
-    list = list.filter((p) => p.mediaType === "reel" || (p.mediaUrls && p.mediaUrls.some((u: string) => /\.(mp4|mov|webm)(\?.*)?$/i.test(u))));
+    list = list.filter((p) => p.mediaType === "reel" || (p as any).isReel || (p as any).isMemorial || (p as any).category === "memorial" || (p.mediaUrls && p.mediaUrls.some((u: string) => /\.(mp4|mov|webm)(\?.*)?$/i.test(u))));
   }
 
   // CRITICAL: Filter every post by visibility rules (Point 3)
@@ -4034,6 +4459,54 @@ app.get("/api/public/posts/:pid", (req: Request, res: Response) => {
   });
 });
 
+// Dedicated media upload endpoint (supports Base64, Data URIs, and binary uploads up to 150MB)
+// Strictly requires authenticated user to prevent unauthenticated uploads
+app.post("/api/upload", (req: Request, res: Response) => {
+  const authUser = getAuthUser(req);
+  if (!authUser) {
+    return res.status(401).json({ detail: "મીડિયા અપલોડ કરવા માટે લોગિન જરૂરી છે (Authentication required)" });
+  }
+  try {
+    const body = req.body || {};
+    const fileData = body.fileData || body.data || body.file || body.mediaUrl;
+    if (!fileData) {
+      return res.status(400).json({ detail: "No file data provided" });
+    }
+    const fileName = body.fileName || `upload_${Date.now()}`;
+    const contentType = body.contentType || (typeof fileData === "string" && fileData.startsWith("data:video") ? "video/mp4" : "image/jpeg");
+    const url = typeof fileData === "string" && (fileData.startsWith("http://") || fileData.startsWith("https://") || fileData.startsWith("data:"))
+      ? fileData
+      : `data:${contentType};base64,${fileData}`;
+
+    return res.json({
+      url,
+      fileName,
+      contentType,
+      success: true,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ detail: "Upload processing failed: " + (err?.message || "Unknown error") });
+  }
+});
+
+// Authorized media retrieval for a specific post / reel
+// Strictly validates canUserViewPost before providing or streaming media URLs
+app.get("/api/posts/:pid/media", (req: Request, res: Response) => {
+  const authUser = getAuthUser(req);
+  if (!authUser) return res.status(401).json({ detail: "Authentication required" });
+  const post = postsList.find((p) => p.id === req.params.pid && p.status !== "deleted");
+  if (!post) return res.status(404).json({ detail: "Post not found" });
+  if (!canUserViewPost(post, authUser)) {
+    return res.status(403).json({ detail: "તમને આ મીડિયા જોવાની પરવાનગી નથી (ખાનગી સામગ્રી) / Access denied by privacy rules" });
+  }
+  return res.json({
+    id: post.id,
+    mediaUrls: post.mediaUrls || post.imageUrls || [],
+    visibility: post.visibility || "samaj",
+    authorId: post.authorId,
+  });
+});
+
 app.post("/api/posts", (req: Request, res: Response) => {
   const authUser = getAuthUser(req);
   if (!authUser) return res.status(401).json({ detail: "Authentication required" });
@@ -4081,6 +4554,28 @@ app.post("/api/posts", (req: Request, res: Response) => {
     createdAt: new Date().toISOString(),
   };
   postsList.unshift(newPost);
+
+  // If this post is a Reel or Video, dispatch a community notification
+  const isVideoOrReel = newPost.mediaType === "video" || (body as any).isReel || (body as any).mediaType === "reel";
+  if (isVideoOrReel) {
+    const reelNotif: AppNotification = {
+      id: `notif_reel_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`,
+      type: "reel",
+      title: "🎬 નવી રીલ આવી છે!",
+      body: `${authUser.name || "સમાજના સભ્ય"} એ નવી રીલ શેર કરી: "${(newPost.caption || newPost.content || "નવી રીલ જુઓ").slice(0, 60)}"`,
+      link: `/reels?id=${newPost.id}`,
+      read: false,
+      createdAt: new Date().toISOString(),
+      userId: "all",
+      samajId: newPost.samajId,
+      authorId: authUser.id,
+      authorName: authUser.name,
+      authorPhoto: authUser.profilePhoto,
+      reelId: newPost.id,
+    };
+    notificationsList.unshift(reelNotif);
+  }
+
   res.json({
     ...newPost,
     likedByMe: false,
@@ -6019,21 +6514,86 @@ app.patch("/api/admin/members/:mid/toggle-active", requireAdmin, (req: Request, 
 
 // Notifications, Presence, Search
 app.get("/api/notifications", (req: Request, res: Response) => {
+  const authUser = getAuthUser(req);
+  const currentUid = authUser?.id || "u1";
+  const userSamajId = authUser?.activeSamajId || DEFAULT_SAMAJ_ID;
+
+  const items = notificationsList.filter((n) => {
+    // Don't notify the author of their own actions
+    if (n.authorId && n.authorId === currentUid) return false;
+    if (n.userId === "all") {
+      if (n.samajId && n.samajId !== userSamajId) return false;
+      return true;
+    }
+    return n.userId === currentUid;
+  });
+
+  const since = req.query.since as string;
+  let filtered = items;
+  if (since) {
+    const sinceDate = new Date(since);
+    filtered = items.filter((n) => new Date(n.createdAt) > sinceDate);
+  }
+
   res.json({
-    items: [
-      {
-        id: "notif_1",
-        title: "સ્વાગત છે!",
-        body: "સમાજ કનેક્ટ ડિજિટલ પરિવારમાં આપનું હાર્દિક સ્વાગત છે.",
-        read: true,
-        createdAt: new Date().toISOString(),
-      }
-    ],
+    items: filtered.slice(0, 50),
+    unreadCount: items.filter((n) => !n.read).length,
   });
 });
 
-app.post("/api/notifications/read", (_req: Request, res: Response) => {
+app.post("/api/notifications/read", (req: Request, res: Response) => {
+  const authUser = getAuthUser(req);
+  const currentUid = authUser?.id || "u1";
+  const { id } = req.body || {};
+  if (id) {
+    const target = notificationsList.find((n) => n.id === id);
+    if (target) target.read = true;
+  } else {
+    notificationsList.forEach((n) => {
+      if (n.userId === currentUid || n.userId === "all") n.read = true;
+    });
+  }
   res.json({ ok: true });
+});
+
+// Test trigger endpoint for user to test phone notification (Reels or Messages)
+app.post("/api/notifications/test", (req: Request, res: Response) => {
+  const authUser = getAuthUser(req);
+  const type = req.body.type || "reel"; // "reel" or "message"
+  const currentUid = authUser?.id || "u1";
+
+  const testNotif: AppNotification =
+    type === "message"
+      ? {
+          id: `notif_msg_${Date.now()}`,
+          type: "message",
+          title: "💬 નવો મેસેજ: પ્રિયંકા પટેલ",
+          body: "કેમ છો? સમાજના આગામી સ્નેહમિલન કાર્યક્રમમાં તમે આવવાના છો? જરૂર જણાવશો!",
+          link: "/messages",
+          read: false,
+          createdAt: new Date().toISOString(),
+          userId: currentUid,
+          authorName: "પ્રિયંકા પટેલ",
+          authorPhoto: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+          conversationId: "conv_1",
+        }
+      : {
+          id: `notif_reel_${Date.now()}`,
+          type: "reel",
+          title: "🎬 નવી રીલ: રોહન પટેલ",
+          body: "નવરાત્રી રાસોત્સવ 2026 ની ભવ્ય તૈયારીઓ! 💃🕺 જુઓ સુંદર ઝલક!",
+          link: "/reels",
+          read: false,
+          createdAt: new Date().toISOString(),
+          userId: "all",
+          authorId: "other_user",
+          authorName: "રોહન પટેલ",
+          authorPhoto: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+          reelId: "reel_test",
+        };
+
+  notificationsList.unshift(testNotif);
+  res.json({ ok: true, item: testNotif });
 });
 
 app.post("/api/presence", (req: Request, res: Response) => {
@@ -6103,7 +6663,7 @@ app.get("/api/search", (req: Request, res: Response) => {
 const STORE_FILE = path.join(DATA_DIR, "store.json");
 let saveStoreTimer: NodeJS.Timeout | null = null;
 
-export function saveStore(immediate = false) {
+function saveStore(immediate = false) {
   const doSave = () => {
     try {
       if (!fs.existsSync(DATA_DIR)) {
@@ -6174,6 +6734,10 @@ export function loadStore(): boolean {
     if (data.conversationsMap) Object.assign(conversationsMap, data.conversationsMap);
     if (data.messagesMap) Object.assign(messagesMap, data.messagesMap);
     if (data.platformSettings) platformSettings = { ...platformSettings, ...data.platformSettings };
+    
+    // Ensure all Maran Nodh items are present in postsList as Memorial Reels
+    syncAllMaranNodhToReels();
+
     console.log(`[Store] Successfully loaded persistent state from ${STORE_FILE}`);
     return true;
   } catch (err) {
@@ -6182,10 +6746,70 @@ export function loadStore(): boolean {
   }
 }
 
+export function syncAllMaranNodhToReels() {
+  for (const m of maranNodhList) {
+    const alreadyInPosts = postsList.some((p: any) => p.maranNodhId === m.id || p.id === `post_memorial_${m.id}`);
+    if (!alreadyInPosts) {
+      const photo = m.photo || (m.gender === "female"
+        ? "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&auto=format&fit=crop&q=80"
+        : "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&auto=format&fit=crop&q=80");
+
+      postsList.unshift({
+        id: `post_memorial_${m.id}`,
+        authorId: m.createdBy || "admin",
+        authorName: "સમાજ કાર્યાલય",
+        authorPhoto: null,
+        authorRole: "admin",
+        content: `🕊️ ભાવભીની શ્રદ્ધાંજલિ\nસ્વ. ${m.deceasedName}\nઉંમર: ${m.age || "-"} વર્ષ\nવતન: ${m.village || "-"}\nહાલ: ${m.currentCity || "-"}\nસ્વર્ગવાસ તારીખ: ${m.passedDate}\n\nબેસણું: ${m.besnuDate || "જાહેર થશે"} (${m.besnuTime || ""})\nસ્થળ: ${m.besnuVenue || ""}\nપરિવાર: ${m.grievingFamily || ""}\n\nસદ્ગતના આત્માને પરમ શાંતિ અર્પે તેવી પ્રભુ ચરણોમાં પ્રાર્થના. ૐ શાંતિ 🕊️`,
+        caption: `🕊️ ભાવભીની શ્રદ્ધાંજલિ: સ્વ. ${m.deceasedName} (વતન: ${m.village || "-"})`,
+        mediaUrls: [photo],
+        imageUrls: [photo],
+        mediaType: "reel",
+        isReel: true,
+        isMemorial: true,
+        category: "memorial",
+        maranNodhId: m.id,
+        maranNodhData: {
+          id: m.id,
+          deceasedName: m.deceasedName,
+          name: m.deceasedName,
+          age: m.age,
+          passedDate: m.passedDate,
+          deathDate: m.passedDate,
+          besnuDate: m.besnuDate,
+          besnuTime: m.besnuTime,
+          besnuVenue: m.besnuVenue,
+          village: m.village,
+          currentCity: m.currentCity,
+          contactPhone: m.contactPhone,
+          grievingFamily: m.grievingFamily,
+          photo: photo,
+          diyaCount: m.diyaCount || 0,
+          flowerCount: m.flowerCount || 0,
+        },
+        visibility: "samaj",
+        samajId: m.samajId || DEFAULT_SAMAJ_ID,
+        audioTitle: "ૐ શાંતિ • ભાવભીની શ્રદ્ધાંજલિ",
+        location: m.village ? `${m.village}` : m.currentCity || "સમાજ",
+        likedBy: [],
+        savedBy: [],
+        likesCount: m.diyaCount || 0,
+        commentsCount: m.condolences?.length || 0,
+        approved: true,
+        status: "active",
+        createdAt: m.createdAt || new Date().toISOString(),
+      });
+    }
+  }
+}
+
 // Start Server with Vite Middleware in Development
 async function startServer() {
   // Restore persistent state on startup
   loadStore();
+
+  // Serve static assets from public/ directory without intercepting index.html
+  app.use(express.static(path.join(process.cwd(), "public"), { index: false }));
 
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({

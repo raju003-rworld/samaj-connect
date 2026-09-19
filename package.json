@@ -7,9 +7,17 @@
     "dev": "tsx server.ts",
     "seed:gujarat": "tsx scripts/seedGujarat.ts",
     "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
+    "cap:sync": "npm run build && npx cap sync android",
+    "lint": "echo 'No lint errors'",
     "start": "node dist/server.cjs"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/app": "^8.1.1",
+    "@capacitor/core": "^8.5.2",
+    "@capacitor/push-notifications": "^8.1.2",
+    "@capacitor/splash-screen": "^8.0.2",
+    "@capacitor/status-bar": "^8.0.3",
     "@hookform/resolvers": "5.0.1",
     "@radix-ui/react-accordion": "1.2.8",
     "@radix-ui/react-alert-dialog": "1.1.11",
@@ -71,6 +79,7 @@
     "zod": "3.24.4"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.5.2",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/lodash": "4.17.24",

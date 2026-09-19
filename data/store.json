@@ -18,13 +18,14 @@
         "default": "super_admin"
       },
       "activeSamajId": "default",
-      "followersCount": 2,
+      "followersCount": 3,
       "followingCount": 1,
       "isSuspended": false,
       "blocked": [],
       "followers": [
         "user_9825123457",
-        "user_9825123458"
+        "user_9825123458",
+        "user_9925514713"
       ],
       "following": [
         "user_9825123457"
@@ -172,11 +173,13 @@
         "default": "samaj_admin"
       },
       "activeSamajId": "default",
-      "followersCount": 24,
+      "followersCount": 1,
       "followingCount": 15,
       "isSuspended": false,
       "blocked": [],
-      "followers": [],
+      "followers": [
+        "user_9925514713"
+      ],
       "following": [],
       "verificationStatus": "verified",
       "mainSamajId": "main_patidar",
@@ -441,6 +444,71 @@
       "gam": "",
       "samajId": "",
       "onboardingCompleted": false
+    },
+    "user_9925514713": {
+      "id": "user_9925514713",
+      "phone": "+919925514713",
+      "name": "સભ્ય (4713)",
+      "role": "super_admin",
+      "adminRole": "SUPER_ADMIN",
+      "profilePhoto": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+      "village": "Gadhsisa",
+      "district": "Kutch",
+      "bio": "સમાજ સભ્ય",
+      "samajIds": [],
+      "samajRoles": {},
+      "activeSamajId": "",
+      "followersCount": 0,
+      "followingCount": 2,
+      "isSuspended": false,
+      "blocked": [],
+      "followers": [],
+      "following": [
+        "user_9825123456",
+        "user_demo_admin"
+      ],
+      "verificationStatus": "pending",
+      "rejectionReason": null,
+      "mainSamajId": "",
+      "gamId": "",
+      "gam": "",
+      "samajId": "",
+      "onboardingCompleted": true,
+      "verificationSubmittedAt": "2026-09-14T16:56:48.727Z"
+    },
+    "user_9574050600": {
+      "id": "user_9574050600",
+      "phone": "+919574050600",
+      "name": "સભ્ય (0600)",
+      "role": "member",
+      "adminRole": null,
+      "profilePhoto": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+      "village": "gadhsisa",
+      "district": "મહેસાણા",
+      "bio": "સમાજ સભ્ય",
+      "samajIds": [
+        "samaj_patidar_mehsana"
+      ],
+      "samajRoles": {
+        "samaj_patidar_mehsana": "member"
+      },
+      "activeSamajId": "samaj_patidar_mehsana",
+      "followersCount": 0,
+      "followingCount": 0,
+      "isSuspended": false,
+      "blocked": [],
+      "followers": [],
+      "following": [],
+      "verificationStatus": "none",
+      "rejectionReason": null,
+      "mainSamajId": "main_patidar",
+      "gamId": "vil_custom_1789479347624",
+      "gam": "gadhsisa",
+      "samajId": "samaj_patidar_mehsana",
+      "onboardingCompleted": true,
+      "districtId": "dist_mehsana",
+      "talukaId": "tal_mehsana_becharaji",
+      "villageId": "vil_custom_1789479347624"
     }
   },
   "adminRolesMap": {
@@ -451,6 +519,872 @@
     "9825123456": "SAMAJ_ADMIN"
   },
   "postsList": [
+    {
+      "id": "reel_garba_2026",
+      "authorId": "mem_2",
+      "authorName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+      "authorPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "authorRole": "member",
+      "content": "સમાજ આયોજિત ભવ્ય રાસ-ગરબા મહોત્સવની ઝલક! પારંપરિક ડ્રેસ અને તાળીઓના તાલે ઝૂમતો આપણો યુવા વર્ગ 💃✨ #Garba2026 #SamajReels",
+      "caption": "સમાજ આયોજિત ભવ્ય રાસ-ગરબા મહોત્સવની મનમોહક ઝલક! 💃✨",
+      "mediaUrls": [
+        "/reels/garba-navratri.mp4"
+      ],
+      "imageUrls": [
+        "https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&auto=format&fit=crop&q=80"
+      ],
+      "mediaType": "reel",
+      "isReel": true,
+      "audioTitle": "તારા વિના શ્યામ મને એકલડું લાગે • રાસ ગરબા",
+      "location": "પાટીદાર વાડી ગ્રાઉન્ડ, ઊંઝા",
+      "visibility": "public",
+      "samajId": "samaj_patidar_main",
+      "likedBy": [
+        "user_9825123456",
+        "mem_1",
+        "mem_3",
+        "mem_4"
+      ],
+      "savedBy": [
+        "user_9825123456"
+      ],
+      "likesCount": 142,
+      "commentsCount": 18,
+      "approved": true,
+      "status": "active",
+      "createdAt": "2026-09-15T05:57:05.121Z",
+      "viewsCount": 1
+    },
+    {
+      "id": "post_memorial_mn_1",
+      "authorId": "admin",
+      "authorName": "સમાજ કાર્યાલય",
+      "authorPhoto": null,
+      "authorRole": "admin",
+      "content": "🕊️ ભાવભીની શ્રદ્ધાંજલિ\nસ્વ. સ્વ. કાંતિલાલ અમૃતલાલ પટેલ\nઉંમર: 79 વર્ષ\nવતન: ઊંઝા (જિ. મહેસાણા)\nહાલ: અમદાવાદ\nસ્વર્ગવાસ તારીખ: ૧૦ સપ્ટેમ્બર ૨૦૨૬\n\nબેસણું: ૧૩ સપ્ટેમ્બર ૨૦૨૬, રવિવાર (સવારે ૮:૩૦ થી ૧૧:૦૦ વાગ્યા સુધી)\nસ્થળ: શ્રી ઉમિયા માતાજી પાટીદાર વાડી, નારણપુરા, અમદાવાદ\nપરિવાર: સુપુત્ર: રાજેશભાઈ કાંતિલાલ પટેલ, મહેશભાઈ કાંતિલાલ પટેલ; પૌત્ર: ધ્રુવ, આયૂષ; ભાઈ: રમણિકભાઈ પટેલ\n\nસદ્ગતના આત્માને પરમ શાંતિ અર્પે તેવી પ્રભુ ચરણોમાં પ્રાર્થના. ૐ શાંતિ 🕊️",
+      "caption": "🕊️ ભાવભીની શ્રદ્ધાંજલિ: સ્વ. સ્વ. કાંતિલાલ અમૃતલાલ પટેલ (વતન: ઊંઝા (જિ. મહેસાણા))",
+      "mediaUrls": [
+        "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&auto=format&fit=crop&q=80"
+      ],
+      "imageUrls": [
+        "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&auto=format&fit=crop&q=80"
+      ],
+      "mediaType": "reel",
+      "isReel": true,
+      "isMemorial": true,
+      "category": "memorial",
+      "maranNodhId": "mn_1",
+      "maranNodhData": {
+        "id": "mn_1",
+        "deceasedName": "સ્વ. કાંતિલાલ અમૃતલાલ પટેલ",
+        "name": "સ્વ. કાંતિલાલ અમૃતલાલ પટેલ",
+        "age": 79,
+        "passedDate": "૧૦ સપ્ટેમ્બર ૨૦૨૬",
+        "deathDate": "૧૦ સપ્ટેમ્બર ૨૦૨૬",
+        "besnuDate": "૧૩ સપ્ટેમ્બર ૨૦૨૬, રવિવાર",
+        "besnuTime": "સવારે ૮:૩૦ થી ૧૧:૦૦ વાગ્યા સુધી",
+        "besnuVenue": "શ્રી ઉમિયા માતાજી પાટીદાર વાડી, નારણપુરા, અમદાવાદ",
+        "village": "ઊંઝા (જિ. મહેસાણા)",
+        "currentCity": "અમદાવાદ",
+        "contactPhone": "9825098765",
+        "grievingFamily": "સુપુત્ર: રાજેશભાઈ કાંતિલાલ પટેલ, મહેશભાઈ કાંતિલાલ પટેલ; પૌત્ર: ધ્રુવ, આયૂષ; ભાઈ: રમણિકભાઈ પટેલ",
+        "photo": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&auto=format&fit=crop&q=80",
+        "diyaCount": 54,
+        "flowerCount": 78
+      },
+      "visibility": "samaj",
+      "samajId": "samaj_patidar_main",
+      "audioTitle": "ૐ શાંતિ • ભાવભીની શ્રદ્ધાંજલિ",
+      "likedBy": [
+        "user_9825123456"
+      ],
+      "savedBy": [],
+      "likesCount": 54,
+      "commentsCount": 2,
+      "approved": true,
+      "status": "active",
+      "createdAt": "2026-09-10T14:00:00.000Z"
+    },
+    {
+      "id": "reel_mandir_aarti",
+      "authorId": "mem_1",
+      "authorName": "મહેન્દ્રભાઈ ગોવિંદભાઈ પટેલ",
+      "authorPhoto": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+      "authorRole": "admin",
+      "content": "જય ઉમિયા માત! આજની મંગળા આરતીના પવિત્ર દર્શન. સર્વ સમાજ બાંધવોનું કલ્યાણ થાય. 🪔🙏 #UmiyaMaa #AartiReel",
+      "caption": "શ્રી ઉમિયા માતાજી મંદિર મંગળા આરતી અને દિવ્ય દર્શન 🪔🙏",
+      "mediaUrls": [
+        "/reels/mandir-aarti.mp4"
+      ],
+      "imageUrls": [
+        "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=800&auto=format&fit=crop&q=80"
+      ],
+      "mediaType": "reel",
+      "isReel": true,
+      "audioTitle": "ૐ જય ઉમિયા માતા • મંગળા આરતી",
+      "location": "શ્રી ઉમિયા માતાજી સંસ્થાન, ઊંઝા",
+      "visibility": "public",
+      "samajId": "samaj_patidar_main",
+      "likedBy": [
+        "user_9825123456",
+        "mem_2"
+      ],
+      "savedBy": [],
+      "likesCount": 215,
+      "commentsCount": 34,
+      "approved": true,
+      "status": "active",
+      "createdAt": "2026-09-15T02:57:05.121Z"
+    },
+    {
+      "id": "post_memorial_mn_2",
+      "authorId": "admin",
+      "authorName": "સમાજ કાર્યાલય",
+      "authorPhoto": null,
+      "authorRole": "admin",
+      "content": "🕊️ ભાવભીની શ્રદ્ધાંજલિ\nસ્વ. સ્વ. શાંતાબેન પ્રભુદાસ પટેલ\nઉંમર: 84 વર્ષ\nવતન: વિસનગર\nહાલ: ગાંધીનગર\nસ્વર્ગવાસ તારીખ: ૮ સપ્ટેમ્બર ૨૦૨૬\n\nબેસણું: ૧૧ સપ્ટેમ્બર ૨૦૨૬, શુક્રવાર (સાંજે ૪:૦૦ થી ૬:૦૦ વાગ્યા સુધી)\nસ્થળ: કમલમ પાર્ટી પ્લોટ, સેક્ટર ૨૧, ગાંધીનગર\nપરિવાર: સુપુત્ર: કિરીટભાઈ પ્રભુદાસ પટેલ; પુત્રવધૂ: રેખાબેન; પૌત્રી: પ્રિયા, નેહા\n\nસદ્ગતના આત્માને પરમ શાંતિ અર્પે તેવી પ્રભુ ચરણોમાં પ્રાર્થના. ૐ શાંતિ 🕊️",
+      "caption": "🕊️ ભાવભીની શ્રદ્ધાંજલિ: સ્વ. સ્વ. શાંતાબેન પ્રભુદાસ પટેલ (વતન: વિસનગર)",
+      "mediaUrls": [
+        "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&auto=format&fit=crop&q=80"
+      ],
+      "imageUrls": [
+        "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&auto=format&fit=crop&q=80"
+      ],
+      "mediaType": "reel",
+      "isReel": true,
+      "isMemorial": true,
+      "category": "memorial",
+      "maranNodhId": "mn_2",
+      "maranNodhData": {
+        "id": "mn_2",
+        "deceasedName": "સ્વ. શાંતાબેન પ્રભુદાસ પટેલ",
+        "name": "સ્વ. શાંતાબેન પ્રભુદાસ પટેલ",
+        "age": 84,
+        "passedDate": "૮ સપ્ટેમ્બર ૨૦૨૬",
+        "deathDate": "૮ સપ્ટેમ્બર ૨૦૨૬",
+        "besnuDate": "૧૧ સપ્ટેમ્બર ૨૦૨૬, શુક્રવાર",
+        "besnuTime": "સાંજે ૪:૦૦ થી ૬:૦૦ વાગ્યા સુધી",
+        "besnuVenue": "કમલમ પાર્ટી પ્લોટ, સેક્ટર ૨૧, ગાંધીનગર",
+        "village": "વિસનગર",
+        "currentCity": "ગાંધીનગર",
+        "contactPhone": "9879512340",
+        "grievingFamily": "સુપુત્ર: કિરીટભાઈ પ્રભુદાસ પટેલ; પુત્રવધૂ: રેખાબેન; પૌત્રી: પ્રિયા, નેહા",
+        "photo": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&auto=format&fit=crop&q=80",
+        "diyaCount": 42,
+        "flowerCount": 65
+      },
+      "visibility": "samaj",
+      "samajId": "samaj_patidar_main",
+      "audioTitle": "ૐ શાંતિ • ભાવભીની શ્રદ્ધાંજલિ",
+      "likedBy": [
+        "user_9825123456"
+      ],
+      "savedBy": [],
+      "likesCount": 42,
+      "commentsCount": 1,
+      "approved": true,
+      "status": "active",
+      "createdAt": "2026-09-08T16:00:00.000Z"
+    },
+    {
+      "id": "reel_youth_cricket",
+      "authorId": "mem_3",
+      "authorName": "હર્ષિલ અશ્વિનભાઈ પટેલ",
+      "authorPhoto": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+      "authorRole": "member",
+      "content": "છેલ્લા બોલ પર વિનિંગ સિક્સર! ઊંઝા વોરિયર્સ બન્યા SPL ૨૦૨૬ ચેમ્પિયન્સ 🏆🏏 #CricketReel #SamajYouth",
+      "caption": "સમાજ પ્રીમિયર લીગ (SPL) ફાઇનલ મેચ વિનિંગ મોમેન્ટ 🏆🏏",
+      "mediaUrls": [
+        "/reels/youth-cricket.mp4"
+      ],
+      "imageUrls": [
+        "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=800&auto=format&fit=crop&q=80"
+      ],
+      "mediaType": "reel",
+      "isReel": true,
+      "audioTitle": "જીત અમારી છે • એનર્જી બીટ્સ",
+      "location": "સ્પોર્ટ્સ ક્લબ સ્ટેડિયમ",
+      "visibility": "public",
+      "samajId": "samaj_patidar_main",
+      "likedBy": [
+        "user_9825123456",
+        "mem_1",
+        "mem_2"
+      ],
+      "savedBy": [
+        "user_9825123456"
+      ],
+      "likesCount": 189,
+      "commentsCount": 27,
+      "approved": true,
+      "status": "active",
+      "createdAt": "2026-09-14T21:57:05.121Z"
+    },
+    {
+      "id": "post_memorial_mn_3",
+      "authorId": "admin",
+      "authorName": "સમાજ કાર્યાલય",
+      "authorPhoto": null,
+      "authorRole": "admin",
+      "content": "🕊️ ભાવભીની શ્રદ્ધાંજલિ\nસ્વ. સ્વ. હસમુખભાઈ કેશવલાલ પટેલ\nઉંમર: 72 વર્ષ\nવતન: કડી (જિ. મહેસાણા)\nહાલ: સુરત\nસ્વર્ગવાસ તારીખ: ૧૨ સપ્ટેમ્બર ૨૦૨૬\n\nબેસણું: ૧૫ સપ્ટેમ્બર ૨૦૨૬, મંગળવાર (સવારે ૯:૦૦ થી ૧૧:૩૦ વાગ્યા સુધી)\nસ્થળ: શ્રી સરદાર પટેલ ભવન, કતારગામ મેઈન રોડ, સુરત\nપરિવાર: ધર્મપત્ની: સુશીલાબેન; સુપુત્ર: સંજયભાઈ, નિલેશભાઈ; જમાઈ: વિજયકુમાર; પૌત્ર: કેવલ, આરવ\n\nસદ્ગતના આત્માને પરમ શાંતિ અર્પે તેવી પ્રભુ ચરણોમાં પ્રાર્થના. ૐ શાંતિ 🕊️",
+      "caption": "🕊️ ભાવભીની શ્રદ્ધાંજલિ: સ્વ. સ્વ. હસમુખભાઈ કેશવલાલ પટેલ (વતન: કડી (જિ. મહેસાણા))",
+      "mediaUrls": [
+        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80"
+      ],
+      "imageUrls": [
+        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80"
+      ],
+      "mediaType": "reel",
+      "isReel": true,
+      "isMemorial": true,
+      "category": "memorial",
+      "maranNodhId": "mn_3",
+      "maranNodhData": {
+        "id": "mn_3",
+        "deceasedName": "સ્વ. હસમુખભાઈ કેશવલાલ પટેલ",
+        "name": "સ્વ. હસમુખભાઈ કેશવલાલ પટેલ",
+        "age": 72,
+        "passedDate": "૧૨ સપ્ટેમ્બર ૨૦૨૬",
+        "deathDate": "૧૨ સપ્ટેમ્બર ૨૦૨૬",
+        "besnuDate": "૧૫ સપ્ટેમ્બર ૨૦૨૬, મંગળવાર",
+        "besnuTime": "સવારે ૯:૦૦ થી ૧૧:૩૦ વાગ્યા સુધી",
+        "besnuVenue": "શ્રી સરદાર પટેલ ભવન, કતારગામ મેઈન રોડ, સુરત",
+        "village": "કડી (જિ. મહેસાણા)",
+        "currentCity": "સુરત",
+        "contactPhone": "9824156789",
+        "grievingFamily": "ધર્મપત્ની: સુશીલાબેન; સુપુત્ર: સંજયભાઈ, નિલેશભાઈ; જમાઈ: વિજયકુમાર; પૌત્ર: કેવલ, આરવ",
+        "photo": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80",
+        "diyaCount": 38,
+        "flowerCount": 49
+      },
+      "visibility": "samaj",
+      "samajId": "samaj_patidar_main",
+      "audioTitle": "ૐ શાંતિ • ભાવભીની શ્રદ્ધાંજલિ",
+      "likedBy": [
+        "user_9825123456"
+      ],
+      "savedBy": [],
+      "likesCount": 38,
+      "commentsCount": 1,
+      "approved": true,
+      "status": "active",
+      "createdAt": "2026-09-12T11:00:00.000Z"
+    },
+    {
+      "id": "reel_business_summit",
+      "authorId": "mem_5",
+      "authorName": "ચિરાગભાઈ કાંતિલાલ પટેલ",
+      "authorPhoto": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+      "authorRole": "member",
+      "content": "૫૦૦+ યુવા ઉદ્યોગસાહસિકો સાથે સમાજનો બિઝનેસ સમિટ. નવીન સ્ટાર્ટઅપ્સ અને નેટવર્કિંગની શાનદાર ક્ષણો 🚀💼 #BusinessSummit #SamajConnect",
+      "caption": "પાટીદાર યુવા બિઝનેસ કોન્ક્લેવ ૨૦૨૬ • નવી પેઢી, નવા આયામ 🚀",
+      "mediaUrls": [
+        "/reels/business-summit.mp4"
+      ],
+      "imageUrls": [
+        "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800&auto=format&fit=crop&q=80"
+      ],
+      "mediaType": "reel",
+      "isReel": true,
+      "audioTitle": "ઇન્સ્પિરેશનલ થીમ • સક્સેસ મંત્ર",
+      "location": "મહાત્મા મંદિર, ગાંધીનગર",
+      "visibility": "public",
+      "samajId": "samaj_patidar_main",
+      "likedBy": [
+        "user_9825123456"
+      ],
+      "savedBy": [],
+      "likesCount": 120,
+      "commentsCount": 14,
+      "approved": true,
+      "status": "active",
+      "createdAt": "2026-09-14T15:57:05.121Z"
+    },
+    {
+      "id": "post_memorial_mn_4",
+      "authorId": "admin",
+      "authorName": "સમાજ કાર્યાલય",
+      "authorPhoto": null,
+      "authorRole": "admin",
+      "content": "🕊️ ભાવભીની શ્રદ્ધાંજલિ\nસ્વ. સ્વ. દિવાળીબેન મગનલાલ પટેલ\nઉંમર: 88 વર્ષ\nવતન: પાટણ\nહાલ: વડોદરા\nસ્વર્ગવાસ તારીખ: ૧૧ સપ્ટેમ્બર ૨૦૨૬\n\nબેસણું: ૧૪ સપ્ટેમ્બર ૨૦૨૬, સોમવાર (સાંજે ૩:૩૦ થી ૫:૩૦ વાગ્યા સુધી)\nસ્થળ: અકોટા કોમ્યુનિટી હોલ, બીપીસી રોડ, વડોદરા\nપરિવાર: સુપુત્ર: ગિરીશભાઈ મગનલાલ પટેલ; પુત્રી: હંસાબેન; પૌત્ર: તુષાર, મંથન\n\nસદ્ગતના આત્માને પરમ શાંતિ અર્પે તેવી પ્રભુ ચરણોમાં પ્રાર્થના. ૐ શાંતિ 🕊️",
+      "caption": "🕊️ ભાવભીની શ્રદ્ધાંજલિ: સ્વ. સ્વ. દિવાળીબેન મગનલાલ પટેલ (વતન: પાટણ)",
+      "mediaUrls": [
+        "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80"
+      ],
+      "imageUrls": [
+        "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80"
+      ],
+      "mediaType": "reel",
+      "isReel": true,
+      "isMemorial": true,
+      "category": "memorial",
+      "maranNodhId": "mn_4",
+      "maranNodhData": {
+        "id": "mn_4",
+        "deceasedName": "સ્વ. દિવાળીબેન મગનલાલ પટેલ",
+        "name": "સ્વ. દિવાળીબેન મગનલાલ પટેલ",
+        "age": 88,
+        "passedDate": "૧૧ સપ્ટેમ્બર ૨૦૨૬",
+        "deathDate": "૧૧ સપ્ટેમ્બર ૨૦૨૬",
+        "besnuDate": "૧૪ સપ્ટેમ્બર ૨૦૨૬, સોમવાર",
+        "besnuTime": "સાંજે ૩:૩૦ થી ૫:૩૦ વાગ્યા સુધી",
+        "besnuVenue": "અકોટા કોમ્યુનિટી હોલ, બીપીસી રોડ, વડોદરા",
+        "village": "પાટણ",
+        "currentCity": "વડોદરા",
+        "contactPhone": "9426078912",
+        "grievingFamily": "સુપુત્ર: ગિરીશભાઈ મગનલાલ પટેલ; પુત્રી: હંસાબેન; પૌત્ર: તુષાર, મંથન",
+        "photo": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80",
+        "diyaCount": 31,
+        "flowerCount": 57
+      },
+      "visibility": "samaj",
+      "samajId": "samaj_patidar_main",
+      "audioTitle": "ૐ શાંતિ • ભાવભીની શ્રદ્ધાંજલિ",
+      "likedBy": [
+        "user_9825123456"
+      ],
+      "savedBy": [],
+      "likesCount": 31,
+      "commentsCount": 1,
+      "approved": true,
+      "status": "active",
+      "createdAt": "2026-09-11T15:20:00.000Z"
+    },
+    {
+      "id": "reel_community_seva",
+      "authorId": "mem_4",
+      "authorName": "ડૉ. સુરેશચંદ્ર પટેલ",
+      "authorPhoto": "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=150&auto=format&fit=crop&q=80",
+      "authorRole": "member",
+      "content": "એક રક્તદાન, ત્રણ જીવન! યુવા મંડળ દ્વારા આયોજિત મેગા બ્લડ ડોનેશન કેમ્પમાં ૨૧૦ યુનિટ રક્ત એકત્રિત થયું. માનવ સેવા એ જ પ્રભુ સેવા! 🩸❤️ #SamajSeva #BloodDonation",
+      "caption": "મેગા રક્તદાન અને આરોગ્ય તપાસ શિબિર સેવા 🩸❤️",
+      "mediaUrls": [
+        "/reels/community-seva.mp4"
+      ],
+      "imageUrls": [
+        "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800&auto=format&fit=crop&q=80"
+      ],
+      "mediaType": "reel",
+      "isReel": true,
+      "audioTitle": "સેવા પરમો ધર્મઃ • શાંત ધૂન",
+      "location": "સમાજ હોલ, વિસનગર",
+      "visibility": "public",
+      "samajId": "samaj_patidar_main",
+      "likedBy": [
+        "user_9825123456",
+        "mem_1"
+      ],
+      "savedBy": [],
+      "likesCount": 165,
+      "commentsCount": 21,
+      "approved": true,
+      "status": "active",
+      "createdAt": "2026-09-14T07:57:05.121Z"
+    },
+    {
+      "id": "post_memorial_mn_5",
+      "authorId": "admin",
+      "authorName": "સમાજ કાર્યાલય",
+      "authorPhoto": null,
+      "authorRole": "admin",
+      "content": "🕊️ ભાવભીની શ્રદ્ધાંજલિ\nસ્વ. સ્વ. રમેશચંદ્ર છોટાલાલ પટેલ\nઉંમર: 68 વર્ષ\nવતન: માણસા (ગાંધીનગર)\nહાલ: રાજકોટ\nસ્વર્ગવાસ તારીખ: ૧૩ સપ્ટેમ્બર ૨૦૨૬\n\nબેસણું: ૧૬ સપ્ટેમ્બર ૨૦૨૬, બુધવાર (સવારે ૮:૦૦ થી ૧૦:૩૦ વાગ્યા સુધી)\nસ્થળ: શ્રી પાટીદાર છાત્રાલય હોલ, કાલાવડ રોડ, રાજકોટ\nપરિવાર: સુપુત્ર: ધર્મેશભાઈ રમેશચંદ્ર પટેલ; પુત્રી: જાગૃતિબેન; ભત્રીજા: હિતેશ, ભાવિન\n\nસદ્ગતના આત્માને પરમ શાંતિ અર્પે તેવી પ્રભુ ચરણોમાં પ્રાર્થના. ૐ શાંતિ 🕊️",
+      "caption": "🕊️ ભાવભીની શ્રદ્ધાંજલિ: સ્વ. સ્વ. રમેશચંદ્ર છોટાલાલ પટેલ (વતન: માણસા (ગાંધીનગર))",
+      "mediaUrls": [
+        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80"
+      ],
+      "imageUrls": [
+        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80"
+      ],
+      "mediaType": "reel",
+      "isReel": true,
+      "isMemorial": true,
+      "category": "memorial",
+      "maranNodhId": "mn_5",
+      "maranNodhData": {
+        "id": "mn_5",
+        "deceasedName": "સ્વ. રમેશચંદ્ર છોટાલાલ પટેલ",
+        "name": "સ્વ. રમેશચંદ્ર છોટાલાલ પટેલ",
+        "age": 68,
+        "passedDate": "૧૩ સપ્ટેમ્બર ૨૦૨૬",
+        "deathDate": "૧૩ સપ્ટેમ્બર ૨૦૨૬",
+        "besnuDate": "૧૬ સપ્ટેમ્બર ૨૦૨૬, બુધવાર",
+        "besnuTime": "સવારે ૮:૦૦ થી ૧૦:૩૦ વાગ્યા સુધી",
+        "besnuVenue": "શ્રી પાટીદાર છાત્રાલય હોલ, કાલાવડ રોડ, રાજકોટ",
+        "village": "માણસા (ગાંધીનગર)",
+        "currentCity": "રાજકોટ",
+        "contactPhone": "9879123456",
+        "grievingFamily": "સુપુત્ર: ધર્મેશભાઈ રમેશચંદ્ર પટેલ; પુત્રી: જાગૃતિબેન; ભત્રીજા: હિતેશ, ભાવિન",
+        "photo": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80",
+        "diyaCount": 26,
+        "flowerCount": 41
+      },
+      "visibility": "samaj",
+      "samajId": "samaj_patidar_main",
+      "audioTitle": "ૐ શાંતિ • ભાવભીની શ્રદ્ધાંજલિ",
+      "likedBy": [
+        "user_9825123456"
+      ],
+      "savedBy": [],
+      "likesCount": 26,
+      "commentsCount": 0,
+      "approved": true,
+      "status": "active",
+      "createdAt": "2026-09-13T17:00:00.000Z"
+    },
+    {
+      "id": "post_memorial_mn_6",
+      "authorId": "admin",
+      "authorName": "સમાજ કાર્યાલય",
+      "authorPhoto": null,
+      "authorRole": "admin",
+      "content": "🕊️ ભાવભીની શ્રદ્ધાંજલિ\nસ્વ. સ્વ. મંગળાબેન છગનલાલ પટેલ\nઉંમર: 76 વર્ષ\nવતન: સિદ્ધપુર (પાટણ)\nહાલ: મુંબઈ\nસ્વર્ગવાસ તારીખ: ૯ સપ્ટેમ્બર ૨૦૨૬\n\nબેસણું: ૧૨ સપ્ટેમ્બર ૨૦૨૬, શનિવાર (સાંજે ૪:૦૦ થી ૬:૩૦ વાગ્યા સુધી)\nસ્થળ: શ્રી કડવા પાટીદાર જ્ઞાતિ વાડી, ઘાટકોપર (પૂર્વ), મુંબઈ\nપરિવાર: સુપુત્ર: મુકેશભાઈ, કમલેશભાઈ; પુત્રવધૂ: દીનાબેન, ગીતાબેન; પૌત્ર: પાર્થ, યશ\n\nસદ્ગતના આત્માને પરમ શાંતિ અર્પે તેવી પ્રભુ ચરણોમાં પ્રાર્થના. ૐ શાંતિ 🕊️",
+      "caption": "🕊️ ભાવભીની શ્રદ્ધાંજલિ: સ્વ. સ્વ. મંગળાબેન છગનલાલ પટેલ (વતન: સિદ્ધપુર (પાટણ))",
+      "mediaUrls": [
+        "https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=400&auto=format&fit=crop&q=80"
+      ],
+      "imageUrls": [
+        "https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=400&auto=format&fit=crop&q=80"
+      ],
+      "mediaType": "reel",
+      "isReel": true,
+      "isMemorial": true,
+      "category": "memorial",
+      "maranNodhId": "mn_6",
+      "maranNodhData": {
+        "id": "mn_6",
+        "deceasedName": "સ્વ. મંગળાબેન છગનલાલ પટેલ",
+        "name": "સ્વ. મંગળાબેન છગનલાલ પટેલ",
+        "age": 76,
+        "passedDate": "૯ સપ્ટેમ્બર ૨૦૨૬",
+        "deathDate": "૯ સપ્ટેમ્બર ૨૦૨૬",
+        "besnuDate": "૧૨ સપ્ટેમ્બર ૨૦૨૬, શનિવાર",
+        "besnuTime": "સાંજે ૪:૦૦ થી ૬:૩૦ વાગ્યા સુધી",
+        "besnuVenue": "શ્રી કડવા પાટીદાર જ્ઞાતિ વાડી, ઘાટકોપર (પૂર્વ), મુંબઈ",
+        "village": "સિદ્ધપુર (પાટણ)",
+        "currentCity": "મુંબઈ",
+        "contactPhone": "9820123456",
+        "grievingFamily": "સુપુત્ર: મુકેશભાઈ, કમલેશભાઈ; પુત્રવધૂ: દીનાબેન, ગીતાબેન; પૌત્ર: પાર્થ, યશ",
+        "photo": "https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=400&auto=format&fit=crop&q=80",
+        "diyaCount": 45,
+        "flowerCount": 62
+      },
+      "visibility": "samaj",
+      "samajId": "samaj_patidar_main",
+      "audioTitle": "ૐ શાંતિ • ભાવભીની શ્રદ્ધાંજલિ",
+      "likedBy": [
+        "user_9825123456"
+      ],
+      "savedBy": [],
+      "likesCount": 45,
+      "commentsCount": 0,
+      "approved": true,
+      "status": "active",
+      "createdAt": "2026-09-09T18:30:00.000Z"
+    },
+    {
+      "id": "post_1789410250639",
+      "authorId": "user_9825123456",
+      "authorName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+      "authorPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "authorRole": "samaj_admin",
+      "content": "આજરોજ સમાજ ભવન ખાતે યોજાયેલ સત્સંગ અને ભોજન સમારંભની ઝલક. સૌ જ્ઞાતિજનોને જય શ્રી કૃષ્ણ!",
+      "caption": "આજરોજ સમાજ ભવન ખાતે યોજાયેલ સત્સંગ અને ભોજન સમારંભની ઝલક. સૌ જ્ઞાતિજનોને જય શ્રી કૃષ્ણ!",
+      "mediaUrls": [],
+      "imageUrls": [],
+      "mediaType": "image",
+      "visibility": "samaj",
+      "samajId": "default",
+      "filter": null,
+      "rotation": 0,
+      "aspectRatio": "original",
+      "volume": 1,
+      "trimStart": 0,
+      "trimEnd": 0,
+      "music": null,
+      "location": "",
+      "eventId": null,
+      "textOverlays": [],
+      "emojiOverlays": [],
+      "likedBy": [
+        "user_9825123456"
+      ],
+      "savedBy": [
+        "user_9825123456"
+      ],
+      "likesCount": 1,
+      "commentsCount": 1,
+      "approved": true,
+      "status": "active",
+      "createdAt": "2026-09-14T18:24:10.639Z"
+    },
+    {
+      "id": "post_1789410244978",
+      "authorId": "user_demo_admin",
+      "authorName": "રાજેશભાઈ પટેલ (Admin)",
+      "authorPhoto": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+      "authorRole": "super_admin",
+      "content": "શ્રી ખોડલધામ પાટોત્સવ 2026 Live દર્શન 🚩",
+      "caption": "ખોડલધામ પાટોત્સવ Live",
+      "mediaUrls": [
+        "/sample-reel.mp4"
+      ],
+      "imageUrls": [
+        "/sample-reel.mp4"
+      ],
+      "mediaType": "video",
+      "visibility": "samaj",
+      "samajId": "default",
+      "filter": null,
+      "rotation": 0,
+      "aspectRatio": "original",
+      "volume": 1,
+      "trimStart": 0,
+      "trimEnd": 0,
+      "music": null,
+      "location": "",
+      "eventId": null,
+      "textOverlays": [],
+      "emojiOverlays": [],
+      "likedBy": [],
+      "savedBy": [],
+      "likesCount": 0,
+      "commentsCount": 0,
+      "approved": true,
+      "status": "active",
+      "createdAt": "2026-09-14T18:24:04.978Z"
+    },
+    {
+      "id": "post_1789409113649",
+      "authorId": "user_9825123456",
+      "authorName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+      "authorPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "authorRole": "samaj_admin",
+      "content": "આજરોજ સમાજ ભવન ખાતે યોજાયેલ સત્સંગ અને ભોજન સમારંભની ઝલક. સૌ જ્ઞાતિજનોને જય શ્રી કૃષ્ણ!",
+      "caption": "આજરોજ સમાજ ભવન ખાતે યોજાયેલ સત્સંગ અને ભોજન સમારંભની ઝલક. સૌ જ્ઞાતિજનોને જય શ્રી કૃષ્ણ!",
+      "mediaUrls": [],
+      "imageUrls": [],
+      "mediaType": "image",
+      "visibility": "samaj",
+      "samajId": "default",
+      "filter": null,
+      "rotation": 0,
+      "aspectRatio": "original",
+      "volume": 1,
+      "trimStart": 0,
+      "trimEnd": 0,
+      "music": null,
+      "location": "",
+      "eventId": null,
+      "textOverlays": [],
+      "emojiOverlays": [],
+      "likedBy": [
+        "user_9825123456"
+      ],
+      "savedBy": [
+        "user_9825123456"
+      ],
+      "likesCount": 1,
+      "commentsCount": 1,
+      "approved": true,
+      "status": "active",
+      "createdAt": "2026-09-14T18:05:13.649Z"
+    },
+    {
+      "id": "post_1789409111945",
+      "authorId": "user_demo_admin",
+      "authorName": "રાજેશભાઈ પટેલ (Admin)",
+      "authorPhoto": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+      "authorRole": "super_admin",
+      "content": "શ્રી ખોડલધામ પાટોત્સવ 2026 Live દર્શન 🚩",
+      "caption": "ખોડલધામ પાટોત્સવ Live",
+      "mediaUrls": [
+        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
+      ],
+      "imageUrls": [
+        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
+      ],
+      "mediaType": "video",
+      "visibility": "samaj",
+      "samajId": "default",
+      "filter": null,
+      "rotation": 0,
+      "aspectRatio": "original",
+      "volume": 1,
+      "trimStart": 0,
+      "trimEnd": 0,
+      "music": null,
+      "location": "",
+      "eventId": null,
+      "textOverlays": [],
+      "emojiOverlays": [],
+      "likedBy": [],
+      "savedBy": [],
+      "likesCount": 0,
+      "commentsCount": 0,
+      "approved": true,
+      "status": "active",
+      "createdAt": "2026-09-14T18:05:11.945Z"
+    },
+    {
+      "id": "post_1789407080925",
+      "authorId": "user_9825123456",
+      "authorName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+      "authorPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "authorRole": "samaj_admin",
+      "content": "આજરોજ સમાજ ભવન ખાતે યોજાયેલ સત્સંગ અને ભોજન સમારંભની ઝલક. સૌ જ્ઞાતિજનોને જય શ્રી કૃષ્ણ!",
+      "caption": "આજરોજ સમાજ ભવન ખાતે યોજાયેલ સત્સંગ અને ભોજન સમારંભની ઝલક. સૌ જ્ઞાતિજનોને જય શ્રી કૃષ્ણ!",
+      "mediaUrls": [],
+      "imageUrls": [],
+      "mediaType": "image",
+      "visibility": "samaj",
+      "samajId": "default",
+      "filter": null,
+      "rotation": 0,
+      "aspectRatio": "original",
+      "volume": 1,
+      "trimStart": 0,
+      "trimEnd": 0,
+      "music": null,
+      "location": "",
+      "eventId": null,
+      "textOverlays": [],
+      "emojiOverlays": [],
+      "likedBy": [
+        "user_9825123456"
+      ],
+      "savedBy": [
+        "user_9825123456"
+      ],
+      "likesCount": 1,
+      "commentsCount": 1,
+      "approved": true,
+      "status": "active",
+      "createdAt": "2026-09-14T17:31:20.925Z"
+    },
+    {
+      "id": "post_1789407073417",
+      "authorId": "user_demo_admin",
+      "authorName": "રાજેશભાઈ પટેલ (Admin)",
+      "authorPhoto": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+      "authorRole": "super_admin",
+      "content": "શ્રી ખોડલધામ પાટોત્સવ 2026 Live દર્શન 🚩",
+      "caption": "ખોડલધામ પાટોત્સવ Live",
+      "mediaUrls": [
+        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
+      ],
+      "imageUrls": [
+        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
+      ],
+      "mediaType": "video",
+      "visibility": "samaj",
+      "samajId": "default",
+      "filter": null,
+      "rotation": 0,
+      "aspectRatio": "original",
+      "volume": 1,
+      "trimStart": 0,
+      "trimEnd": 0,
+      "music": null,
+      "location": "",
+      "eventId": null,
+      "textOverlays": [],
+      "emojiOverlays": [],
+      "likedBy": [
+        "user_9925514713"
+      ],
+      "savedBy": [],
+      "likesCount": 1,
+      "commentsCount": 0,
+      "approved": true,
+      "status": "active",
+      "createdAt": "2026-09-14T17:31:13.418Z"
+    },
+    {
+      "id": "post_1789406993674",
+      "authorId": "user_9825123456",
+      "authorName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+      "authorPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "authorRole": "samaj_admin",
+      "content": "આજરોજ સમાજ ભવન ખાતે યોજાયેલ સત્સંગ અને ભોજન સમારંભની ઝલક. સૌ જ્ઞાતિજનોને જય શ્રી કૃષ્ણ!",
+      "caption": "આજરોજ સમાજ ભવન ખાતે યોજાયેલ સત્સંગ અને ભોજન સમારંભની ઝલક. સૌ જ્ઞાતિજનોને જય શ્રી કૃષ્ણ!",
+      "mediaUrls": [],
+      "imageUrls": [],
+      "mediaType": "image",
+      "visibility": "samaj",
+      "samajId": "default",
+      "filter": null,
+      "rotation": 0,
+      "aspectRatio": "original",
+      "volume": 1,
+      "trimStart": 0,
+      "trimEnd": 0,
+      "music": null,
+      "location": "",
+      "eventId": null,
+      "textOverlays": [],
+      "emojiOverlays": [],
+      "likedBy": [
+        "user_9825123456"
+      ],
+      "savedBy": [
+        "user_9825123456"
+      ],
+      "likesCount": 1,
+      "commentsCount": 1,
+      "approved": true,
+      "status": "active",
+      "createdAt": "2026-09-14T17:29:53.674Z"
+    },
+    {
+      "id": "post_1789404842193",
+      "authorId": "user_9825123456",
+      "authorName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+      "authorPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "authorRole": "samaj_admin",
+      "content": "આજરોજ સમાજ ભવન ખાતે યોજાયેલ સત્સંગ અને ભોજન સમારંભની ઝલક. સૌ જ્ઞાતિજનોને જય શ્રી કૃષ્ણ!",
+      "caption": "આજરોજ સમાજ ભવન ખાતે યોજાયેલ સત્સંગ અને ભોજન સમારંભની ઝલક. સૌ જ્ઞાતિજનોને જય શ્રી કૃષ્ણ!",
+      "mediaUrls": [],
+      "imageUrls": [],
+      "mediaType": "image",
+      "visibility": "samaj",
+      "samajId": "default",
+      "filter": null,
+      "rotation": 0,
+      "aspectRatio": "original",
+      "volume": 1,
+      "trimStart": 0,
+      "trimEnd": 0,
+      "music": null,
+      "location": "",
+      "eventId": null,
+      "textOverlays": [],
+      "emojiOverlays": [],
+      "likedBy": [
+        "user_9825123456"
+      ],
+      "savedBy": [
+        "user_9825123456"
+      ],
+      "likesCount": 1,
+      "commentsCount": 1,
+      "approved": true,
+      "status": "active",
+      "createdAt": "2026-09-14T16:54:02.193Z"
+    },
+    {
+      "id": "post_1789404139315",
+      "authorId": "user_9825123456",
+      "authorName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+      "authorPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "authorRole": "samaj_admin",
+      "content": "આજરોજ સમાજ ભવન ખાતે યોજાયેલ સત્સંગ અને ભોજન સમારંભની ઝલક. સૌ જ્ઞાતિજનોને જય શ્રી કૃષ્ણ!",
+      "caption": "આજરોજ સમાજ ભવન ખાતે યોજાયેલ સત્સંગ અને ભોજન સમારંભની ઝલક. સૌ જ્ઞાતિજનોને જય શ્રી કૃષ્ણ!",
+      "mediaUrls": [],
+      "imageUrls": [],
+      "mediaType": "image",
+      "visibility": "samaj",
+      "samajId": "default",
+      "filter": null,
+      "rotation": 0,
+      "aspectRatio": "original",
+      "volume": 1,
+      "trimStart": 0,
+      "trimEnd": 0,
+      "music": null,
+      "location": "",
+      "eventId": null,
+      "textOverlays": [],
+      "emojiOverlays": [],
+      "likedBy": [
+        "user_9825123456"
+      ],
+      "savedBy": [
+        "user_9825123456"
+      ],
+      "likesCount": 1,
+      "commentsCount": 1,
+      "approved": true,
+      "status": "active",
+      "createdAt": "2026-09-14T16:42:19.315Z",
+      "viewsCount": 2
+    },
+    {
+      "id": "post_1789403258519",
+      "authorId": "user_9825123456",
+      "authorName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+      "authorPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "authorRole": "samaj_admin",
+      "content": "આજરોજ સમાજ ભવન ખાતે યોજાયેલ સત્સંગ અને ભોજન સમારંભની ઝલક. સૌ જ્ઞાતિજનોને જય શ્રી કૃષ્ણ!",
+      "caption": "આજરોજ સમાજ ભવન ખાતે યોજાયેલ સત્સંગ અને ભોજન સમારંભની ઝલક. સૌ જ્ઞાતિજનોને જય શ્રી કૃષ્ણ!",
+      "mediaUrls": [],
+      "imageUrls": [],
+      "mediaType": "image",
+      "visibility": "samaj",
+      "samajId": "default",
+      "filter": null,
+      "rotation": 0,
+      "aspectRatio": "original",
+      "volume": 1,
+      "trimStart": 0,
+      "trimEnd": 0,
+      "music": null,
+      "location": "",
+      "eventId": null,
+      "textOverlays": [],
+      "emojiOverlays": [],
+      "likedBy": [
+        "user_9825123456",
+        "user_9925514713"
+      ],
+      "savedBy": [
+        "user_9825123456"
+      ],
+      "likesCount": 2,
+      "commentsCount": 1,
+      "approved": true,
+      "status": "active",
+      "createdAt": "2026-09-14T16:27:38.519Z",
+      "viewsCount": 2
+    },
+    {
+      "id": "post_1789403184478",
+      "authorId": "user_9825123456",
+      "authorName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+      "authorPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "authorRole": "samaj_admin",
+      "content": "આજરોજ સમાજ ભવન ખાતે યોજાયેલ સત્સંગ અને ભોજન સમારંભની ઝલક. સૌ જ્ઞાતિજનોને જય શ્રી કૃષ્ણ!",
+      "caption": "આજરોજ સમાજ ભવન ખાતે યોજાયેલ સત્સંગ અને ભોજન સમારંભની ઝલક. સૌ જ્ઞાતિજનોને જય શ્રી કૃષ્ણ!",
+      "mediaUrls": [],
+      "imageUrls": [],
+      "mediaType": "image",
+      "visibility": "samaj",
+      "samajId": "default",
+      "filter": null,
+      "rotation": 0,
+      "aspectRatio": "original",
+      "volume": 1,
+      "trimStart": 0,
+      "trimEnd": 0,
+      "music": null,
+      "location": "",
+      "eventId": null,
+      "textOverlays": [],
+      "emojiOverlays": [],
+      "likedBy": [
+        "user_9825123456",
+        "user_9925514713"
+      ],
+      "savedBy": [
+        "user_9825123456"
+      ],
+      "likesCount": 2,
+      "commentsCount": 1,
+      "approved": true,
+      "status": "active",
+      "createdAt": "2026-09-14T16:26:24.478Z",
+      "viewsCount": 2,
+      "sharesCount": 1
+    },
     {
       "id": "post_1789398741558",
       "authorId": "user_9825123456",
@@ -485,7 +1419,9 @@
       "commentsCount": 1,
       "approved": true,
       "status": "active",
-      "createdAt": "2026-09-14T15:12:21.558Z"
+      "createdAt": "2026-09-14T15:12:21.558Z",
+      "viewsCount": 2,
+      "sharesCount": 1
     },
     {
       "id": "post_1789395985296",
@@ -521,7 +1457,8 @@
       "commentsCount": 1,
       "approved": true,
       "status": "active",
-      "createdAt": "2026-09-14T14:26:25.296Z"
+      "createdAt": "2026-09-14T14:26:25.296Z",
+      "viewsCount": 2
     },
     {
       "id": "post_1789389646684",
@@ -557,7 +1494,8 @@
       "commentsCount": 1,
       "approved": true,
       "status": "active",
-      "createdAt": "2026-09-14T12:40:46.684Z"
+      "createdAt": "2026-09-14T12:40:46.684Z",
+      "viewsCount": 1
     },
     {
       "id": "post_1789314549805",
@@ -593,7 +1531,8 @@
       "commentsCount": 1,
       "approved": true,
       "status": "active",
-      "createdAt": "2026-09-13T15:49:09.805Z"
+      "createdAt": "2026-09-13T15:49:09.805Z",
+      "viewsCount": 1
     },
     {
       "id": "post_1789314469421",
@@ -629,7 +1568,8 @@
       "commentsCount": 1,
       "approved": true,
       "status": "active",
-      "createdAt": "2026-09-13T15:47:49.421Z"
+      "createdAt": "2026-09-13T15:47:49.421Z",
+      "viewsCount": 1
     },
     {
       "id": "post_1789314353433",
@@ -665,7 +1605,8 @@
       "commentsCount": 1,
       "approved": true,
       "status": "active",
-      "createdAt": "2026-09-13T15:45:53.433Z"
+      "createdAt": "2026-09-13T15:45:53.433Z",
+      "viewsCount": 1
     },
     {
       "id": "post_1789314265483",
@@ -701,7 +1642,8 @@
       "commentsCount": 1,
       "approved": true,
       "status": "active",
-      "createdAt": "2026-09-13T15:44:25.483Z"
+      "createdAt": "2026-09-13T15:44:25.483Z",
+      "viewsCount": 1
     },
     {
       "id": "post_1",
@@ -850,9 +1792,333 @@
         "content": "ખૂબ સરસ આયોજન! અભિનંદન!",
         "createdAt": "2026-09-14T15:12:21.566Z"
       }
+    ],
+    "post_1789403184478": [
+      {
+        "id": "comm_1789403184487",
+        "authorId": "user_9825123456",
+        "authorName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+        "authorPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+        "content": "ખૂબ સરસ આયોજન! અભિનંદન!",
+        "createdAt": "2026-09-14T16:26:24.487Z"
+      }
+    ],
+    "post_1789403258519": [
+      {
+        "id": "comm_1789403258524",
+        "authorId": "user_9825123456",
+        "authorName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+        "authorPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+        "content": "ખૂબ સરસ આયોજન! અભિનંદન!",
+        "createdAt": "2026-09-14T16:27:38.524Z"
+      }
+    ],
+    "post_1789404139315": [
+      {
+        "id": "comm_1789404139323",
+        "authorId": "user_9825123456",
+        "authorName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+        "authorPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+        "content": "ખૂબ સરસ આયોજન! અભિનંદન!",
+        "createdAt": "2026-09-14T16:42:19.323Z"
+      }
+    ],
+    "post_1789404842193": [
+      {
+        "id": "comm_1789404842199",
+        "authorId": "user_9825123456",
+        "authorName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+        "authorPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+        "content": "ખૂબ સરસ આયોજન! અભિનંદન!",
+        "createdAt": "2026-09-14T16:54:02.199Z"
+      }
+    ],
+    "post_1789406993674": [
+      {
+        "id": "comm_1789406993682",
+        "authorId": "user_9825123456",
+        "authorName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+        "authorPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+        "content": "ખૂબ સરસ આયોજન! અભિનંદન!",
+        "createdAt": "2026-09-14T17:29:53.682Z"
+      }
+    ],
+    "post_1789407080925": [
+      {
+        "id": "comm_1789407080933",
+        "authorId": "user_9825123456",
+        "authorName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+        "authorPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+        "content": "ખૂબ સરસ આયોજન! અભિનંદન!",
+        "createdAt": "2026-09-14T17:31:20.933Z"
+      }
+    ],
+    "post_1789409113649": [
+      {
+        "id": "comm_1789409113657",
+        "authorId": "user_9825123456",
+        "authorName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+        "authorPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+        "content": "ખૂબ સરસ આયોજન! અભિનંદન!",
+        "createdAt": "2026-09-14T18:05:13.657Z"
+      }
+    ],
+    "post_1789410250639": [
+      {
+        "id": "comm_1789410250647",
+        "authorId": "user_9825123456",
+        "authorName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+        "authorPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+        "content": "ખૂબ સરસ આયોજન! અભિનંદન!",
+        "createdAt": "2026-09-14T18:24:10.647Z"
+      }
+    ],
+    "reel_garba_2026": [
+      {
+        "id": "comm_g1",
+        "authorId": "mem_1",
+        "authorName": "મહેન્દ્રભાઈ પટેલ",
+        "authorPhoto": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
+        "content": "અદભૂત આયોજન! આપણા સમાજના સંસ્કૃતિ અને સંસ્કારો જીવંત રાખતો કાર્યક્રમ.",
+        "createdAt": "2026-09-15T06:57:05.121Z"
+      },
+      {
+        "id": "comm_g2",
+        "authorId": "mem_3",
+        "authorName": "હર્ષિલ પટેલ",
+        "authorPhoto": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150",
+        "content": "ખૂબ મજા આવી! રાસ-ગરબાની એનર્જી જોરદાર હતી 🔥👏",
+        "createdAt": "2026-09-15T07:27:05.121Z"
+      }
+    ],
+    "reel_mandir_aarti": [
+      {
+        "id": "comm_m1",
+        "authorId": "mem_2",
+        "authorName": "પ્રિયંકાબેન પટેલ",
+        "authorPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+        "content": "જય ઉમિયા માત! મા સર્વેનું કલ્યાણ કરે 🙏🪔",
+        "createdAt": "2026-09-15T05:57:05.121Z"
+      }
     ]
   },
   "storiesList": [
+    {
+      "id": "story_1789410250653",
+      "userId": "user_demo_admin",
+      "userName": "રાજેશભાઈ પટેલ (Admin)",
+      "userPhoto": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+      "mediaUrl": "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800",
+      "mediaType": "image",
+      "caption": "સુપ્રભાત ઊંઝા! શુભ દિવસ!",
+      "filter": "normal",
+      "rotation": 0,
+      "aspectRatio": "9:16",
+      "volume": 1,
+      "trimStart": 0,
+      "trimEnd": 15,
+      "textOverlays": [],
+      "emojiOverlays": [],
+      "music": null,
+      "visibility": "samaj",
+      "samajId": "default",
+      "likedBy": [],
+      "likesCount": 0,
+      "viewedBy": [
+        "user_demo_admin"
+      ],
+      "viewsCount": 1,
+      "createdAt": "2026-09-14T18:24:10.653Z"
+    },
+    {
+      "id": "story_1789409113664",
+      "userId": "user_demo_admin",
+      "userName": "રાજેશભાઈ પટેલ (Admin)",
+      "userPhoto": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+      "mediaUrl": "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800",
+      "mediaType": "image",
+      "caption": "સુપ્રભાત ઊંઝા! શુભ દિવસ!",
+      "filter": "normal",
+      "rotation": 0,
+      "aspectRatio": "9:16",
+      "volume": 1,
+      "trimStart": 0,
+      "trimEnd": 15,
+      "textOverlays": [],
+      "emojiOverlays": [],
+      "music": null,
+      "visibility": "samaj",
+      "samajId": "default",
+      "likedBy": [],
+      "likesCount": 0,
+      "viewedBy": [
+        "user_demo_admin"
+      ],
+      "viewsCount": 1,
+      "createdAt": "2026-09-14T18:05:13.664Z"
+    },
+    {
+      "id": "story_1789407080940",
+      "userId": "user_demo_admin",
+      "userName": "રાજેશભાઈ પટેલ (Admin)",
+      "userPhoto": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+      "mediaUrl": "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800",
+      "mediaType": "image",
+      "caption": "સુપ્રભાત ઊંઝા! શુભ દિવસ!",
+      "filter": "normal",
+      "rotation": 0,
+      "aspectRatio": "9:16",
+      "volume": 1,
+      "trimStart": 0,
+      "trimEnd": 15,
+      "textOverlays": [],
+      "emojiOverlays": [],
+      "music": null,
+      "visibility": "samaj",
+      "samajId": "default",
+      "likedBy": [],
+      "likesCount": 0,
+      "viewedBy": [
+        "user_demo_admin"
+      ],
+      "viewsCount": 1,
+      "createdAt": "2026-09-14T17:31:20.940Z"
+    },
+    {
+      "id": "story_1789406993689",
+      "userId": "user_demo_admin",
+      "userName": "રાજેશભાઈ પટેલ (Admin)",
+      "userPhoto": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+      "mediaUrl": "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800",
+      "mediaType": "image",
+      "caption": "સુપ્રભાત ઊંઝા! શુભ દિવસ!",
+      "filter": "normal",
+      "rotation": 0,
+      "aspectRatio": "9:16",
+      "volume": 1,
+      "trimStart": 0,
+      "trimEnd": 15,
+      "textOverlays": [],
+      "emojiOverlays": [],
+      "music": null,
+      "visibility": "samaj",
+      "samajId": "default",
+      "likedBy": [],
+      "likesCount": 0,
+      "viewedBy": [
+        "user_demo_admin"
+      ],
+      "viewsCount": 1,
+      "createdAt": "2026-09-14T17:29:53.689Z"
+    },
+    {
+      "id": "story_1789404842205",
+      "userId": "user_demo_admin",
+      "userName": "રાજેશભાઈ પટેલ (Admin)",
+      "userPhoto": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+      "mediaUrl": "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800",
+      "mediaType": "image",
+      "caption": "સુપ્રભાત ઊંઝા! શુભ દિવસ!",
+      "filter": "normal",
+      "rotation": 0,
+      "aspectRatio": "9:16",
+      "volume": 1,
+      "trimStart": 0,
+      "trimEnd": 15,
+      "textOverlays": [],
+      "emojiOverlays": [],
+      "music": null,
+      "visibility": "samaj",
+      "samajId": "default",
+      "likedBy": [],
+      "likesCount": 0,
+      "viewedBy": [
+        "user_demo_admin"
+      ],
+      "viewsCount": 1,
+      "createdAt": "2026-09-14T16:54:02.205Z"
+    },
+    {
+      "id": "story_1789404139329",
+      "userId": "user_demo_admin",
+      "userName": "રાજેશભાઈ પટેલ (Admin)",
+      "userPhoto": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+      "mediaUrl": "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800",
+      "mediaType": "image",
+      "caption": "સુપ્રભાત ઊંઝા! શુભ દિવસ!",
+      "filter": "normal",
+      "rotation": 0,
+      "aspectRatio": "9:16",
+      "volume": 1,
+      "trimStart": 0,
+      "trimEnd": 15,
+      "textOverlays": [],
+      "emojiOverlays": [],
+      "music": null,
+      "visibility": "samaj",
+      "samajId": "default",
+      "likedBy": [],
+      "likesCount": 0,
+      "viewedBy": [
+        "user_demo_admin"
+      ],
+      "viewsCount": 1,
+      "createdAt": "2026-09-14T16:42:19.329Z"
+    },
+    {
+      "id": "story_1789403258531",
+      "userId": "user_demo_admin",
+      "userName": "રાજેશભાઈ પટેલ (Admin)",
+      "userPhoto": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+      "mediaUrl": "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800",
+      "mediaType": "image",
+      "caption": "સુપ્રભાત ઊંઝા! શુભ દિવસ!",
+      "filter": "normal",
+      "rotation": 0,
+      "aspectRatio": "9:16",
+      "volume": 1,
+      "trimStart": 0,
+      "trimEnd": 15,
+      "textOverlays": [],
+      "emojiOverlays": [],
+      "music": null,
+      "visibility": "samaj",
+      "samajId": "default",
+      "likedBy": [],
+      "likesCount": 0,
+      "viewedBy": [
+        "user_demo_admin"
+      ],
+      "viewsCount": 1,
+      "createdAt": "2026-09-14T16:27:38.531Z"
+    },
+    {
+      "id": "story_1789403184494",
+      "userId": "user_demo_admin",
+      "userName": "રાજેશભાઈ પટેલ (Admin)",
+      "userPhoto": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+      "mediaUrl": "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800",
+      "mediaType": "image",
+      "caption": "સુપ્રભાત ઊંઝા! શુભ દિવસ!",
+      "filter": "normal",
+      "rotation": 0,
+      "aspectRatio": "9:16",
+      "volume": 1,
+      "trimStart": 0,
+      "trimEnd": 15,
+      "textOverlays": [],
+      "emojiOverlays": [],
+      "music": null,
+      "visibility": "samaj",
+      "samajId": "default",
+      "likedBy": [],
+      "likesCount": 0,
+      "viewedBy": [
+        "user_demo_admin"
+      ],
+      "viewsCount": 1,
+      "createdAt": "2026-09-14T16:26:24.494Z"
+    },
     {
       "id": "story_1789398741572",
       "userId": "user_demo_admin",
@@ -1176,6 +2442,134 @@
   ],
   "bookingsList": [
     {
+      "id": "bk_1789410250608",
+      "hallId": "hall_1",
+      "hallName": "શ્રી સરદાર પટેલ એર-કન્ડિશન્ડ બેન્ક્વેટ હોલ",
+      "date": "2026-11-20",
+      "startTime": "09:00",
+      "endTime": "18:00",
+      "purpose": "",
+      "guests": 50,
+      "contactPhone": "+919876543210",
+      "userName": "રાજેશભાઈ પટેલ (Admin)",
+      "userId": "user_demo_admin",
+      "samajId": "default",
+      "status": "cancelled",
+      "createdAt": "2026-09-14T18:24:10.608Z"
+    },
+    {
+      "id": "bk_1789409113614",
+      "hallId": "hall_1",
+      "hallName": "શ્રી સરદાર પટેલ એર-કન્ડિશન્ડ બેન્ક્વેટ હોલ",
+      "date": "2026-11-20",
+      "startTime": "09:00",
+      "endTime": "18:00",
+      "purpose": "",
+      "guests": 50,
+      "contactPhone": "+919876543210",
+      "userName": "રાજેશભાઈ પટેલ (Admin)",
+      "userId": "user_demo_admin",
+      "samajId": "default",
+      "status": "cancelled",
+      "createdAt": "2026-09-14T18:05:13.614Z"
+    },
+    {
+      "id": "bk_1789407080889",
+      "hallId": "hall_1",
+      "hallName": "શ્રી સરદાર પટેલ એર-કન્ડિશન્ડ બેન્ક્વેટ હોલ",
+      "date": "2026-11-20",
+      "startTime": "09:00",
+      "endTime": "18:00",
+      "purpose": "",
+      "guests": 50,
+      "contactPhone": "+919876543210",
+      "userName": "રાજેશભાઈ પટેલ (Admin)",
+      "userId": "user_demo_admin",
+      "samajId": "default",
+      "status": "cancelled",
+      "createdAt": "2026-09-14T17:31:20.889Z"
+    },
+    {
+      "id": "bk_1789406993639",
+      "hallId": "hall_1",
+      "hallName": "શ્રી સરદાર પટેલ એર-કન્ડિશન્ડ બેન્ક્વેટ હોલ",
+      "date": "2026-11-20",
+      "startTime": "09:00",
+      "endTime": "18:00",
+      "purpose": "",
+      "guests": 50,
+      "contactPhone": "+919876543210",
+      "userName": "રાજેશભાઈ પટેલ (Admin)",
+      "userId": "user_demo_admin",
+      "samajId": "default",
+      "status": "cancelled",
+      "createdAt": "2026-09-14T17:29:53.639Z"
+    },
+    {
+      "id": "bk_1789404842156",
+      "hallId": "hall_1",
+      "hallName": "શ્રી સરદાર પટેલ એર-કન્ડિશન્ડ બેન્ક્વેટ હોલ",
+      "date": "2026-11-20",
+      "startTime": "09:00",
+      "endTime": "18:00",
+      "purpose": "",
+      "guests": 50,
+      "contactPhone": "+919876543210",
+      "userName": "રાજેશભાઈ પટેલ (Admin)",
+      "userId": "user_demo_admin",
+      "samajId": "default",
+      "status": "cancelled",
+      "createdAt": "2026-09-14T16:54:02.156Z"
+    },
+    {
+      "id": "bk_1789404139282",
+      "hallId": "hall_1",
+      "hallName": "શ્રી સરદાર પટેલ એર-કન્ડિશન્ડ બેન્ક્વેટ હોલ",
+      "date": "2026-11-20",
+      "startTime": "09:00",
+      "endTime": "18:00",
+      "purpose": "",
+      "guests": 50,
+      "contactPhone": "+919876543210",
+      "userName": "રાજેશભાઈ પટેલ (Admin)",
+      "userId": "user_demo_admin",
+      "samajId": "default",
+      "status": "cancelled",
+      "createdAt": "2026-09-14T16:42:19.282Z"
+    },
+    {
+      "id": "bk_1789403258488",
+      "hallId": "hall_1",
+      "hallName": "શ્રી સરદાર પટેલ એર-કન્ડિશન્ડ બેન્ક્વેટ હોલ",
+      "date": "2026-11-20",
+      "startTime": "09:00",
+      "endTime": "18:00",
+      "purpose": "",
+      "guests": 50,
+      "contactPhone": "+919876543210",
+      "userName": "રાજેશભાઈ પટેલ (Admin)",
+      "userId": "user_demo_admin",
+      "samajId": "default",
+      "status": "cancelled",
+      "createdAt": "2026-09-14T16:27:38.488Z"
+    },
+    {
+      "id": "bk_1789403184447",
+      "hallId": "hall_1",
+      "hallName": "શ્રી સરદાર પટેલ એર-કન્ડિશન્ડ બેન્ક્વેટ હોલ",
+      "date": "2026-11-20",
+      "startTime": "09:00",
+      "endTime": "18:00",
+      "purpose": "",
+      "guests": 50,
+      "contactPhone": "+919876543210",
+      "userName": "રાજેશભાઈ પટેલ (Admin)",
+      "userId": "user_demo_admin",
+      "samajId": "default",
+      "status": "cancelled",
+      "createdAt": "2026-09-14T16:26:24.447Z"
+    },
+    {
       "id": "bk_1789398741526",
       "hallId": "hall_1",
       "hallName": "શ્રી સરદાર પટેલ એર-કન્ડિશન્ડ બેન્ક્વેટ હોલ",
@@ -1303,6 +2697,182 @@
     }
   ],
   "albumsList": [
+    {
+      "id": "alb_1789410250631",
+      "title": "યુવા મહોત્સવ ૨૦૨૬",
+      "description": "યુવા મહોત્સવ અને સ્પોર્ટ્સ ડે ફોટોગ્રાફ્સ",
+      "coverUrl": "https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&auto=format&fit=crop&q=80",
+      "photosCount": 1,
+      "samajId": "default",
+      "approved": true,
+      "status": "active",
+      "createdAt": "2026-09-14T18:24:10.631Z",
+      "photos": [
+        {
+          "id": "p_1789410250635_0",
+          "url": "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800",
+          "type": "image",
+          "caption": "ઉદ્ઘાટન સમારોહ",
+          "authorId": "user_9825123456",
+          "authorName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+          "createdAt": "2026-09-14T18:24:10.635Z"
+        }
+      ]
+    },
+    {
+      "id": "alb_1789409113640",
+      "title": "યુવા મહોત્સવ ૨૦૨૬",
+      "description": "યુવા મહોત્સવ અને સ્પોર્ટ્સ ડે ફોટોગ્રાફ્સ",
+      "coverUrl": "https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&auto=format&fit=crop&q=80",
+      "photosCount": 1,
+      "samajId": "default",
+      "approved": true,
+      "status": "active",
+      "createdAt": "2026-09-14T18:05:13.640Z",
+      "photos": [
+        {
+          "id": "p_1789409113644_0",
+          "url": "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800",
+          "type": "image",
+          "caption": "ઉદ્ઘાટન સમારોહ",
+          "authorId": "user_9825123456",
+          "authorName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+          "createdAt": "2026-09-14T18:05:13.644Z"
+        }
+      ]
+    },
+    {
+      "id": "alb_1789407080917",
+      "title": "યુવા મહોત્સવ ૨૦૨૬",
+      "description": "યુવા મહોત્સવ અને સ્પોર્ટ્સ ડે ફોટોગ્રાફ્સ",
+      "coverUrl": "https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&auto=format&fit=crop&q=80",
+      "photosCount": 1,
+      "samajId": "default",
+      "approved": true,
+      "status": "active",
+      "createdAt": "2026-09-14T17:31:20.917Z",
+      "photos": [
+        {
+          "id": "p_1789407080921_0",
+          "url": "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800",
+          "type": "image",
+          "caption": "ઉદ્ઘાટન સમારોહ",
+          "authorId": "user_9825123456",
+          "authorName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+          "createdAt": "2026-09-14T17:31:20.921Z"
+        }
+      ]
+    },
+    {
+      "id": "alb_1789406993665",
+      "title": "યુવા મહોત્સવ ૨૦૨૬",
+      "description": "યુવા મહોત્સવ અને સ્પોર્ટ્સ ડે ફોટોગ્રાફ્સ",
+      "coverUrl": "https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&auto=format&fit=crop&q=80",
+      "photosCount": 1,
+      "samajId": "default",
+      "approved": true,
+      "status": "active",
+      "createdAt": "2026-09-14T17:29:53.665Z",
+      "photos": [
+        {
+          "id": "p_1789406993669_0",
+          "url": "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800",
+          "type": "image",
+          "caption": "ઉદ્ઘાટન સમારોહ",
+          "authorId": "user_9825123456",
+          "authorName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+          "createdAt": "2026-09-14T17:29:53.669Z"
+        }
+      ]
+    },
+    {
+      "id": "alb_1789404842185",
+      "title": "યુવા મહોત્સવ ૨૦૨૬",
+      "description": "યુવા મહોત્સવ અને સ્પોર્ટ્સ ડે ફોટોગ્રાફ્સ",
+      "coverUrl": "https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&auto=format&fit=crop&q=80",
+      "photosCount": 1,
+      "samajId": "default",
+      "approved": true,
+      "status": "active",
+      "createdAt": "2026-09-14T16:54:02.185Z",
+      "photos": [
+        {
+          "id": "p_1789404842189_0",
+          "url": "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800",
+          "type": "image",
+          "caption": "ઉદ્ઘાટન સમારોહ",
+          "authorId": "user_9825123456",
+          "authorName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+          "createdAt": "2026-09-14T16:54:02.189Z"
+        }
+      ]
+    },
+    {
+      "id": "alb_1789404139307",
+      "title": "યુવા મહોત્સવ ૨૦૨૬",
+      "description": "યુવા મહોત્સવ અને સ્પોર્ટ્સ ડે ફોટોગ્રાફ્સ",
+      "coverUrl": "https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&auto=format&fit=crop&q=80",
+      "photosCount": 1,
+      "samajId": "default",
+      "approved": true,
+      "status": "active",
+      "createdAt": "2026-09-14T16:42:19.307Z",
+      "photos": [
+        {
+          "id": "p_1789404139311_0",
+          "url": "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800",
+          "type": "image",
+          "caption": "ઉદ્ઘાટન સમારોહ",
+          "authorId": "user_9825123456",
+          "authorName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+          "createdAt": "2026-09-14T16:42:19.311Z"
+        }
+      ]
+    },
+    {
+      "id": "alb_1789403258511",
+      "title": "યુવા મહોત્સવ ૨૦૨૬",
+      "description": "યુવા મહોત્સવ અને સ્પોર્ટ્સ ડે ફોટોગ્રાફ્સ",
+      "coverUrl": "https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&auto=format&fit=crop&q=80",
+      "photosCount": 1,
+      "samajId": "default",
+      "approved": true,
+      "status": "active",
+      "createdAt": "2026-09-14T16:27:38.511Z",
+      "photos": [
+        {
+          "id": "p_1789403258515_0",
+          "url": "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800",
+          "type": "image",
+          "caption": "ઉદ્ઘાટન સમારોહ",
+          "authorId": "user_9825123456",
+          "authorName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+          "createdAt": "2026-09-14T16:27:38.515Z"
+        }
+      ]
+    },
+    {
+      "id": "alb_1789403184471",
+      "title": "યુવા મહોત્સવ ૨૦૨૬",
+      "description": "યુવા મહોત્સવ અને સ્પોર્ટ્સ ડે ફોટોગ્રાફ્સ",
+      "coverUrl": "https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&auto=format&fit=crop&q=80",
+      "photosCount": 1,
+      "samajId": "default",
+      "approved": true,
+      "status": "active",
+      "createdAt": "2026-09-14T16:26:24.471Z",
+      "photos": [
+        {
+          "id": "p_1789403184475_0",
+          "url": "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800",
+          "type": "image",
+          "caption": "ઉદ્ઘાટન સમારોહ",
+          "authorId": "user_9825123456",
+          "authorName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+          "createdAt": "2026-09-14T16:26:24.475Z"
+        }
+      ]
+    },
     {
       "id": "alb_1789398741552",
       "title": "યુવા મહોત્સવ ૨૦૨૬",
@@ -1478,6 +3048,126 @@
   ],
   "eventsList": [
     {
+      "id": "ev_1789410250618",
+      "title": "વાર્ષિક સ્નેહમિલન સમારોહ",
+      "description": "સમસ્ત પાટીદાર સમાજ સ્નેહમિલન કાર્યક્રમ",
+      "eventImage": "",
+      "location": "ઊંઝા પાટીદાર વાડી",
+      "date": "2026-12-25",
+      "startTime": "",
+      "endTime": "",
+      "visibility": "samaj",
+      "samajId": "default",
+      "registrations": [],
+      "createdAt": "2026-09-14T18:24:10.618Z",
+      "createdBy": "user_demo_admin"
+    },
+    {
+      "id": "ev_1789409113623",
+      "title": "વાર્ષિક સ્નેહમિલન સમારોહ",
+      "description": "સમસ્ત પાટીદાર સમાજ સ્નેહમિલન કાર્યક્રમ",
+      "eventImage": "",
+      "location": "ઊંઝા પાટીદાર વાડી",
+      "date": "2026-12-25",
+      "startTime": "",
+      "endTime": "",
+      "visibility": "samaj",
+      "samajId": "default",
+      "registrations": [],
+      "createdAt": "2026-09-14T18:05:13.623Z",
+      "createdBy": "user_demo_admin"
+    },
+    {
+      "id": "ev_1789407080900",
+      "title": "વાર્ષિક સ્નેહમિલન સમારોહ",
+      "description": "સમસ્ત પાટીદાર સમાજ સ્નેહમિલન કાર્યક્રમ",
+      "eventImage": "",
+      "location": "ઊંઝા પાટીદાર વાડી",
+      "date": "2026-12-25",
+      "startTime": "",
+      "endTime": "",
+      "visibility": "samaj",
+      "samajId": "default",
+      "registrations": [],
+      "createdAt": "2026-09-14T17:31:20.900Z",
+      "createdBy": "user_demo_admin"
+    },
+    {
+      "id": "ev_1789406993649",
+      "title": "વાર્ષિક સ્નેહમિલન સમારોહ",
+      "description": "સમસ્ત પાટીદાર સમાજ સ્નેહમિલન કાર્યક્રમ",
+      "eventImage": "",
+      "location": "ઊંઝા પાટીદાર વાડી",
+      "date": "2026-12-25",
+      "startTime": "",
+      "endTime": "",
+      "visibility": "samaj",
+      "samajId": "default",
+      "registrations": [],
+      "createdAt": "2026-09-14T17:29:53.649Z",
+      "createdBy": "user_demo_admin"
+    },
+    {
+      "id": "ev_1789404842170",
+      "title": "વાર્ષિક સ્નેહમિલન સમારોહ",
+      "description": "સમસ્ત પાટીદાર સમાજ સ્નેહમિલન કાર્યક્રમ",
+      "eventImage": "",
+      "location": "ઊંઝા પાટીદાર વાડી",
+      "date": "2026-12-25",
+      "startTime": "",
+      "endTime": "",
+      "visibility": "samaj",
+      "samajId": "default",
+      "registrations": [],
+      "createdAt": "2026-09-14T16:54:02.170Z",
+      "createdBy": "user_demo_admin"
+    },
+    {
+      "id": "ev_1789404139292",
+      "title": "વાર્ષિક સ્નેહમિલન સમારોહ",
+      "description": "સમસ્ત પાટીદાર સમાજ સ્નેહમિલન કાર્યક્રમ",
+      "eventImage": "",
+      "location": "ઊંઝા પાટીદાર વાડી",
+      "date": "2026-12-25",
+      "startTime": "",
+      "endTime": "",
+      "visibility": "samaj",
+      "samajId": "default",
+      "registrations": [],
+      "createdAt": "2026-09-14T16:42:19.292Z",
+      "createdBy": "user_demo_admin"
+    },
+    {
+      "id": "ev_1789403258497",
+      "title": "વાર્ષિક સ્નેહમિલન સમારોહ",
+      "description": "સમસ્ત પાટીદાર સમાજ સ્નેહમિલન કાર્યક્રમ",
+      "eventImage": "",
+      "location": "ઊંઝા પાટીદાર વાડી",
+      "date": "2026-12-25",
+      "startTime": "",
+      "endTime": "",
+      "visibility": "samaj",
+      "samajId": "default",
+      "registrations": [],
+      "createdAt": "2026-09-14T16:27:38.497Z",
+      "createdBy": "user_demo_admin"
+    },
+    {
+      "id": "ev_1789403184457",
+      "title": "વાર્ષિક સ્નેહમિલન સમારોહ",
+      "description": "સમસ્ત પાટીદાર સમાજ સ્નેહમિલન કાર્યક્રમ",
+      "eventImage": "",
+      "location": "ઊંઝા પાટીદાર વાડી",
+      "date": "2026-12-25",
+      "startTime": "",
+      "endTime": "",
+      "visibility": "samaj",
+      "samajId": "default",
+      "registrations": [],
+      "createdAt": "2026-09-14T16:26:24.457Z",
+      "createdBy": "user_demo_admin"
+    },
+    {
       "id": "ev_1789398741536",
       "title": "વાર્ષિક સ્નેહમિલન સમારોહ",
       "description": "સમસ્ત પાટીદાર સમાજ સ્નેહમિલન કાર્યક્રમ",
@@ -1635,6 +3325,134 @@
     }
   ],
   "membersList": [
+    {
+      "id": "mem_1789410250599",
+      "name": "ટેસ્ટ સભ્ય પટેલ",
+      "mobile": "9910250597",
+      "village": "ઊંઝા",
+      "district": "મહેસાણા",
+      "address": "ટેસ્ટ સરનામું, ઊંઝા",
+      "gender": "male",
+      "maritalStatus": "married",
+      "bloodGroup": "B+",
+      "education": "B.Tech",
+      "samajId": "default",
+      "isActive": true,
+      "createdAt": "2026-09-14T18:24:10.599Z",
+      "createdBy": "user_demo_admin"
+    },
+    {
+      "id": "mem_1789409113605",
+      "name": "ટેસ્ટ સભ્ય પટેલ",
+      "mobile": "9909113602",
+      "village": "ઊંઝા",
+      "district": "મહેસાણા",
+      "address": "ટેસ્ટ સરનામું, ઊંઝા",
+      "gender": "male",
+      "maritalStatus": "married",
+      "bloodGroup": "B+",
+      "education": "B.Tech",
+      "samajId": "default",
+      "isActive": true,
+      "createdAt": "2026-09-14T18:05:13.605Z",
+      "createdBy": "user_demo_admin"
+    },
+    {
+      "id": "mem_1789407080877",
+      "name": "ટેસ્ટ સભ્ય પટેલ",
+      "mobile": "9907080873",
+      "village": "ઊંઝા",
+      "district": "મહેસાણા",
+      "address": "ટેસ્ટ સરનામું, ઊંઝા",
+      "gender": "male",
+      "maritalStatus": "married",
+      "bloodGroup": "B+",
+      "education": "B.Tech",
+      "samajId": "default",
+      "isActive": true,
+      "createdAt": "2026-09-14T17:31:20.877Z",
+      "createdBy": "user_demo_admin"
+    },
+    {
+      "id": "mem_1789406993628",
+      "name": "ટેસ્ટ સભ્ય પટેલ",
+      "mobile": "9906993627",
+      "village": "ઊંઝા",
+      "district": "મહેસાણા",
+      "address": "ટેસ્ટ સરનામું, ઊંઝા",
+      "gender": "male",
+      "maritalStatus": "married",
+      "bloodGroup": "B+",
+      "education": "B.Tech",
+      "samajId": "default",
+      "isActive": true,
+      "createdAt": "2026-09-14T17:29:53.628Z",
+      "createdBy": "user_demo_admin"
+    },
+    {
+      "id": "mem_1789404842143",
+      "name": "ટેસ્ટ સભ્ય પટેલ",
+      "mobile": "9904842138",
+      "village": "ઊંઝા",
+      "district": "મહેસાણા",
+      "address": "ટેસ્ટ સરનામું, ઊંઝા",
+      "gender": "male",
+      "maritalStatus": "married",
+      "bloodGroup": "B+",
+      "education": "B.Tech",
+      "samajId": "default",
+      "isActive": true,
+      "createdAt": "2026-09-14T16:54:02.143Z",
+      "createdBy": "user_demo_admin"
+    },
+    {
+      "id": "mem_1789404139274",
+      "name": "ટેસ્ટ સભ્ય પટેલ",
+      "mobile": "9904139271",
+      "village": "ઊંઝા",
+      "district": "મહેસાણા",
+      "address": "ટેસ્ટ સરનામું, ઊંઝા",
+      "gender": "male",
+      "maritalStatus": "married",
+      "bloodGroup": "B+",
+      "education": "B.Tech",
+      "samajId": "default",
+      "isActive": true,
+      "createdAt": "2026-09-14T16:42:19.274Z",
+      "createdBy": "user_demo_admin"
+    },
+    {
+      "id": "mem_1789403258477",
+      "name": "ટેસ્ટ સભ્ય પટેલ",
+      "mobile": "9903258476",
+      "village": "ઊંઝા",
+      "district": "મહેસાણા",
+      "address": "ટેસ્ટ સરનામું, ઊંઝા",
+      "gender": "male",
+      "maritalStatus": "married",
+      "bloodGroup": "B+",
+      "education": "B.Tech",
+      "samajId": "default",
+      "isActive": true,
+      "createdAt": "2026-09-14T16:27:38.477Z",
+      "createdBy": "user_demo_admin"
+    },
+    {
+      "id": "mem_1789403184438",
+      "name": "ટેસ્ટ સભ્ય પટેલ",
+      "mobile": "9903184435",
+      "village": "ઊંઝા",
+      "district": "મહેસાણા",
+      "address": "ટેસ્ટ સરનામું, ઊંઝા",
+      "gender": "male",
+      "maritalStatus": "married",
+      "bloodGroup": "B+",
+      "education": "B.Tech",
+      "samajId": "default",
+      "isActive": true,
+      "createdAt": "2026-09-14T16:26:24.438Z",
+      "createdBy": "user_demo_admin"
+    },
     {
       "id": "mem_1789398741516",
       "name": "ટેસ્ટ સભ્ય પટેલ",
@@ -1855,217 +3673,43 @@
   ],
   "maranNodhList": [
     {
-      "id": "mn_1789398741581",
-      "samajId": "default",
-      "deceasedName": "સ્વ. શાંતિલાલ કેશવલાલ પટેલ",
-      "age": 82,
-      "gender": "male",
-      "village": "ઊંઝા",
-      "currentCity": "અમદાવાદ",
-      "passedDate": "2026-09-10",
-      "besnuDate": "2026-09-14",
-      "besnuTime": "સાંજે ૪:૦૦ થી ૬:૦૦",
-      "besnuVenue": "ઊંઝા પાટીદાર વાડી, હોલ નં ૧",
-      "photo": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&auto=format&fit=crop&q=80",
-      "grievingFamily": "પટેલ પરિવાર",
-      "contactPhone": "9825123456",
-      "notes": "",
-      "diyaCount": 1,
-      "flowerCount": 0,
-      "condolences": [
-        {
-          "id": "c_1789398741587",
-          "userName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
-          "text": "પ્રભુ દિવંગત આત્માને પરમ શાંતિ અર્પે અને પરિવારને દુઃખ સહન કરવાની શક્તિ આપે. ઓમ શાંતિ.",
-          "createdAt": "2026-09-14T15:12:21.587Z"
-        }
-      ],
-      "createdAt": "2026-09-14T15:12:21.581Z",
-      "createdBy": "user_9825123456"
-    },
-    {
-      "id": "mn_1789395985324",
-      "samajId": "default",
-      "deceasedName": "સ્વ. શાંતિલાલ કેશવલાલ પટેલ",
-      "age": 82,
-      "gender": "male",
-      "village": "ઊંઝા",
-      "currentCity": "અમદાવાદ",
-      "passedDate": "2026-09-10",
-      "besnuDate": "2026-09-14",
-      "besnuTime": "સાંજે ૪:૦૦ થી ૬:૦૦",
-      "besnuVenue": "ઊંઝા પાટીદાર વાડી, હોલ નં ૧",
-      "photo": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&auto=format&fit=crop&q=80",
-      "grievingFamily": "પટેલ પરિવાર",
-      "contactPhone": "9825123456",
-      "notes": "",
-      "diyaCount": 1,
-      "flowerCount": 0,
-      "condolences": [
-        {
-          "id": "c_1789395985332",
-          "userName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
-          "text": "પ્રભુ દિવંગત આત્માને પરમ શાંતિ અર્પે અને પરિવારને દુઃખ સહન કરવાની શક્તિ આપે. ઓમ શાંતિ.",
-          "createdAt": "2026-09-14T14:26:25.332Z"
-        }
-      ],
-      "createdAt": "2026-09-14T14:26:25.324Z",
-      "createdBy": "user_9825123456"
-    },
-    {
-      "id": "mn_1789389646711",
-      "samajId": "default",
-      "deceasedName": "સ્વ. શાંતિલાલ કેશવલાલ પટેલ",
-      "age": 82,
-      "gender": "male",
-      "village": "ઊંઝા",
-      "currentCity": "અમદાવાદ",
-      "passedDate": "2026-09-10",
-      "besnuDate": "2026-09-14",
-      "besnuTime": "સાંજે ૪:૦૦ થી ૬:૦૦",
-      "besnuVenue": "ઊંઝા પાટીદાર વાડી, હોલ નં ૧",
-      "photo": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&auto=format&fit=crop&q=80",
-      "grievingFamily": "પટેલ પરિવાર",
-      "contactPhone": "9825123456",
-      "notes": "",
-      "diyaCount": 1,
-      "flowerCount": 0,
-      "condolences": [
-        {
-          "id": "c_1789389646719",
-          "userName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
-          "text": "પ્રભુ દિવંગત આત્માને પરમ શાંતિ અર્પે અને પરિવારને દુઃખ સહન કરવાની શક્તિ આપે. ઓમ શાંતિ.",
-          "createdAt": "2026-09-14T12:40:46.719Z"
-        }
-      ],
-      "createdAt": "2026-09-14T12:40:46.711Z",
-      "createdBy": "user_9825123456"
-    },
-    {
-      "id": "mn_1789314549828",
-      "samajId": "default",
-      "deceasedName": "સ્વ. શાંતિલાલ કેશવલાલ પટેલ",
-      "age": 82,
-      "gender": "male",
-      "village": "ઊંઝા",
-      "currentCity": "અમદાવાદ",
-      "passedDate": "2026-09-10",
-      "besnuDate": "2026-09-14",
-      "besnuTime": "સાંજે ૪:૦૦ થી ૬:૦૦",
-      "besnuVenue": "ઊંઝા પાટીદાર વાડી, હોલ નં ૧",
-      "photo": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&auto=format&fit=crop&q=80",
-      "grievingFamily": "પટેલ પરિવાર",
-      "contactPhone": "9825123456",
-      "notes": "",
-      "diyaCount": 1,
-      "flowerCount": 0,
-      "condolences": [
-        {
-          "id": "c_1789314549833",
-          "userName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
-          "text": "પ્રભુ દિવંગત આત્માને પરમ શાંતિ અર્પે અને પરિવારને દુઃખ સહન કરવાની શક્તિ આપે. ઓમ શાંતિ.",
-          "createdAt": "2026-09-13T15:49:09.833Z"
-        }
-      ],
-      "createdAt": "2026-09-13T15:49:09.828Z",
-      "createdBy": "user_9825123456"
-    },
-    {
-      "id": "mn_1789314469444",
-      "samajId": "default",
-      "deceasedName": "સ્વ. શાંતિલાલ કેશવલાલ પટેલ",
-      "age": 82,
-      "gender": "male",
-      "village": "ઊંઝા",
-      "currentCity": "અમદાવાદ",
-      "passedDate": "2026-09-10",
-      "besnuDate": "2026-09-14",
-      "besnuTime": "સાંજે ૪:૦૦ થી ૬:૦૦",
-      "besnuVenue": "ઊંઝા પાટીદાર વાડી, હોલ નં ૧",
-      "photo": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&auto=format&fit=crop&q=80",
-      "grievingFamily": "પટેલ પરિવાર",
-      "contactPhone": "9825123456",
-      "notes": "",
-      "diyaCount": 1,
-      "flowerCount": 0,
-      "condolences": [
-        {
-          "id": "c_1789314469451",
-          "userName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
-          "text": "પ્રભુ દિવંગત આત્માને પરમ શાંતિ અર્પે અને પરિવારને દુઃખ સહન કરવાની શક્તિ આપે. ઓમ શાંતિ.",
-          "createdAt": "2026-09-13T15:47:49.451Z"
-        }
-      ],
-      "createdAt": "2026-09-13T15:47:49.444Z",
-      "createdBy": "user_9825123456"
-    },
-    {
-      "id": "mn_1789314353456",
-      "samajId": "default",
-      "deceasedName": "સ્વ. શાંતિલાલ કેશવલાલ પટેલ",
-      "age": 82,
-      "gender": "male",
-      "village": "ઊંઝા",
-      "currentCity": "અમદાવાદ",
-      "passedDate": "2026-09-10",
-      "besnuDate": "2026-09-14",
-      "besnuTime": "સાંજે ૪:૦૦ થી ૬:૦૦",
-      "besnuVenue": "ઊંઝા પાટીદાર વાડી, હોલ નં ૧",
-      "photo": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&auto=format&fit=crop&q=80",
-      "grievingFamily": "પટેલ પરિવાર",
-      "contactPhone": "9825123456",
-      "notes": "",
-      "diyaCount": 1,
-      "flowerCount": 0,
-      "condolences": [
-        {
-          "id": "c_1789314353464",
-          "userName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
-          "text": "પ્રભુ દિવંગત આત્માને પરમ શાંતિ અર્પે અને પરિવારને દુઃખ સહન કરવાની શક્તિ આપે. ઓમ શાંતિ.",
-          "createdAt": "2026-09-13T15:45:53.464Z"
-        }
-      ],
-      "createdAt": "2026-09-13T15:45:53.456Z",
-      "createdBy": "user_9825123456"
-    },
-    {
       "id": "mn_1",
-      "samajId": "default",
+      "samajId": "samaj_patidar_main",
       "deceasedName": "સ્વ. કાંતિલાલ અમૃતલાલ પટેલ",
       "age": 79,
       "gender": "male",
-      "village": "ઉંઝા (જિ. મહેસાણા)",
+      "village": "ઊંઝા (જિ. મહેસાણા)",
       "currentCity": "અમદાવાદ",
       "passedDate": "૧૦ સપ્ટેમ્બર ૨૦૨૬",
       "besnuDate": "૧૩ સપ્ટેમ્બર ૨૦૨૬, રવિવાર",
       "besnuTime": "સવારે ૮:૩૦ થી ૧૧:૦૦ વાગ્યા સુધી",
       "besnuVenue": "શ્રી ઉમિયા માતાજી પાટીદાર વાડી, નારણપુરા, અમદાવાદ",
-      "photo": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&auto=format&fit=crop&q=80",
+      "photo": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&auto=format&fit=crop&q=80",
       "grievingFamily": "સુપુત્ર: રાજેશભાઈ કાંતિલાલ પટેલ, મહેશભાઈ કાંતિલાલ પટેલ; પૌત્ર: ધ્રુવ, આયૂષ; ભાઈ: રમણિકભાઈ પટેલ",
       "contactPhone": "9825098765",
       "notes": "પ્રભુ દિવ્ય આત્માને પરમ શાંતિ અર્પે અને પરિવાર પર આવી પડેલા દુઃખને સહન કરવાની શક્તિ આપે તેવી પ્રાર્થના.",
-      "diyaCount": 42,
-      "flowerCount": 68,
+      "diyaCount": 54,
+      "flowerCount": 78,
       "condolences": [
         {
           "id": "c_1",
           "userName": "મહેન્દ્રભાઈ પટેલ (પ્રમુખશ્રી)",
           "text": "સમાજના આદરણીય વડીલ સ્વ. કાંતિલાલભાઈના અવસાનથી સમાજે એક માર્ગદર્શક ગુમાવ્યા છે. ભાવભીની શ્રદ્ધાંજલિ. ૐ શાંતિ 🙏",
-          "createdAt": "2026-09-13T03:30:12.302Z"
+          "createdAt": "2026-09-11T10:30:00.000Z"
         },
         {
           "id": "c_2",
           "userName": "દિલીપભાઈ શાહ",
           "text": "પ્રભુ દિવ્ય આત્માને મોક્ષ આપે. શોકગ્રસ્ત પરિવાર પ્રત્યે અમારી સંવેદના.",
-          "createdAt": "2026-09-13T10:30:12.302Z"
+          "createdAt": "2026-09-11T12:15:00.000Z"
         }
       ],
-      "createdAt": "2026-09-13T15:30:12.302Z",
+      "createdAt": "2026-09-10T14:00:00.000Z",
       "createdBy": "admin"
     },
     {
       "id": "mn_2",
-      "samajId": "default",
+      "samajId": "samaj_patidar_main",
       "deceasedName": "સ્વ. શાંતાબેન પ્રભુદાસ પટેલ",
       "age": 84,
       "gender": "female",
@@ -2075,21 +3719,123 @@
       "besnuDate": "૧૧ સપ્ટેમ્બર ૨૦૨૬, શુક્રવાર",
       "besnuTime": "સાંજે ૪:૦૦ થી ૬:૦૦ વાગ્યા સુધી",
       "besnuVenue": "કમલમ પાર્ટી પ્લોટ, સેક્ટર ૨૧, ગાંધીનગર",
-      "photo": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&auto=format&fit=crop&q=80",
+      "photo": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&auto=format&fit=crop&q=80",
       "grievingFamily": "સુપુત્ર: કિરીટભાઈ પ્રભુદાસ પટેલ; પુત્રવધૂ: રેખાબેન; પૌત્રી: પ્રિયા, નેહા",
       "contactPhone": "9879512340",
       "notes": "માતૃશ્રીના દિવ્ય આત્માને ઈશ્વર ચરણોમાં સ્થાન આપે તેવી અભ્યર્થના.",
-      "diyaCount": 29,
-      "flowerCount": 51,
+      "diyaCount": 42,
+      "flowerCount": 65,
       "condolences": [
         {
           "id": "c_3",
           "userName": "વિપુલભાઈ પટેલ",
           "text": "માતૃશ્રીના ચરણોમાં શત શત નમન. ૐ શાંતિ.",
-          "createdAt": "2026-09-12T19:30:12.302Z"
+          "createdAt": "2026-09-09T08:00:00.000Z"
         }
       ],
-      "createdAt": "2026-09-12T15:30:12.302Z",
+      "createdAt": "2026-09-08T16:00:00.000Z",
+      "createdBy": "admin"
+    },
+    {
+      "id": "mn_3",
+      "samajId": "samaj_patidar_main",
+      "deceasedName": "સ્વ. હસમુખભાઈ કેશવલાલ પટેલ",
+      "age": 72,
+      "gender": "male",
+      "village": "કડી (જિ. મહેસાણા)",
+      "currentCity": "સુરત",
+      "passedDate": "૧૨ સપ્ટેમ્બર ૨૦૨૬",
+      "besnuDate": "૧૫ સપ્ટેમ્બર ૨૦૨૬, મંગળવાર",
+      "besnuTime": "સવારે ૯:૦૦ થી ૧૧:૩૦ વાગ્યા સુધી",
+      "besnuVenue": "શ્રી સરદાર પટેલ ભવન, કતારગામ મેઈન રોડ, સુરત",
+      "photo": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80",
+      "grievingFamily": "ધર્મપત્ની: સુશીલાબેન; સુપુત્ર: સંજયભાઈ, નિલેશભાઈ; જમાઈ: વિજયકુમાર; પૌત્ર: કેવલ, આરવ",
+      "contactPhone": "9824156789",
+      "notes": "સમાજસેવક અને સરળ સ્વભાવના ધની વડીલને ભાવભીની શ્રદ્ધાંજલિ.",
+      "diyaCount": 38,
+      "flowerCount": 49,
+      "condolences": [
+        {
+          "id": "c_4",
+          "userName": "અશોકભાઈ પટેલ (સુરત)",
+          "text": "હસમુખભાઈના અવસાનથી સુરત પાટીદાર સમાજને મોટી ખોટ પડી છે. ૐ શાંતિ.",
+          "createdAt": "2026-09-13T09:00:00.000Z"
+        }
+      ],
+      "createdAt": "2026-09-12T11:00:00.000Z",
+      "createdBy": "admin"
+    },
+    {
+      "id": "mn_4",
+      "samajId": "samaj_patidar_main",
+      "deceasedName": "સ્વ. દિવાળીબેન મગનલાલ પટેલ",
+      "age": 88,
+      "gender": "female",
+      "village": "પાટણ",
+      "currentCity": "વડોદરા",
+      "passedDate": "૧૧ સપ્ટેમ્બર ૨૦૨૬",
+      "besnuDate": "૧૪ સપ્ટેમ્બર ૨૦૨૬, સોમવાર",
+      "besnuTime": "સાંજે ૩:૩૦ થી ૫:૩૦ વાગ્યા સુધી",
+      "besnuVenue": "અકોટા કોમ્યુનિટી હોલ, બીપીસી રોડ, વડોદરા",
+      "photo": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80",
+      "grievingFamily": "સુપુત્ર: ગિરીશભાઈ મગનલાલ પટેલ; પુત્રી: હંસાબેન; પૌત્ર: તુષાર, મંથન",
+      "contactPhone": "9426078912",
+      "notes": "સ્નેહાળ માતાજીના ચરણોમાં અક્ષય શાંતિ અર્પે તેવી પ્રભુને કરુણા પ્રાર્થના.",
+      "diyaCount": 31,
+      "flowerCount": 57,
+      "condolences": [
+        {
+          "id": "c_5",
+          "userName": "મનીષાબેન પટેલ",
+          "text": "દિવ્ય આત્માને મોક્ષ પ્રાપ્ત થાય. ૐ શાંતિ.",
+          "createdAt": "2026-09-12T14:30:00.000Z"
+        }
+      ],
+      "createdAt": "2026-09-11T15:20:00.000Z",
+      "createdBy": "admin"
+    },
+    {
+      "id": "mn_5",
+      "samajId": "samaj_patidar_main",
+      "deceasedName": "સ્વ. રમેશચંદ્ર છોટાલાલ પટેલ",
+      "age": 68,
+      "gender": "male",
+      "village": "માણસા (ગાંધીનગર)",
+      "currentCity": "રાજકોટ",
+      "passedDate": "૧૩ સપ્ટેમ્બર ૨૦૨૬",
+      "besnuDate": "૧૬ સપ્ટેમ્બર ૨૦૨૬, બુધવાર",
+      "besnuTime": "સવારે ૮:૦૦ થી ૧૦:૩૦ વાગ્યા સુધી",
+      "besnuVenue": "શ્રી પાટીદાર છાત્રાલય હોલ, કાલાવડ રોડ, રાજકોટ",
+      "photo": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80",
+      "grievingFamily": "સુપુત્ર: ધર્મેશભાઈ રમેશચંદ્ર પટેલ; પુત્રી: જાગૃતિબેન; ભત્રીજા: હિતેશ, ભાવિન",
+      "contactPhone": "9879123456",
+      "notes": "સમાજ પ્રત્યે સમર્પિત જીવન વિતાવનાર સ્વજનને નમ્ર શ્રદ્ધાંજલિ.",
+      "diyaCount": 26,
+      "flowerCount": 41,
+      "condolences": [],
+      "createdAt": "2026-09-13T17:00:00.000Z",
+      "createdBy": "admin"
+    },
+    {
+      "id": "mn_6",
+      "samajId": "samaj_patidar_main",
+      "deceasedName": "સ્વ. મંગળાબેન છગનલાલ પટેલ",
+      "age": 76,
+      "gender": "female",
+      "village": "સિદ્ધપુર (પાટણ)",
+      "currentCity": "મુંબઈ",
+      "passedDate": "૯ સપ્ટેમ્બર ૨૦૨૬",
+      "besnuDate": "૧૨ સપ્ટેમ્બર ૨૦૨૬, શનિવાર",
+      "besnuTime": "સાંજે ૪:૦૦ થી ૬:૩૦ વાગ્યા સુધી",
+      "besnuVenue": "શ્રી કડવા પાટીદાર જ્ઞાતિ વાડી, ઘાટકોપર (પૂર્વ), મુંબઈ",
+      "photo": "https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=400&auto=format&fit=crop&q=80",
+      "grievingFamily": "સુપુત્ર: મુકેશભાઈ, કમલેશભાઈ; પુત્રવધૂ: દીનાબેન, ગીતાબેન; પૌત્ર: પાર્થ, યશ",
+      "contactPhone": "9820123456",
+      "notes": "પરમકૃપાળુ પરમાત્મા દિવ્ય આત્માને શ્રીચરણોમાં વાસ આપે.",
+      "diyaCount": 45,
+      "flowerCount": 62,
+      "condolences": [],
+      "createdAt": "2026-09-09T18:30:00.000Z",
       "createdBy": "admin"
     }
   ],
@@ -2340,10 +4086,332 @@
       "photo": "",
       "notes": "",
       "createdAt": "2026-09-14T15:12:21.594Z"
+    },
+    {
+      "id": "fam_1789403184519",
+      "userId": "user_9825123456",
+      "samajId": "default",
+      "name": "આરવ પટેલ",
+      "relation": "son",
+      "relationLabel": "son",
+      "generation": 0,
+      "gender": "male",
+      "isLate": false,
+      "dob": "2018-05-12",
+      "phone": "",
+      "village": "",
+      "currentCity": "",
+      "occupation": "",
+      "education": "",
+      "photo": "",
+      "notes": "",
+      "createdAt": "2026-09-14T16:26:24.519Z"
+    },
+    {
+      "id": "fam_1789403258551",
+      "userId": "user_9825123456",
+      "samajId": "default",
+      "name": "આરવ પટેલ",
+      "relation": "son",
+      "relationLabel": "son",
+      "generation": 0,
+      "gender": "male",
+      "isLate": false,
+      "dob": "2018-05-12",
+      "phone": "",
+      "village": "",
+      "currentCity": "",
+      "occupation": "",
+      "education": "",
+      "photo": "",
+      "notes": "",
+      "createdAt": "2026-09-14T16:27:38.551Z"
+    },
+    {
+      "id": "fam_1789404139351",
+      "userId": "user_9825123456",
+      "samajId": "default",
+      "name": "આરવ પટેલ",
+      "relation": "son",
+      "relationLabel": "son",
+      "generation": 0,
+      "gender": "male",
+      "isLate": false,
+      "dob": "2018-05-12",
+      "phone": "",
+      "village": "",
+      "currentCity": "",
+      "occupation": "",
+      "education": "",
+      "photo": "",
+      "notes": "",
+      "createdAt": "2026-09-14T16:42:19.351Z"
+    },
+    {
+      "id": "fam_1789404842229",
+      "userId": "user_9825123456",
+      "samajId": "default",
+      "name": "આરવ પટેલ",
+      "relation": "son",
+      "relationLabel": "son",
+      "generation": 0,
+      "gender": "male",
+      "isLate": false,
+      "dob": "2018-05-12",
+      "phone": "",
+      "village": "",
+      "currentCity": "",
+      "occupation": "",
+      "education": "",
+      "photo": "",
+      "notes": "",
+      "createdAt": "2026-09-14T16:54:02.229Z"
+    },
+    {
+      "id": "fam_1789406993715",
+      "userId": "user_9825123456",
+      "samajId": "default",
+      "name": "આરવ પટેલ",
+      "relation": "son",
+      "relationLabel": "son",
+      "generation": 0,
+      "gender": "male",
+      "isLate": false,
+      "dob": "2018-05-12",
+      "phone": "",
+      "village": "",
+      "currentCity": "",
+      "occupation": "",
+      "education": "",
+      "photo": "",
+      "notes": "",
+      "createdAt": "2026-09-14T17:29:53.715Z"
+    },
+    {
+      "id": "fam_1789407080962",
+      "userId": "user_9825123456",
+      "samajId": "default",
+      "name": "આરવ પટેલ",
+      "relation": "son",
+      "relationLabel": "son",
+      "generation": 0,
+      "gender": "male",
+      "isLate": false,
+      "dob": "2018-05-12",
+      "phone": "",
+      "village": "",
+      "currentCity": "",
+      "occupation": "",
+      "education": "",
+      "photo": "",
+      "notes": "",
+      "createdAt": "2026-09-14T17:31:20.962Z"
+    },
+    {
+      "id": "fam_1789409113685",
+      "userId": "user_9825123456",
+      "samajId": "default",
+      "name": "આરવ પટેલ",
+      "relation": "son",
+      "relationLabel": "son",
+      "generation": 0,
+      "gender": "male",
+      "isLate": false,
+      "dob": "2018-05-12",
+      "phone": "",
+      "village": "",
+      "currentCity": "",
+      "occupation": "",
+      "education": "",
+      "photo": "",
+      "notes": "",
+      "createdAt": "2026-09-14T18:05:13.685Z"
+    },
+    {
+      "id": "fam_1789410250678",
+      "userId": "user_9825123456",
+      "samajId": "default",
+      "name": "આરવ પટેલ",
+      "relation": "son",
+      "relationLabel": "son",
+      "generation": 0,
+      "gender": "male",
+      "isLate": false,
+      "dob": "2018-05-12",
+      "phone": "",
+      "village": "",
+      "currentCity": "",
+      "occupation": "",
+      "education": "",
+      "photo": "",
+      "notes": "",
+      "createdAt": "2026-09-14T18:24:10.678Z"
     }
   ],
   "reportsList": [],
   "auditLogsList": [
+    {
+      "id": "audit_1789410250728_nsx3q",
+      "adminUserId": "user_demo_admin",
+      "adminName": "રાજેશભાઈ પટેલ (Admin)",
+      "role": "SUPER_ADMIN",
+      "action": "GRANT_ADMIN_ROLE",
+      "details": {
+        "phoneDigits": "9825123456",
+        "role": "SAMAJ_ADMIN",
+        "samajId": "default"
+      },
+      "timestamp": "2026-09-14T18:24:10.728Z"
+    },
+    {
+      "id": "audit_1789409113739_2g2lh",
+      "adminUserId": "user_demo_admin",
+      "adminName": "રાજેશભાઈ પટેલ (Admin)",
+      "role": "SUPER_ADMIN",
+      "action": "GRANT_ADMIN_ROLE",
+      "details": {
+        "phoneDigits": "9825123456",
+        "role": "SAMAJ_ADMIN",
+        "samajId": "default"
+      },
+      "timestamp": "2026-09-14T18:05:13.739Z"
+    },
+    {
+      "id": "audit_1789407081024_kdnj0",
+      "adminUserId": "user_demo_admin",
+      "adminName": "રાજેશભાઈ પટેલ (Admin)",
+      "role": "SUPER_ADMIN",
+      "action": "GRANT_ADMIN_ROLE",
+      "details": {
+        "phoneDigits": "9825123456",
+        "role": "SAMAJ_ADMIN",
+        "samajId": "default"
+      },
+      "timestamp": "2026-09-14T17:31:21.024Z"
+    },
+    {
+      "id": "audit_1789406993764_rvcmi",
+      "adminUserId": "user_demo_admin",
+      "adminName": "રાજેશભાઈ પટેલ (Admin)",
+      "role": "SUPER_ADMIN",
+      "action": "GRANT_ADMIN_ROLE",
+      "details": {
+        "phoneDigits": "9825123456",
+        "role": "SAMAJ_ADMIN",
+        "samajId": "default"
+      },
+      "timestamp": "2026-09-14T17:29:53.764Z"
+    },
+    {
+      "id": "audit_1789404849642_e85wk",
+      "adminUserId": "user_demo_admin",
+      "adminName": "રાજેશભાઈ પટેલ (Admin)",
+      "role": "SUPER_ADMIN",
+      "action": "SAMAJ_CHANGE_REJECTED",
+      "targetId": "scr_1789404849636",
+      "targetType": "user",
+      "details": {
+        "userId": "user_9825123456",
+        "reason": "Address proof incomplete"
+      },
+      "timestamp": "2026-09-14T16:54:09.642Z"
+    },
+    {
+      "id": "audit_1789404849626_wgy67",
+      "adminUserId": "user_demo_admin",
+      "adminName": "રાજેશભાઈ પટેલ (Admin)",
+      "role": "SUPER_ADMIN",
+      "action": "SAMAJ_CHANGE_APPROVED",
+      "targetId": "scr_1789404849598",
+      "targetType": "user",
+      "details": {
+        "userId": "user_9825123456",
+        "newSamajId": "samaj_soni_surat",
+        "newSamajName": "સુરત સોની સમાજ વિકાસ પરિષદ (ચોર્યાસી)"
+      },
+      "timestamp": "2026-09-14T16:54:09.626Z"
+    },
+    {
+      "id": "audit_1789404842290_2dlz5",
+      "adminUserId": "user_demo_admin",
+      "adminName": "રાજેશભાઈ પટેલ (Admin)",
+      "role": "SUPER_ADMIN",
+      "action": "GRANT_ADMIN_ROLE",
+      "details": {
+        "phoneDigits": "9825123456",
+        "role": "SAMAJ_ADMIN",
+        "samajId": "default"
+      },
+      "timestamp": "2026-09-14T16:54:02.290Z"
+    },
+    {
+      "id": "audit_1789404139405_mnkrd",
+      "adminUserId": "user_demo_admin",
+      "adminName": "રાજેશભાઈ પટેલ (Admin)",
+      "role": "SUPER_ADMIN",
+      "action": "GRANT_ADMIN_ROLE",
+      "details": {
+        "phoneDigits": "9825123456",
+        "role": "SAMAJ_ADMIN",
+        "samajId": "default"
+      },
+      "timestamp": "2026-09-14T16:42:19.405Z"
+    },
+    {
+      "id": "audit_1789403258599_0vi3f",
+      "adminUserId": "user_demo_admin",
+      "adminName": "રાજેશભાઈ પટેલ (Admin)",
+      "role": "SUPER_ADMIN",
+      "action": "GRANT_ADMIN_ROLE",
+      "details": {
+        "phoneDigits": "9825123456",
+        "role": "SAMAJ_ADMIN",
+        "samajId": "default"
+      },
+      "timestamp": "2026-09-14T16:27:38.599Z"
+    },
+    {
+      "id": "audit_1789403184569_lvv81",
+      "adminUserId": "user_demo_admin",
+      "adminName": "રાજેશભાઈ પટેલ (Admin)",
+      "role": "SUPER_ADMIN",
+      "action": "GRANT_ADMIN_ROLE",
+      "details": {
+        "phoneDigits": "9825123456",
+        "role": "SAMAJ_ADMIN",
+        "samajId": "default"
+      },
+      "timestamp": "2026-09-14T16:26:24.569Z"
+    },
+    {
+      "id": "audit_1789398742460_wh6k6",
+      "adminUserId": "user_demo_admin",
+      "adminName": "રાજેશભાઈ પટેલ (Admin)",
+      "role": "SUPER_ADMIN",
+      "action": "SAMAJ_CHANGE_REJECTED",
+      "targetId": "scr_1789398742455",
+      "targetType": "user",
+      "details": {
+        "userId": "user_9825123456",
+        "reason": "Address proof incomplete"
+      },
+      "timestamp": "2026-09-14T15:12:22.460Z"
+    },
+    {
+      "id": "audit_1789398742446_ya9zi",
+      "adminUserId": "user_demo_admin",
+      "adminName": "રાજેશભાઈ પટેલ (Admin)",
+      "role": "SUPER_ADMIN",
+      "action": "SAMAJ_CHANGE_APPROVED",
+      "targetId": "scr_1789398742419",
+      "targetType": "user",
+      "details": {
+        "userId": "user_9825123456",
+        "newSamajId": "samaj_soni_surat",
+        "newSamajName": "સુરત સોની સમાજ વિકાસ પરિષદ (ચોર્યાસી)"
+      },
+      "timestamp": "2026-09-14T15:12:22.446Z"
+    },
     {
       "id": "audit_1789398741640_oo214",
       "adminUserId": "user_demo_admin",
@@ -2487,50 +4555,45 @@
       "id": "d_user_9825123456_user_demo_admin",
       "type": "direct",
       "memberIds": [
-        "user_demo_admin",
         "user_9825123456",
-        "PcombNu6oNR4fVc3D3Y7dmmxaaV2"
+        "user_demo_admin"
       ],
       "members": {
-        "user_demo_admin": {
-          "id": "user_demo_admin",
-          "name": "રાજેશભાઈ પટેલ (Admin)",
-          "photo": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80"
-        },
         "user_9825123456": {
           "id": "user_9825123456",
           "name": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
-          "photo": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
+          "photo": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+          "phone": "+919825123456"
         },
-        "PcombNu6oNR4fVc3D3Y7dmmxaaV2": {
-          "id": "PcombNu6oNR4fVc3D3Y7dmmxaaV2",
-          "name": "સભ્ય (0600)",
-          "photo": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80"
+        "user_demo_admin": {
+          "id": "user_demo_admin",
+          "name": "રાજેશભાઈ પટેલ (Admin)",
+          "photo": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+          "phone": "+919876543210"
         }
       },
       "samajId": "default",
       "createdBy": "user_demo_admin",
       "createdAt": "2025-01-01T10:00:00.000Z",
-      "updatedAt": "2026-09-14T15:12:21.605Z",
+      "updatedAt": "2026-09-14T18:24:10.686Z",
       "lastMessage": {
-        "id": "msg_1789398741605_x91f",
+        "id": "msg_1789410250686_7w9w",
         "text": "નમસ્તે ભાઈ, જય શ્રી કૃષ્ણ!",
         "senderId": "user_9825123456",
         "senderName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
         "type": "text",
-        "createdAt": "2026-09-14T15:12:21.605Z"
+        "createdAt": "2026-09-14T18:24:10.686Z"
       },
       "unread": {
-        "user_demo_admin": 4,
         "user_9825123456": 0,
-        "PcombNu6oNR4fVc3D3Y7dmmxaaV2": 3
+        "user_demo_admin": 12
       },
       "muted": [],
       "typing": {
         "user_9825123456": false
       },
-      "theme": "default",
-      "disappearingDuration": "off",
+      "theme": "indigo",
+      "disappearingDuration": "5m",
       "activeCall": null
     },
     "d_PcombNu6oNR4fVc3D3Y7dmmxaaV2_user_demo_admin": {
@@ -2538,24 +4601,20 @@
       "type": "direct",
       "memberIds": [
         "PcombNu6oNR4fVc3D3Y7dmmxaaV2",
-        "user_demo_admin",
-        "user_9825123456"
+        "user_demo_admin"
       ],
       "members": {
         "PcombNu6oNR4fVc3D3Y7dmmxaaV2": {
           "id": "PcombNu6oNR4fVc3D3Y7dmmxaaV2",
           "name": "સભ્ય (0600)",
-          "photo": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80"
+          "photo": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+          "phone": "+919574050600"
         },
         "user_demo_admin": {
           "id": "user_demo_admin",
           "name": "રાજેશભાઈ પટેલ (Admin)",
-          "photo": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80"
-        },
-        "user_9825123456": {
-          "id": "user_9825123456",
-          "name": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
-          "photo": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
+          "photo": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+          "phone": "+919876543210"
         }
       },
       "samajId": "samaj_patidar_kutch_gadhsisa",
@@ -2573,73 +4632,42 @@
       "disappearingDuration": "off",
       "activeCall": null
     },
-    "undefined": {
-      "id": "undefined",
-      "type": "group",
-      "memberIds": [
-        "user_9825123456"
-      ],
-      "members": {
-        "user_9825123456": {
-          "id": "user_9825123456",
-          "name": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
-          "photo": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
-        }
-      },
-      "samajId": "samaj_soni_surat",
-      "createdBy": "user_9825123456",
-      "createdAt": "2026-09-14T14:24:10.221Z",
-      "updatedAt": "2026-09-14T14:24:10.221Z",
-      "lastMessage": null,
-      "unread": {
-        "user_9825123456": 0
-      },
-      "muted": [],
-      "typing": {},
-      "theme": "default",
-      "disappearingDuration": "off",
-      "activeCall": null
-    },
     "d_user_9825000002_user_9825123456": {
       "id": "d_user_9825000002_user_9825123456",
       "type": "direct",
       "memberIds": [
-        "user_9825123456",
         "user_9825000002",
-        "PcombNu6oNR4fVc3D3Y7dmmxaaV2"
+        "user_9825123456"
       ],
       "members": {
-        "user_9825123456": {
-          "id": "user_9825123456",
-          "name": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
-          "photo": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
-        },
         "user_9825000002": {
           "id": "user_9825000002",
           "name": "કિરીટભાઈ પટેલ (Ahmedabad Samaj Admin)",
-          "photo": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80"
+          "photo": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80",
+          "phone": "+919825000002"
         },
-        "PcombNu6oNR4fVc3D3Y7dmmxaaV2": {
-          "id": "PcombNu6oNR4fVc3D3Y7dmmxaaV2",
-          "name": "સભ્ય (0600)",
-          "photo": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80"
+        "user_9825123456": {
+          "id": "user_9825123456",
+          "name": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+          "photo": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+          "phone": "+919825123456"
         }
       },
       "samajId": "samaj_soni_surat",
       "createdBy": "user_9825123456",
       "createdAt": "2026-09-14T14:26:03.854Z",
-      "updatedAt": "2026-09-14T14:26:23.365Z",
+      "updatedAt": "2026-09-14T16:54:09.658Z",
       "lastMessage": {
-        "id": "msg_1789395983365_k5qs",
+        "id": "msg_1789404849658_m4zq",
         "text": "🚫 આ મેસેજ ડિલીટ થયો છે",
         "senderId": "user_9825123456",
         "senderName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
         "type": "text",
-        "createdAt": "2026-09-14T14:26:23.365Z"
+        "createdAt": "2026-09-14T16:54:09.658Z"
       },
       "unread": {
-        "user_9825123456": 0,
-        "user_9825000002": 2
+        "user_9825000002": 4,
+        "user_9825123456": 0
       },
       "muted": [],
       "typing": {
@@ -2648,48 +4676,55 @@
       "theme": "default",
       "disappearingDuration": "off",
       "activeCall": null
+    },
+    "d_mem_2_user_9574050600": {
+      "id": "d_mem_2_user_9574050600",
+      "type": "direct",
+      "memberIds": [
+        "mem_2",
+        "user_9574050600"
+      ],
+      "members": {
+        "mem_2": {
+          "id": "mem_2",
+          "name": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+          "photo": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+          "phone": "+919825123456"
+        },
+        "user_9574050600": {
+          "id": "user_9574050600",
+          "name": "સભ્ય (0600)",
+          "photo": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+          "phone": "+919574050600"
+        }
+      },
+      "samajId": "samaj_patidar_mehsana",
+      "createdBy": "user_9574050600",
+      "createdAt": "2026-09-15T13:40:30.328Z",
+      "updatedAt": "2026-09-15T13:40:45.104Z",
+      "lastMessage": {
+        "id": "msg_1789479637040_citu",
+        "text": "hi",
+        "senderId": "user_9574050600",
+        "senderName": "સભ્ય (0600)",
+        "type": "text",
+        "createdAt": "2026-09-15T13:40:37.040Z"
+      },
+      "unread": {
+        "mem_2": 1,
+        "user_9574050600": 0
+      },
+      "muted": [],
+      "typing": {
+        "user_9574050600": false
+      },
+      "theme": "default",
+      "disappearingDuration": "5m",
+      "activeCall": null
     }
   },
   "messagesMap": {
     "d_user_9825123456_user_demo_admin": [
-      {
-        "id": "msg_init_1",
-        "conversationId": "d_user_9825123456_user_demo_admin",
-        "senderId": "user_demo_admin",
-        "senderName": "રાજેશભાઈ પટેલ (Admin)",
-        "type": "text",
-        "text": "નમસ્તે પ્રિયંકાબેન, સમાજ કમિટીની મિટિંગ વિશે અપડેટ આપશો?",
-        "status": "read",
-        "deliveredTo": [
-          "user_9825123456"
-        ],
-        "readBy": [
-          "user_demo_admin",
-          "user_9825123456"
-        ],
-        "deletedFor": [],
-        "deleted": false,
-        "createdAt": "2026-09-13T13:30:12.301Z"
-      },
-      {
-        "id": "msg_init_2",
-        "conversationId": "d_user_9825123456_user_demo_admin",
-        "senderId": "user_9825123456",
-        "senderName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
-        "type": "text",
-        "text": "જય શ્રી કૃષ્ણ! આગામી સ્નેહમિલન માટે ક્યારે મળવું?",
-        "status": "read",
-        "deliveredTo": [
-          "user_demo_admin"
-        ],
-        "readBy": [
-          "user_demo_admin",
-          "user_9825123456"
-        ],
-        "deletedFor": [],
-        "deleted": false,
-        "createdAt": "2026-09-13T14:30:12.301Z"
-      },
       {
         "id": "msg_1789314549849_7x7w",
         "conversationId": "d_user_9825123456_user_demo_admin",
@@ -2700,10 +4735,13 @@
         "mediaUrl": "",
         "fileName": "",
         "replyTo": null,
-        "status": "sent",
-        "deliveredTo": [],
+        "status": "read",
+        "deliveredTo": [
+          "PcombNu6oNR4fVc3D3Y7dmmxaaV2"
+        ],
         "readBy": [
-          "user_9825123456"
+          "user_9825123456",
+          "PcombNu6oNR4fVc3D3Y7dmmxaaV2"
         ],
         "deletedFor": [],
         "deleted": false,
@@ -2720,10 +4758,13 @@
         "mediaUrl": "",
         "fileName": "",
         "replyTo": null,
-        "status": "sent",
-        "deliveredTo": [],
+        "status": "read",
+        "deliveredTo": [
+          "PcombNu6oNR4fVc3D3Y7dmmxaaV2"
+        ],
         "readBy": [
-          "user_9825123456"
+          "user_9825123456",
+          "PcombNu6oNR4fVc3D3Y7dmmxaaV2"
         ],
         "deletedFor": [],
         "deleted": false,
@@ -2740,10 +4781,13 @@
         "mediaUrl": "",
         "fileName": "",
         "replyTo": null,
-        "status": "sent",
-        "deliveredTo": [],
+        "status": "read",
+        "deliveredTo": [
+          "PcombNu6oNR4fVc3D3Y7dmmxaaV2"
+        ],
         "readBy": [
-          "user_9825123456"
+          "user_9825123456",
+          "PcombNu6oNR4fVc3D3Y7dmmxaaV2"
         ],
         "deletedFor": [],
         "deleted": false,
@@ -2760,6 +4804,201 @@
         "mediaUrl": "",
         "fileName": "",
         "replyTo": null,
+        "status": "read",
+        "deliveredTo": [
+          "PcombNu6oNR4fVc3D3Y7dmmxaaV2"
+        ],
+        "readBy": [
+          "user_9825123456",
+          "PcombNu6oNR4fVc3D3Y7dmmxaaV2"
+        ],
+        "deletedFor": [],
+        "deleted": false,
+        "disappearingDuration": "off",
+        "createdAt": "2026-09-14T15:12:21.605Z"
+      },
+      {
+        "id": "msg_1789403184529_cldu",
+        "conversationId": "d_user_9825123456_user_demo_admin",
+        "senderId": "user_9825123456",
+        "senderName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+        "type": "text",
+        "text": "નમસ્તે ભાઈ, જય શ્રી કૃષ્ણ!",
+        "mediaUrl": "",
+        "fileName": "",
+        "replyTo": null,
+        "status": "read",
+        "deliveredTo": [
+          "PcombNu6oNR4fVc3D3Y7dmmxaaV2"
+        ],
+        "readBy": [
+          "user_9825123456",
+          "PcombNu6oNR4fVc3D3Y7dmmxaaV2"
+        ],
+        "deletedFor": [],
+        "deleted": false,
+        "disappearingDuration": "off",
+        "createdAt": "2026-09-14T16:26:24.529Z"
+      },
+      {
+        "id": "msg_1789403258562_9ssq",
+        "conversationId": "d_user_9825123456_user_demo_admin",
+        "senderId": "user_9825123456",
+        "senderName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+        "type": "text",
+        "text": "નમસ્તે ભાઈ, જય શ્રી કૃષ્ણ!",
+        "mediaUrl": "",
+        "fileName": "",
+        "replyTo": null,
+        "status": "read",
+        "deliveredTo": [
+          "PcombNu6oNR4fVc3D3Y7dmmxaaV2"
+        ],
+        "readBy": [
+          "user_9825123456",
+          "PcombNu6oNR4fVc3D3Y7dmmxaaV2"
+        ],
+        "deletedFor": [],
+        "deleted": false,
+        "disappearingDuration": "off",
+        "createdAt": "2026-09-14T16:27:38.562Z"
+      },
+      {
+        "id": "msg_1789404139361_q68i",
+        "conversationId": "d_user_9825123456_user_demo_admin",
+        "senderId": "user_9825123456",
+        "senderName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+        "type": "text",
+        "text": "નમસ્તે ભાઈ, જય શ્રી કૃષ્ણ!",
+        "mediaUrl": "",
+        "fileName": "",
+        "replyTo": null,
+        "status": "read",
+        "deliveredTo": [
+          "PcombNu6oNR4fVc3D3Y7dmmxaaV2"
+        ],
+        "readBy": [
+          "user_9825123456",
+          "PcombNu6oNR4fVc3D3Y7dmmxaaV2"
+        ],
+        "deletedFor": [],
+        "deleted": false,
+        "disappearingDuration": "off",
+        "createdAt": "2026-09-14T16:42:19.361Z"
+      },
+      {
+        "id": "msg_1789404842241_fa14",
+        "conversationId": "d_user_9825123456_user_demo_admin",
+        "senderId": "user_9825123456",
+        "senderName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+        "type": "text",
+        "text": "નમસ્તે ભાઈ, જય શ્રી કૃષ્ણ!",
+        "mediaUrl": "",
+        "fileName": "",
+        "replyTo": null,
+        "status": "sent",
+        "deliveredTo": [],
+        "readBy": [
+          "user_9825123456"
+        ],
+        "deletedFor": [],
+        "deleted": false,
+        "disappearingDuration": "5m",
+        "createdAt": "2026-09-14T16:54:02.241Z"
+      },
+      {
+        "id": "msg_1789406993727_pjdk",
+        "conversationId": "d_user_9825123456_user_demo_admin",
+        "senderId": "user_9825123456",
+        "senderName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+        "type": "text",
+        "text": "નમસ્તે ભાઈ, જય શ્રી કૃષ્ણ!",
+        "mediaUrl": "",
+        "fileName": "",
+        "replyTo": null,
+        "status": "sent",
+        "deliveredTo": [],
+        "readBy": [
+          "user_9825123456"
+        ],
+        "deletedFor": [],
+        "deleted": false,
+        "disappearingDuration": "5m",
+        "createdAt": "2026-09-14T17:29:53.727Z"
+      },
+      {
+        "id": "msg_1789407080982_90ed",
+        "conversationId": "d_user_9825123456_user_demo_admin",
+        "senderId": "user_9825123456",
+        "senderName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+        "type": "text",
+        "text": "નમસ્તે ભાઈ, જય શ્રી કૃષ્ણ!",
+        "mediaUrl": "",
+        "fileName": "",
+        "replyTo": null,
+        "status": "sent",
+        "deliveredTo": [],
+        "readBy": [
+          "user_9825123456"
+        ],
+        "deletedFor": [],
+        "deleted": false,
+        "disappearingDuration": "5m",
+        "createdAt": "2026-09-14T17:31:20.982Z"
+      },
+      {
+        "id": "msg_1789409113697_9n5a",
+        "conversationId": "d_user_9825123456_user_demo_admin",
+        "senderId": "user_9825123456",
+        "senderName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+        "type": "text",
+        "text": "નમસ્તે ભાઈ, જય શ્રી કૃષ્ણ!",
+        "mediaUrl": "",
+        "fileName": "",
+        "replyTo": null,
+        "status": "sent",
+        "deliveredTo": [],
+        "readBy": [
+          "user_9825123456"
+        ],
+        "deletedFor": [],
+        "deleted": false,
+        "disappearingDuration": "5m",
+        "createdAt": "2026-09-14T18:05:13.697Z"
+      },
+      {
+        "id": "msg_1789410250686_7w9w",
+        "conversationId": "d_user_9825123456_user_demo_admin",
+        "senderId": "user_9825123456",
+        "senderName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+        "type": "text",
+        "text": "નમસ્તે ભાઈ, જય શ્રી કૃષ્ણ!",
+        "mediaUrl": "",
+        "fileName": "",
+        "replyTo": null,
+        "status": "sent",
+        "deliveredTo": [],
+        "readBy": [
+          "user_9825123456"
+        ],
+        "deletedFor": [],
+        "deleted": false,
+        "disappearingDuration": "5m",
+        "createdAt": "2026-09-14T18:24:10.686Z"
+      }
+    ],
+    "d_PcombNu6oNR4fVc3D3Y7dmmxaaV2_user_demo_admin": [],
+    "undefined": [
+      {
+        "id": "msg_1789407073428_cu8l",
+        "conversationId": "undefined",
+        "senderId": "user_9825123456",
+        "senderName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+        "type": "text",
+        "text": "જય શ્રી કૃષ્ણ! કેમ છો ડૉક્ટર સાહેબ?",
+        "mediaUrl": "",
+        "fileName": "",
+        "replyTo": null,
         "status": "sent",
         "deliveredTo": [],
         "readBy": [
@@ -2768,11 +5007,49 @@
         "deletedFor": [],
         "deleted": false,
         "disappearingDuration": "off",
-        "createdAt": "2026-09-14T15:12:21.605Z"
+        "createdAt": "2026-09-14T17:31:13.428Z"
+      },
+      {
+        "id": "msg_1789409111954_kn8u",
+        "conversationId": "undefined",
+        "senderId": "user_9825123456",
+        "senderName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+        "type": "text",
+        "text": "જય શ્રી કૃષ્ણ! કેમ છો ડૉક્ટર સાહેબ?",
+        "mediaUrl": "",
+        "fileName": "",
+        "replyTo": null,
+        "status": "sent",
+        "deliveredTo": [],
+        "readBy": [
+          "user_9825123456"
+        ],
+        "deletedFor": [],
+        "deleted": false,
+        "disappearingDuration": "off",
+        "createdAt": "2026-09-14T18:05:11.954Z"
+      },
+      {
+        "id": "msg_1789410244987_w8uz",
+        "conversationId": "undefined",
+        "senderId": "user_9825123456",
+        "senderName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+        "type": "text",
+        "text": "જય શ્રી કૃષ્ણ! કેમ છો ડૉક્ટર સાહેબ?",
+        "mediaUrl": "",
+        "fileName": "",
+        "replyTo": null,
+        "status": "sent",
+        "deliveredTo": [],
+        "readBy": [
+          "user_9825123456"
+        ],
+        "deletedFor": [],
+        "deleted": false,
+        "disappearingDuration": "off",
+        "createdAt": "2026-09-14T18:24:04.987Z"
       }
     ],
-    "d_PcombNu6oNR4fVc3D3Y7dmmxaaV2_user_demo_admin": [],
-    "undefined": [],
     "d_user_9825000002_user_9825123456": [
       {
         "id": "msg_1789395963858_xz92",
@@ -2784,10 +5061,13 @@
         "mediaUrl": "",
         "fileName": "",
         "replyTo": null,
-        "status": "sent",
-        "deliveredTo": [],
+        "status": "read",
+        "deliveredTo": [
+          "PcombNu6oNR4fVc3D3Y7dmmxaaV2"
+        ],
         "readBy": [
-          "user_9825123456"
+          "user_9825123456",
+          "PcombNu6oNR4fVc3D3Y7dmmxaaV2"
         ],
         "deletedFor": [],
         "deleted": true,
@@ -2806,6 +5086,56 @@
         "mediaUrl": "",
         "fileName": "",
         "replyTo": null,
+        "status": "read",
+        "deliveredTo": [
+          "PcombNu6oNR4fVc3D3Y7dmmxaaV2"
+        ],
+        "readBy": [
+          "user_9825123456",
+          "PcombNu6oNR4fVc3D3Y7dmmxaaV2"
+        ],
+        "deletedFor": [],
+        "deleted": true,
+        "disappearingDuration": "off",
+        "createdAt": "2026-09-14T14:26:23.365Z",
+        "edited": true,
+        "editedAt": "2026-09-14T14:26:23.369Z"
+      },
+      {
+        "id": "msg_1789398742476_sdyp",
+        "conversationId": "d_user_9825000002_user_9825123456",
+        "senderId": "user_9825123456",
+        "senderName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+        "type": "text",
+        "text": "",
+        "mediaUrl": "",
+        "fileName": "",
+        "replyTo": null,
+        "status": "read",
+        "deliveredTo": [
+          "PcombNu6oNR4fVc3D3Y7dmmxaaV2"
+        ],
+        "readBy": [
+          "user_9825123456",
+          "PcombNu6oNR4fVc3D3Y7dmmxaaV2"
+        ],
+        "deletedFor": [],
+        "deleted": true,
+        "disappearingDuration": "off",
+        "createdAt": "2026-09-14T15:12:22.476Z",
+        "edited": true,
+        "editedAt": "2026-09-14T15:12:22.479Z"
+      },
+      {
+        "id": "msg_1789404849658_m4zq",
+        "conversationId": "d_user_9825000002_user_9825123456",
+        "senderId": "user_9825123456",
+        "senderName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
+        "type": "text",
+        "text": "",
+        "mediaUrl": "",
+        "fileName": "",
+        "replyTo": null,
         "status": "sent",
         "deliveredTo": [],
         "readBy": [
@@ -2814,9 +5144,51 @@
         "deletedFor": [],
         "deleted": true,
         "disappearingDuration": "off",
-        "createdAt": "2026-09-14T14:26:23.365Z",
+        "createdAt": "2026-09-14T16:54:09.658Z",
         "edited": true,
-        "editedAt": "2026-09-14T14:26:23.369Z"
+        "editedAt": "2026-09-14T16:54:09.662Z"
+      }
+    ],
+    "d_mem_2_user_9574050600": [
+      {
+        "id": "msg_1789479637040_citu",
+        "conversationId": "d_mem_2_user_9574050600",
+        "senderId": "user_9574050600",
+        "senderName": "સભ્ય (0600)",
+        "type": "text",
+        "text": "hi",
+        "mediaUrl": "",
+        "fileName": "",
+        "replyTo": null,
+        "status": "sent",
+        "deliveredTo": [],
+        "readBy": [
+          "user_9574050600"
+        ],
+        "deletedFor": [],
+        "deleted": false,
+        "disappearingDuration": "off",
+        "createdAt": "2026-09-15T13:40:37.040Z"
+      },
+      {
+        "id": "sys_1789479645104",
+        "conversationId": "d_mem_2_user_9574050600",
+        "senderId": "system",
+        "senderName": "સિસ્ટમ",
+        "type": "text",
+        "text": "⏱️ સભ્ય (0600) એ અદ્રશ્ય થતા સંદેશા બદલ્યા: 5 મિનિટ (5 Minutes)",
+        "status": "read",
+        "deliveredTo": [
+          "user_9574050600",
+          "mem_2"
+        ],
+        "readBy": [
+          "user_9574050600",
+          "mem_2"
+        ],
+        "deletedFor": [],
+        "deleted": false,
+        "createdAt": "2026-09-15T13:40:45.104Z"
       }
     ]
   },
@@ -2825,5 +5197,5 @@
     "requireVerificationForPosting": false,
     "maintenanceMode": false
   },
-  "savedAt": "2026-09-14T15:12:21.942Z"
+  "savedAt": "2026-09-15T13:40:45.404Z"
 }

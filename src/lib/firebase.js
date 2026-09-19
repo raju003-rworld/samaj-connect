@@ -19,11 +19,17 @@ const cfg = {
 };
 
 const hasRealFirebase = Boolean(cfg.apiKey);
+// Cloud Firestore should only be initialized if explicitly enabled by environment variable,
+// otherwise the app uses its robust, built-in server-side persistence and REST APIs.
+const hasRealFirestore = Boolean(
+  hasRealFirebase &&
+  (process.env.REACT_APP_ENABLE_FIRESTORE === "true" || process.env.VITE_ENABLE_FIRESTORE === "true")
+);
 
 export const fbApp = getApps()[0] || initializeApp(cfg);
-const realAuth = getAuth(fbApp);
-export const fdb = getFirestore(fbApp);
-export const storage = getStorage(fbApp);
+const realAuth = hasRealFirebase ? getAuth(fbApp) : null;
+export const fdb = hasRealFirestore ? getFirestore(fbApp) : null;
+export const storage = hasRealFirebase ? getStorage(fbApp) : null;
 
 // Mock Auth system when running in local/demo mode without Firebase credentials
 const DEMO_USER_KEY = "sc_demo_authenticated";
@@ -101,7 +107,16 @@ export const auth = {
 };
 
 let recaptcha = null;
-export const startPhoneSignIn = async (phone, containerId = "recaptcha-container") => {
+export const clearRecaptcha = () => {
+  if (recaptcha) {
+    try {
+      recaptcha.clear();
+    } catch {}
+    recaptcha = null;
+  }
+};
+
+export const startPhoneSignIn = async (phone, containerId = "recaptcha-container", preferredSize = "invisible") => {
   if (!hasRealFirebase) {
     throw new Error("Firebase Auth is not configured");
   }
@@ -111,25 +126,40 @@ export const startPhoneSignIn = async (phone, containerId = "recaptcha-container
     containerEl.innerHTML = "";
   }
 
-  if (recaptcha) {
-    try {
-      recaptcha.clear();
-    } catch {}
-    recaptcha = null;
+  clearRecaptcha();
+
+  try {
+    recaptcha = new RecaptchaVerifier(realAuth, containerEl || containerId, {
+      size: preferredSize,
+      callback: () => {
+        // reCAPTCHA solved
+      },
+      "expired-callback": () => {
+        // Response expired
+      },
+    });
+
+    await recaptcha.render();
+    return await signInWithPhoneNumber(realAuth, phone, recaptcha);
+  } catch (err) {
+    // If invisible reCAPTCHA fails in Android WebView due to app credential attestation,
+    // automatically fallback to interactive visible reCAPTCHA ('normal' size) so user can complete it.
+    if (preferredSize === "invisible" && (err?.code === "auth/invalid-app-credential" || err?.code === "auth/captcha-check-failed")) {
+      console.warn("Invisible reCAPTCHA failed, retrying with interactive normal reCAPTCHA in WebView...");
+      clearRecaptcha();
+      if (containerEl) {
+        containerEl.innerHTML = "";
+      }
+      recaptcha = new RecaptchaVerifier(realAuth, containerEl || containerId, {
+        size: "normal",
+        callback: () => {},
+        "expired-callback": () => {},
+      });
+      await recaptcha.render();
+      return await signInWithPhoneNumber(realAuth, phone, recaptcha);
+    }
+    throw err;
   }
-
-  recaptcha = new RecaptchaVerifier(realAuth, containerEl || containerId, {
-    size: "invisible",
-    callback: () => {
-      // reCAPTCHA solved
-    },
-    "expired-callback": () => {
-      // Response expired
-    },
-  });
-
-  await recaptcha.render();
-  return await signInWithPhoneNumber(realAuth, phone, recaptcha);
 };
 
 export const signInCustom = async (token, phone = "+919876543210") => {
@@ -161,6 +191,7 @@ export const signInCustom = async (token, phone = "+919876543210") => {
 export const fbSignOut = async () => {
   mockCurrentUser = null;
   localStorage.removeItem(DEMO_USER_KEY);
+  localStorage.removeItem("sc_cached_user");
   notifyAuthListeners();
   if (hasRealFirebase) {
     try {
@@ -174,7 +205,9 @@ export const getIdToken = async () => (auth.currentUser ? auth.currentUser.getId
 
 // Downscale large images client-side (max 1600px, JPEG 0.85) for faster upload/loading
 const compressImage = (file) => new Promise((resolve) => {
-  if (!file.type.startsWith("image/") || file.type === "image/gif" || file.size < 400 * 1024) return resolve(file);
+  if (!file || !file.type || !file.type.startsWith("image/") || file.type === "image/gif" || file.size < 400 * 1024) {
+    return resolve(file);
+  }
   const img = new Image();
   const url = URL.createObjectURL(file);
   img.onload = () => {
@@ -183,78 +216,162 @@ const compressImage = (file) => new Promise((resolve) => {
     const c = document.createElement("canvas");
     c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
     c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
-    c.toBlob((b) => { URL.revokeObjectURL(url); resolve(b ? new File([b], file.name.replace(/\.\w+$/, ".jpg"), { type: "image/jpeg" }) : file); }, "image/jpeg", 0.85);
+    c.toBlob((b) => { URL.revokeObjectURL(url); resolve(b ? new File([b], (file.name || "image.jpg").replace(/\.\w+$/, ".jpg"), { type: "image/jpeg" }) : file); }, "image/jpeg", 0.85);
   };
   img.onerror = () => resolve(file);
   img.src = url;
 });
 
-// Upload to Storage under uploads/{uid}/{kind}/ — returns download URL
+// Upload to Storage under uploads/{uid}/{kind}/ — returns download URL or base64 fallback
 export const uploadFile = async (rawFile, kind = "media", onProgress) => {
-  const uid = auth.currentUser?.uid;
-  if (!uid) throw new Error("Not signed in");
+  if (!rawFile) throw new Error("કોઈ ફાઈલ પસંદ કરેલ નથી (No file selected)");
+  if (rawFile.size > 100 * 1024 * 1024) {
+    throw new Error("ફાઈલ સાઈઝ 100MB કરતાં વધુ હોઈ શકશે નહીં (File size exceeds 100MB limit)");
+  }
+
+  const uid = auth.currentUser?.uid || "user";
   const file = await compressImage(rawFile);
-  if (!hasRealFirebase) {
-    // Return a base64 or blob URL in demo mode
-    return new Promise((resolve) => {
+  const readBase64 = () =>
+    new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => {
         onProgress?.(100);
         resolve(reader.result);
       };
+      reader.onerror = () => reject(new Error("ફાઈલ વાંચવામાં ભૂલ આવી (Error reading file)"));
       reader.readAsDataURL(file);
     });
+
+  if (!hasRealFirebase || !storage) {
+    return readBase64();
   }
+
   return new Promise((resolve, reject) => {
-    const safe = file.name.replace(/[^\w.\-]/g, "_");
-    const r = ref(storage, `uploads/${uid}/${kind}/${Date.now()}_${safe}`);
-    const task = uploadBytesResumable(r, file, { contentType: file.type });
-    task.on("state_changed",
-      (s) => onProgress?.(Math.round((s.bytesTransferred / s.totalBytes) * 100)),
-      reject,
-      async () => resolve(await getDownloadURL(task.snapshot.ref)));
+    try {
+      const safe = (file.name || `file_${Date.now()}`).replace(/[^\w.\-]/g, "_");
+      const contentType = file.type || (kind === "reels" ? "video/mp4" : "application/octet-stream");
+      const r = ref(storage, `uploads/${uid}/${kind}/${Date.now()}_${safe}`);
+      const task = uploadBytesResumable(r, file, { contentType });
+      task.on(
+        "state_changed",
+        (s) => {
+          if (s.totalBytes > 0) {
+            const pct = Math.min(99, Math.round((s.bytesTransferred / s.totalBytes) * 100));
+            onProgress?.(pct);
+          }
+        },
+        (err) => {
+          console.warn("Storage upload failed, fallback to local base64:", err?.message || err);
+          readBase64().then(resolve).catch(reject);
+        },
+        async () => {
+          try {
+            const downloadUrl = await getDownloadURL(task.snapshot.ref);
+            onProgress?.(100);
+            resolve(downloadUrl);
+          } catch {
+            readBase64().then(resolve).catch(reject);
+          }
+        }
+      );
+    } catch (err) {
+      console.warn("Storage upload exception, fallback to local:", err?.message || err);
+      readBase64().then(resolve).catch(reject);
+    }
   });
 };
 
 // Realtime helpers (reads are guarded by Firestore rules; writes go via backend API)
 const withId = (s) => ({ id: s.id, ...s.data() });
 export const listenMessages = (cid, cb) => {
-  if (!hasRealFirebase) return () => {};
-  return fbOnSnapshot(query(collection(fdb, "conversations", cid, "messages"), orderBy("createdAt", "asc"), limit(200)),
-    (snap) => cb(snap.docs.map(withId)), (e) => console.warn("messages listener", e.message));
+  if (!hasRealFirestore || !fdb) return () => {};
+  try {
+    return fbOnSnapshot(
+      query(collection(fdb, "conversations", cid, "messages"), orderBy("createdAt", "asc"), limit(200)),
+      (snap) => cb(snap.docs.map(withId)),
+      (e) => console.warn("messages listener", e.message)
+    );
+  } catch {
+    return () => {};
+  }
 };
 
 export const listenConversation = (cid, cb) => {
-  if (!hasRealFirebase) return () => {};
-  return fbOnSnapshot(doc(fdb, "conversations", cid), (s) => s.exists() && cb(withId(s)), (e) => console.warn(e.message));
+  if (!hasRealFirestore || !fdb) return () => {};
+  try {
+    return fbOnSnapshot(
+      doc(fdb, "conversations", cid),
+      (s) => s.exists() && cb(withId(s)),
+      (e) => console.warn(e.message)
+    );
+  } catch {
+    return () => {};
+  }
 };
 
 export const listenConversations = (uid, cb) => {
-  if (!hasRealFirebase) return () => {};
-  return fbOnSnapshot(query(collection(fdb, "conversations"), where("memberIds", "array-contains", uid)),
-    (snap) => cb(snap.docs.map(withId).sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""))), (e) => console.warn(e.message));
+  if (!hasRealFirestore || !fdb) return () => {};
+  try {
+    return fbOnSnapshot(
+      query(collection(fdb, "conversations"), where("memberIds", "array-contains", uid)),
+      (snap) => cb(snap.docs.map(withId).sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""))),
+      (e) => console.warn(e.message)
+    );
+  } catch {
+    return () => {};
+  }
 };
 
 export const listenNotifications = (uid, cb) => {
-  if (!hasRealFirebase) return () => {};
-  return fbOnSnapshot(query(collection(fdb, "notifications"), where("userId", "==", uid)),
-    (snap) => cb(snap.docs.map(withId).sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""))), (e) => console.warn(e.message));
+  if (!hasRealFirestore || !fdb) return () => {};
+  try {
+    return fbOnSnapshot(
+      query(collection(fdb, "notifications"), where("userId", "==", uid)),
+      (snap) => cb(snap.docs.map(withId).sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""))),
+      (e) => console.warn(e.message)
+    );
+  } catch {
+    return () => {};
+  }
 };
 
 export const listenLive = (lid, cb) => {
-  if (!hasRealFirebase) return () => {};
-  return fbOnSnapshot(doc(fdb, "liveSessions", lid), (s) => s.exists() && cb(withId(s)), (e) => console.warn(e.message));
+  if (!hasRealFirestore || !fdb) return () => {};
+  try {
+    return fbOnSnapshot(
+      doc(fdb, "liveSessions", lid),
+      (s) => s.exists() && cb(withId(s)),
+      (e) => console.warn(e.message)
+    );
+  } catch {
+    return () => {};
+  }
 };
 
 export const listenLiveChat = (lid, cb) => {
-  if (!hasRealFirebase) return () => {};
-  return fbOnSnapshot(query(collection(fdb, "liveSessions", lid, "chat"), orderBy("createdAt", "asc"), limit(200)),
-    (snap) => cb(snap.docs.map(withId).filter((m) => !m.hidden)), (e) => console.warn(e.message));
+  if (!hasRealFirestore || !fdb) return () => {};
+  try {
+    return fbOnSnapshot(
+      query(collection(fdb, "liveSessions", lid, "chat"), orderBy("createdAt", "asc"), limit(200)),
+      (snap) => cb(snap.docs.map(withId).filter((m) => !m.hidden)),
+      (e) => console.warn(e.message)
+    );
+  } catch {
+    return () => {};
+  }
 };
 
 export const listenPresence = (uid, cb) => {
-  if (!hasRealFirebase) return () => {};
-  return fbOnSnapshot(doc(fdb, "presence", uid), (s) => cb(s.exists() ? s.data() : null), () => {});
+  if (!hasRealFirestore || !fdb) return () => {};
+  try {
+    return fbOnSnapshot(
+      doc(fdb, "presence", uid),
+      (s) => cb(s.exists() ? s.data() : null),
+      () => {}
+    );
+  } catch {
+    return () => {};
+  }
 };
 
 // ---- FCM push (requires REACT_APP_FIREBASE_VAPID_KEY; silently skipped otherwise) ----

@@ -16,6 +16,9 @@ import {
   X,
   MessageSquare,
   Users,
+  Upload,
+  Camera,
+  Film,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { useApp } from "@/context/AppContext";
@@ -53,7 +56,35 @@ export default function MaranNodh() {
     try {
       setLoading(true);
       const { data } = await api.get("/maran-nodh");
-      setRecords(data?.records || []);
+      const raw = data?.records || data?.items || [];
+      const normalized = raw.map((r) => ({
+        ...r,
+        id: r.id,
+        name: r.name || r.deceasedName || "સ્વર્ગસ્થ સભ્ય",
+        deceasedName: r.deceasedName || r.name || "સ્વર્ગસ્થ સભ્ય",
+        age: r.age,
+        deathDate: r.deathDate || r.passedDate || "",
+        passedDate: r.passedDate || r.deathDate || "",
+        village: r.village || "",
+        currentCity: r.currentCity || "",
+        photo: r.photo || (r.gender === "female"
+          ? "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&auto=format&fit=crop&q=80"
+          : "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&auto=format&fit=crop&q=80"),
+        besnuDate: r.besnuDate || "",
+        besnuTime: r.besnuTime || "",
+        besnuVenue: r.besnuVenue || "",
+        tributes: r.tributes || {
+          diya: r.diyaCount || 0,
+          flower: r.flowerCount || 0,
+        },
+        familyMembers: Array.isArray(r.familyMembers)
+          ? r.familyMembers
+          : (r.grievingFamily ? r.grievingFamily.split(",").map((s) => s.trim()).filter(Boolean) : []),
+        contactPhone: r.contactPhone || "",
+        notes: r.notes || "",
+        condolences: r.condolences || [],
+      }));
+      setRecords(normalized);
     } catch {
       toast.error("મરણ નોંધ ડેટા લોડ કરવામાં ભૂલ આવી");
     } finally {
@@ -65,23 +96,44 @@ export default function MaranNodh() {
     fetchRecords();
   }, []);
 
+  const handlePhotoFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error("ફોટો સાઈઝ 8MB કરતાં નાની હોવી જોઈએ");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setFormPhoto(reader.result);
+      toast.success("ફોટો પસંદ થયો");
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleCreate = async (e) => {
     e.preventDefault();
-    if (!formName.trim() || !formDeathDate) {
-      toast.error("કૃપા કરીને નામ અને સ્વર્ગવાસ તારીખ દાખલ કરો");
+    const cleanName = formName.trim();
+    if (!cleanName) {
+      toast.error("કૃપા કરીને સ્વર્ગસ્થનું નામ દાખલ કરો");
       return;
     }
 
+    const dDate = formDeathDate || new Date().toISOString().split("T")[0];
+
     const payload = {
-      name: formName.trim(),
+      deceasedName: cleanName,
+      name: cleanName,
       age: formAge ? Number(formAge) : undefined,
-      deathDate: formDeathDate,
+      deathDate: dDate,
+      passedDate: dDate,
       village: formVillage.trim(),
       currentCity: formCity.trim(),
       photo: formPhoto.trim(),
       besnuDate: formBesnuDate,
       besnuTime: formBesnuTime.trim(),
       besnuVenue: formBesnuVenue.trim(),
+      grievingFamily: formFamilyMembers.trim(),
       familyMembers: formFamilyMembers
         ? formFamilyMembers.split(",").map((s) => s.trim()).filter(Boolean)
         : [],
@@ -91,7 +143,7 @@ export default function MaranNodh() {
 
     try {
       await api.post("/maran-nodh", payload);
-      toast.success("મરણ નોંધ / બેસણું સફળતાપૂર્વક પ્રસિદ્ધ કરવામાં આવ્યું");
+      toast.success("મરણ નોંધ અને શ્રદ્ધાંજલિ રીલ સફળતાપૂર્વક પ્રસિદ્ધ થઈ! 🕊️");
       setModalOpen(false);
       // Reset
       setFormName("");
@@ -106,8 +158,9 @@ export default function MaranNodh() {
       setFormContactPhone("");
       setFormNotes("");
       fetchRecords();
-    } catch {
-      toast.error("પ્રસિદ્ધ કરવામાં ભૂલ આવી. ફરી પ્રયત્ન કરો.");
+    } catch (err) {
+      const msg = err?.response?.data?.error || err?.response?.data?.detail || "પ્રસિદ્ધ કરવામાં ભૂલ આવી. ફરી પ્રયત્ન કરો.";
+      toast.error(msg);
     }
   };
 
@@ -190,13 +243,19 @@ export default function MaranNodh() {
           <p className="text-amber-200/80 text-xs sm:text-sm pl-9 max-w-xl">
             સમાજના સ્વર્ગસ્થ વડીલો તથા સ્વજનોને ભાવભીની શ્રદ્ધાંજલિ, બેસણા અને સાંત્વના પાઠવવાનું સત્તાવાર મંચ
           </p>
-          <div className="pt-2 pl-9">
+          <div className="pt-2 pl-9 flex items-center gap-2 flex-wrap">
             <button
               data-testid="add-maran-nodh-btn"
               onClick={() => setModalOpen(true)}
               className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-stone-950 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow-md active:scale-95 transition-all"
             >
               <Plus className="w-4 h-4 stroke-[3]" /> + નવી મરણ નોંધ / બેસણું ઉમેરો
+            </button>
+            <button
+              onClick={() => nav("/reels")}
+              className="px-4 py-2 bg-stone-900 hover:bg-stone-800 text-amber-300 border border-amber-400/40 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow-md active:scale-95 transition-all"
+            >
+              <Film className="w-4 h-4 text-amber-400" /> 🎥 શ્રદ્ધાંજલિ રીલ્સ જુઓ (Reels)
             </button>
           </div>
         </div>
@@ -294,14 +353,24 @@ export default function MaranNodh() {
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => handleShare(r)}
-                      className="p-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-semibold flex items-center gap-1.5 transition-colors self-start"
-                      title="વોટ્સએપ પર શેર કરો"
-                    >
-                      <Share2 className="w-3.5 h-3.5" />
-                      <span>શેર કરો</span>
-                    </button>
+                    <div className="flex items-center gap-1.5 self-start flex-wrap">
+                      <button
+                        onClick={() => nav(`/reels?maranId=${r.id}`)}
+                        className="p-2 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-200 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                        title="રીલમાં શ્રદ્ધાંજલિ જુઓ"
+                      >
+                        <Film className="w-3.5 h-3.5 text-purple-700" />
+                        <span>રીલમાં જુઓ</span>
+                      </button>
+                      <button
+                        onClick={() => handleShare(r)}
+                        className="p-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                        title="વોટ્સએપ પર શેર કરો"
+                      >
+                        <Share2 className="w-3.5 h-3.5" />
+                        <span>શેર કરો</span>
+                      </button>
+                    </div>
                   </div>
 
                   {/* Death Date */}
@@ -522,16 +591,34 @@ export default function MaranNodh() {
                 </div>
               </div>
 
-              {/* Photo URL */}
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">સ્વર્ગસ્થ ફોટો લિંક (Photo URL)</label>
-                <input
-                  type="url"
-                  value={formPhoto}
-                  onChange={(e) => setFormPhoto(e.target.value)}
-                  placeholder="https://..."
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-300 focus:bg-white text-xs"
-                />
+              {/* Photo Upload or URL */}
+              <div className="space-y-1.5">
+                <label className="block font-bold text-slate-700">
+                  સ્વર્ગસ્થ ફોટો (ગેલરીમાંથી અથવા લિંક)
+                </label>
+                <div className="flex items-center gap-3 p-2 bg-amber-50/60 border border-amber-200/80 rounded-2xl">
+                  <div className="w-14 h-16 rounded-xl bg-amber-100/70 border-2 border-dashed border-amber-300 grid place-items-center overflow-hidden shrink-0">
+                    {formPhoto ? (
+                      <img src={formPhoto} alt="preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <Camera className="w-5 h-5 text-amber-600" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0 space-y-1.5">
+                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 text-xs font-bold cursor-pointer transition shadow-xs">
+                      <Upload className="w-3.5 h-3.5 stroke-[2.5]" />
+                      <span>{formPhoto ? "ફોટો બદલો" : "મોબાઇલ ગેલરી / કેમેરા માંથી લો"}</span>
+                      <input type="file" accept="image/*" className="hidden" onChange={handlePhotoFile} />
+                    </label>
+                    <input
+                      type="url"
+                      value={formPhoto.startsWith("data:") ? "" : formPhoto}
+                      onChange={(e) => setFormPhoto(e.target.value)}
+                      placeholder="અથવા ફોટો વેબ લિંક (https://...) પેસ્ટ કરો"
+                      className="w-full p-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-300 text-xs"
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Besnu details group */}
