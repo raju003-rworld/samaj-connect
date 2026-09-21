@@ -79,7 +79,7 @@ agenthub/agents/youtube/db
 memory/test_credentials.md
 
 # Mobile development
-android-sdk/backend/firebase-admin.json
+android-sdk/
 frontend/node_modules/.cache/default-development/9.pack
 frontend/node_modules/.cache/default-development/2.pack
 frontend/node_modules/.cache/default-development/3.pack
@@ -87,9 +87,22 @@ frontend/node_modules/.cache/default-development/4.pack
 .env
 .env.*
 *.env
+!.env.example
 credentials.json
 *.key
 .credentials
 frontend/node_modules/.cache/default-development/0.pack
 frontend/node_modules/.cache/default-development/7.pack
 frontend/node_modules/.cache/default-development/1.pack
+
+# Service account keys and other secrets - NEVER commit these
+backend/firebase-admin.json
+firebase-admin.json
+**/firebase-admin*.json
+**/*firebase-adminsdk*.json
+**/service-account*.json
+**/serviceAccount*.json
+**/*-service-account.json
+*.p12
+*.jks
+*.keystore
