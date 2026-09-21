@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Phone, MessageCircle, Share2, Plus, ChevronRight } from "lucide-react";
+import { Search, Phone, Video, MessageCircle, Share2, Plus, ChevronRight } from "lucide-react";
 import { api } from "@/lib/api";
 import { useApp } from "@/context/AppContext";
 import { IDS } from "@/constants/testIds";
@@ -24,6 +24,23 @@ export default function Members() {
   const [filter, setFilter] = useState("all");
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  const startInAppCall = async (m, callType = "voice") => {
+    try {
+      const { data } = await api.post("/conversations/direct", {
+        userId: m.userId || m.id,
+        phone: m.mobile,
+      });
+      const cid = data?.conversation?.id || data?.id;
+      if (cid) {
+        nav(`/messages/${cid}?autoCall=${callType}`);
+      } else {
+        callNumber(m.mobile);
+      }
+    } catch {
+      callNumber(m.mobile);
+    }
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -100,9 +117,40 @@ export default function Members() {
               <div className="text-xs text-purple-800 font-medium mt-0.5">📞 {m.mobile}</div>
             </button>
             <div className="flex items-center gap-1.5">
-              <button data-testid={`member-call-${m.id}`} onClick={() => callNumber(m.mobile)} className="px-3 py-1.5 bg-purple-900 hover:bg-purple-950 text-white text-xs font-semibold rounded-full flex items-center gap-1"><Phone className="w-3.5 h-3.5" />{t("call")}</button>
-              <button data-testid={`member-whatsapp-${m.id}`} onClick={() => openWhatsApp(m.mobile)} className="p-2 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"><MessageCircle className="w-4 h-4" /></button>
-              <button data-testid={`member-share-${m.id}`} onClick={() => navigator.share?.({ title: m.name, text: `${m.name} — ${m.mobile}` }).catch(() => {})} className="p-2 rounded-full bg-slate-50 text-slate-600 border border-slate-200 hidden sm:inline-flex"><Share2 className="w-4 h-4" /></button>
+              <button
+                data-testid={`member-call-${m.id}`}
+                onClick={() => startInAppCall(m, "voice")}
+                className="px-2.5 py-1.5 bg-purple-900 hover:bg-purple-950 text-white text-xs font-semibold rounded-full flex items-center gap-1"
+                title="ઇન્ટરનેટ વૉઇસ કૉલ"
+              >
+                <Phone className="w-3.5 h-3.5" />
+                <span className="hidden xs:inline">{t("call")}</span>
+              </button>
+              <button
+                data-testid={`member-video-${m.id}`}
+                onClick={() => startInAppCall(m, "video")}
+                className="p-1.5 sm:px-2.5 sm:py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-full flex items-center gap-1"
+                title="વિડિઓ કૉલ"
+              >
+                <Video className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">વિડિઓ</span>
+              </button>
+              <button
+                data-testid={`member-whatsapp-${m.id}`}
+                onClick={() => openWhatsApp(m.mobile)}
+                className="p-2 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
+                title="WhatsApp"
+              >
+                <MessageCircle className="w-4 h-4" />
+              </button>
+              <button
+                data-testid={`member-share-${m.id}`}
+                onClick={() => navigator.share?.({ title: m.name, text: `${m.name} — ${m.mobile}` }).catch(() => {})}
+                className="p-2 rounded-full bg-slate-50 text-slate-600 border border-slate-200 hidden sm:inline-flex"
+                title="શેર"
+              >
+                <Share2 className="w-4 h-4" />
+              </button>
               <ChevronRight className="w-4 h-4 text-slate-400 hidden sm:block" />
             </div>
           </div>

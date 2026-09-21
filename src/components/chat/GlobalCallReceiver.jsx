@@ -57,11 +57,19 @@ export default function GlobalCallReceiver() {
     };
   }, [user?.id, location.pathname, inCallOverlay]);
 
+  const userDigits = user?.phone ? user.phone.replace(/\D/g, "").slice(-10) : "";
+  const isMatchUser = (targetId) => {
+    if (!targetId || !user) return false;
+    if (targetId === user.id) return true;
+    if (userDigits && (targetId === `user_${userDigits}` || targetId.includes(userDigits))) return true;
+    return false;
+  };
+
   // Handle ringing chime for incoming calls
   useEffect(() => {
     const isIncoming =
       activeCallData?.call &&
-      activeCallData.call.receiverId === user?.id &&
+      (activeCallData.isIncoming || isMatchUser(activeCallData.call.receiverId)) &&
       (activeCallData.call.status === "calling" || activeCallData.call.status === "ringing") &&
       !inCallOverlay;
 
@@ -88,7 +96,7 @@ export default function GlobalCallReceiver() {
 
   const { call, conversationId, otherUser } = activeCallData;
   const isIncoming =
-    call.receiverId === user?.id &&
+    (activeCallData.isIncoming || isMatchUser(call.receiverId)) &&
     (call.status === "calling" || call.status === "ringing");
 
   const handleAccept = async () => {

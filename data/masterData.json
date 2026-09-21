@@ -2370,6 +2370,24 @@
       "name": "Ahwa",
       "nameGujarati": "આહવા",
       "isActive": true
+    },
+    {
+      "id": "vil_custom_1789908081439",
+      "districtId": "dist_mehsana",
+      "talukaId": "tal_mehsana_becharaji",
+      "name": "vbcvb",
+      "nameGujarati": "vbcvb",
+      "isActive": true,
+      "createdAt": "2026-09-20T12:41:21.439Z"
+    },
+    {
+      "id": "vil_custom_1789914388537",
+      "districtId": "dist_kachchh",
+      "talukaId": "tal_kch_bhachau",
+      "name": "asdas",
+      "nameGujarati": "asdas",
+      "isActive": true,
+      "createdAt": "2026-09-20T14:26:28.537Z"
     }
   ],
   "mainSamaj": [
@@ -2548,6 +2566,428 @@
         "દરજી"
       ],
       "description": "સમસ્ત દર્જી જ્ઞાતિ સેવા ટ્રસ્ટ",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "main_koli",
+      "name": "શ્રી સમસ્ત કોળી સમાજ (Koli)",
+      "nameGujarati": "શ્રી સમસ્ત કોળી સમાજ",
+      "nameEn": "Shree Samast Koli Samaj (Koli)",
+      "code": "KOLI",
+      "aliases": [
+        "KOLI",
+        "TALPADA",
+        "CHUNVALIYA",
+        "કોળી",
+        "તળપદા",
+        "ચુવાળિયા"
+      ],
+      "description": "સમસ્ત ગુજરાત કોળી સમાજ સંગઠન",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "main_bharwad",
+      "name": "શ્રી ગોપાલક ભરવાડ સમાજ (Bharwad)",
+      "nameGujarati": "શ્રી ગોપાલક ભરવાડ સમાજ",
+      "nameEn": "Shree Gopalak Bharwad Samaj (Bharwad)",
+      "code": "BHARWAD",
+      "aliases": [
+        "BHARWAD",
+        "GOPALAK",
+        "ભરવાડ",
+        "ગોપાલક"
+      ],
+      "description": "સમસ્ત ગુજરાત ગોપાલક ભરવાડ મહાસંઘ",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "main_rabari",
+      "name": "શ્રી માલધારી રબારી સમાજ (Rabari)",
+      "nameGujarati": "શ્રી માલધારી રબારી સમાજ",
+      "nameEn": "Shree Maldhari Rabari Samaj (Rabari)",
+      "code": "RABARI",
+      "aliases": [
+        "RABARI",
+        "DESAI",
+        "MALDHARI",
+        "રબારી",
+        "દેસાઈ",
+        "માલધારી"
+      ],
+      "description": "સમસ્ત માલધારી રબારી વિકાસ મંડળ",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "main_ahir",
+      "name": "શ્રી આહીર સમાજ (Ahir / Yadav)",
+      "nameGujarati": "શ્રી આહીર સમાજ (યાદવ)",
+      "nameEn": "Shree Ahir Samaj (Yadav)",
+      "code": "AHIR",
+      "aliases": [
+        "AHIR",
+        "YADAV",
+        "આહીર",
+        "યાદવ"
+      ],
+      "description": "અખિલ ગુજરાત આહીર સમાજ સેવા ટ્રસ્ટ",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "main_lohana",
+      "name": "શ્રી રઘુવંશી લોહાણા મહાજન (Lohana)",
+      "nameGujarati": "શ્રી રઘુવંશી લોહાણા મહાજન",
+      "nameEn": "Shree Raghuvanshi Lohana Mahajan (Lohana)",
+      "code": "LOHANA",
+      "aliases": [
+        "LOHANA",
+        "RAGHUVANSHI",
+        "THAKKAR",
+        "લોહાણા",
+        "રઘુવંશી",
+        "ઠક્કર"
+      ],
+      "description": "સમસ્ત રઘુવંશી લોહાણા મહાપરિષદ",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "main_valand",
+      "name": "શ્રી વાણંદ / નાયી સમાજ (Valand)",
+      "nameGujarati": "શ્રી વાણંદ / નાયી સમાજ",
+      "nameEn": "Shree Valand / Nayi Samaj (Valand)",
+      "code": "VALAND",
+      "aliases": [
+        "VALAND",
+        "NAYI",
+        "LIMBACHIYA",
+        "વાણંદ",
+        "નાયી",
+        "લીંબચીયા"
+      ],
+      "description": "સમસ્ત વાણંદ લીંબચીયા જ્ઞાતિ મંડળ",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "main_mochi",
+      "name": "શ્રી ગુર્જર મોચી સમાજ (Mochi)",
+      "nameGujarati": "શ્રી ગુર્જર મોચી સમાજ",
+      "nameEn": "Shree Gurjar Mochi Samaj (Mochi)",
+      "code": "MOCHI",
+      "aliases": [
+        "MOCHI",
+        "મોચી",
+        "ગુર્જર મોચી",
+        "ચાવડા"
+      ],
+      "description": "સમસ્ત ગુર્જર મોચી જ્ઞાતિ સેવા ટ્રસ્ટ",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "main_bhavsar",
+      "name": "શ્રી ભાવસાર સમાજ (Bhavsar)",
+      "nameGujarati": "શ્રી ભાવસાર સમાજ",
+      "nameEn": "Shree Bhavsar Samaj (Bhavsar)",
+      "code": "BHAVSAR",
+      "aliases": [
+        "BHAVSAR",
+        "ભાવસાર",
+        "હિંગળાજ"
+      ],
+      "description": "અખિલ ગુજરાત ભાવસાર ક્ષત્રિય સમાજ",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "main_khatri",
+      "name": "શ્રી સમસ્ત ક્ષત્રિય ખત્રી સમાજ (Khatri)",
+      "nameGujarati": "શ્રી સમસ્ત ક્ષત્રિય ખત્રી સમાજ",
+      "nameEn": "Shree Samast Kshatriya Khatri Samaj (Khatri)",
+      "code": "KHATRI",
+      "aliases": [
+        "KHATRI",
+        "ખત્રી",
+        "બ્રહ્મક્ષત્રિય"
+      ],
+      "description": "સમસ્ત ગુજરાત ક્ષત્રિય ખત્રી મહાસભા",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "main_kansara",
+      "name": "શ્રી કંસારા સમાજ (Kansara)",
+      "nameGujarati": "શ્રી કંસારા સમાજ",
+      "nameEn": "Shree Kansara Samaj (Kansara)",
+      "code": "KANSARA",
+      "aliases": [
+        "KANSARA",
+        "કંસારા"
+      ],
+      "description": "સમસ્ત કંસારા જ્ઞાતિ હિતવર્ધક મંડળ",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "main_ghanchi",
+      "name": "શ્રી મોઢ ઘાંચી સમાજ (Ghanchi)",
+      "nameGujarati": "શ્રી મોઢ ઘાંચી સમાજ",
+      "nameEn": "Shree Modh Ghanchi Samaj (Ghanchi)",
+      "code": "GHANCHI",
+      "aliases": [
+        "GHANCHI",
+        "MODH GHANCHI",
+        "ઘાંચી",
+        "મોઢ ઘાંચી"
+      ],
+      "description": "સમસ્ત મોઢ ઘાંચી સેવા મંડળ",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "main_sompura",
+      "name": "શ્રી સોમપુરા સલાટ / બ્રાહ્મણ સમાજ (Sompura)",
+      "nameGujarati": "શ્રી સોમપુરા સલાટ / બ્રાહ્મણ સમાજ",
+      "nameEn": "Shree Sompura Salat / Brahmin Samaj (Sompura)",
+      "code": "SOMPURA",
+      "aliases": [
+        "SOMPURA",
+        "SALAT",
+        "સોમપુરા",
+        "સલાટ"
+      ],
+      "description": "સમસ્ત સોમપુરા શિલ્પી સમાજ ટ્રસ્ટ",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "main_vankar",
+      "name": "શ્રી વણકર / મેઘવાલ સમાજ (Vankar)",
+      "nameGujarati": "શ્રી વણકર / મેઘવાલ સમાજ",
+      "nameEn": "Shree Vankar / Meghwal Samaj (Vankar)",
+      "code": "VANKAR",
+      "aliases": [
+        "VANKAR",
+        "MEGHWAL",
+        "વણકર",
+        "મેઘવાલ",
+        "પરમાર",
+        "સોલંકી"
+      ],
+      "description": "સમસ્ત ગુજરાત વણકર સમાજ ઉત્કર્ષ સમિતિ",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "main_rohit",
+      "name": "શ્રી રોહિત સમાજ (Rohit)",
+      "nameGujarati": "શ્રી રોહિત સમાજ",
+      "nameEn": "Shree Rohit Samaj (Rohit)",
+      "code": "ROHIT",
+      "aliases": [
+        "ROHIT",
+        "રોહિત",
+        "રોહિત સમાજ"
+      ],
+      "description": "સમસ્ત રોહિત જ્ઞાતિ સેવા મંડળ",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "main_chaudhari",
+      "name": "શ્રી ચૌધરી સમાજ (Anjana Patidar)",
+      "nameGujarati": "શ્રી ચૌધરી સમાજ (આંજણા)",
+      "nameEn": "Shree Chaudhari Samaj (Anjana Patidar)",
+      "code": "CHAUDHARI",
+      "aliases": [
+        "CHAUDHARI",
+        "ANJANA",
+        "ચૌધરી",
+        "આંજણા",
+        "અર્બુદા"
+      ],
+      "description": "સમસ્ત અખિલ આંજણા કેળવણી મંડળ",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "main_charan",
+      "name": "શ્રી ચારણ / ગઢવી સમાજ (Charan Gadhvi)",
+      "nameGujarati": "શ્રી ચારણ / ગઢવી સમાજ",
+      "nameEn": "Shree Charan / Gadhvi Samaj (Charan Gadhvi)",
+      "code": "CHARAN",
+      "aliases": [
+        "CHARAN",
+        "GADHVI",
+        "ચારણ",
+        "ગઢવી",
+        "સોનલ"
+      ],
+      "description": "સમસ્ત ચારણ ગઢવી કલ્યાણ ટ્રસ્ટ",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "main_sathwara",
+      "name": "શ્રી સાથવારા કડિયા સમાજ (Sathwara)",
+      "nameGujarati": "શ્રી સાથવારા કડિયા સમાજ",
+      "nameEn": "Shree Sathwara Kadia Samaj (Sathwara)",
+      "code": "SATHWARA",
+      "aliases": [
+        "SATHWARA",
+        "KADIA",
+        "સાથવારા",
+        "કડિયા"
+      ],
+      "description": "સમસ્ત સાથવારા પ્રગતિશીલ મંડળ",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "main_ravaldev",
+      "name": "શ્રી રાવળદેવ / યોગી સમાજ (Ravaldev)",
+      "nameGujarati": "શ્રી રાવળદેવ / યોગી સમાજ",
+      "nameEn": "Shree Ravaldev / Yogi Samaj (Ravaldev)",
+      "code": "RAVALDEV",
+      "aliases": [
+        "RAVALDEV",
+        "YOGI",
+        "રાવળદેવ",
+        "યોગી",
+        "રાવળ"
+      ],
+      "description": "સમસ્ત ગુજરાત રાવળદેવ જ્ઞાતિ મંડળ",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "main_bhoi",
+      "name": "શ્રી ભોઈ સમાજ (Bhoi)",
+      "nameGujarati": "શ્રી ભોઈ સમાજ",
+      "nameEn": "Shree Bhoi Samaj (Bhoi)",
+      "code": "BHOI",
+      "aliases": [
+        "BHOI",
+        "ભોઈ",
+        "ભોઈ સમાજ"
+      ],
+      "description": "સમસ્ત ભોઈ જ્ઞાતિ સેવા ટ્રસ્ટ",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "main_vadi",
+      "name": "શ્રી વાદી નાથ સમાજ (Vadi)",
+      "nameGujarati": "શ્રી વાદી નાથ સમાજ",
+      "nameEn": "Shree Vadi Nath Samaj (Vadi)",
+      "code": "VADI",
+      "aliases": [
+        "VADI",
+        "વાદી",
+        "નાથ"
+      ],
+      "description": "સમસ્ત વાદી નાથ જ્ઞાતિ સંઘ",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "main_goswami",
+      "name": "શ્રી દશનામ ગોસ્વામી સમાજ (Goswami)",
+      "nameGujarati": "શ્રી દશનામ ગોસ્વામી સમાજ",
+      "nameEn": "Shree Dashnam Goswami Samaj (Goswami)",
+      "code": "GOSWAMI",
+      "aliases": [
+        "GOSWAMI",
+        "GOSAI",
+        "BAPAJI",
+        "ગોસ્વામી",
+        "ગોસાઈ",
+        "બાવાજી"
+      ],
+      "description": "સમસ્ત દશનામ ગોસ્વામી મહાસંઘ",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "main_bhatia",
+      "name": "શ્રી ભાટિયા મહાજન (Bhatia)",
+      "nameGujarati": "શ્રી ભાટિયા મહાજન",
+      "nameEn": "Shree Bhatia Mahajan (Bhatia)",
+      "code": "BHATIA",
+      "aliases": [
+        "BHATIA",
+        "ભાટિયા",
+        "ભાટિયા મહાજન"
+      ],
+      "description": "સમસ્ત ભાટિયા જ્ઞાતિ કેન્દ્રીય મહાજન",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "main_chippa",
+      "name": "શ્રી છીપા સમાજ (Chippa)",
+      "nameGujarati": "શ્રી છીપા સમાજ",
+      "nameEn": "Shree Chippa Samaj (Chippa)",
+      "code": "CHIPPA",
+      "aliases": [
+        "CHIPPA",
+        "છીપા",
+        "રંગરેજ"
+      ],
+      "description": "સમસ્ત છીપા ક્ષત્રિય જ્ઞાતિ ટ્રસ્ટ",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "main_kharva",
+      "name": "શ્રી ખારવા સમાજ (Kharva)",
+      "nameGujarati": "શ્રી ખારવા સમાજ (સાગરપુત્ર)",
+      "nameEn": "Shree Kharva Samaj (Kharva)",
+      "code": "KHARVA",
+      "aliases": [
+        "KHARVA",
+        "SAGARPUTRA",
+        "ખારવા",
+        "સાગરપુત્ર"
+      ],
+      "description": "સમસ્ત અખિલ ગુજરાત ખારવા સમાજ",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "main_kandoi",
+      "name": "શ્રી કંદોઈ / મોધ સમાજ (Kandoi)",
+      "nameGujarati": "શ્રી કંદોઈ સમાજ",
+      "nameEn": "Shree Kandoi Samaj (Kandoi)",
+      "code": "KANDOI",
+      "aliases": [
+        "KANDOI",
+        "HALWAI",
+        "કંદોઈ",
+        "હલવાઈ"
+      ],
+      "description": "સમસ્ત કંદોઈ જ્ઞાતિ હિતવર્ધક સભા",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "main_machhi",
+      "name": "શ્રી માછી સમાજ (Machhi)",
+      "nameGujarati": "શ્રી માછી સમાજ",
+      "nameEn": "Shree Machhi Samaj (Machhi)",
+      "code": "MACHHI",
+      "aliases": [
+        "MACHHI",
+        "TANDEL",
+        "માછી",
+        "તાંડેલ"
+      ],
+      "description": "સમસ્ત માછી મહાજન સંગઠન",
       "isActive": true,
       "createdAt": "2024-01-01T00:00:00.000Z"
     }
@@ -2971,5 +3411,5 @@
       "createdAt": "2024-01-01T00:00:00.000Z"
     }
   ],
-  "lastUpdated": "2026-09-13T13:40:45.229Z"
+  "lastUpdated": "2026-09-20T14:26:28.538Z"
 }

@@ -1,12 +1,13 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Search, Plus, Users, BellOff, Phone, Video, MessageSquare, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Search, Plus, Users, BellOff, Bell, Phone, Video, MessageSquare, AlertCircle, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { useApp } from "@/context/AppContext";
 import { listenConversations } from "@/lib/firebase";
 import { ChatWindow } from "@/components/chat/ChatWindow";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { requestNotificationPermission, getNotificationPermission } from "@/lib/pushNotifications";
 
 const dedupeById = (items) => {
   const seen = new Set();
@@ -298,7 +299,7 @@ function NewChatDialog({ open, onOpenChange, onOpened }) {
 }
 
 export default function Messages() {
-  const { user, t, activeSamaj } = useApp();
+  const { user, t, activeSamaj, triggerTestNotification } = useApp();
   const nav = useNavigate();
   const { cid } = useParams();
   const [params] = useSearchParams();
@@ -306,6 +307,35 @@ export default function Messages() {
   const [q, setQ] = useState("");
   const [tab, setTab] = useState("all"); // "all" | "samaj" | "unread"
   const [open, setOpen] = useState(!!params.get("new"));
+  const [notifPerm, setNotifPerm] = useState("default");
+
+  useEffect(() => {
+    getNotificationPermission().then((p) => {
+      if (p) setNotifPerm(p);
+    });
+  }, []);
+
+  const handleTestChatAlert = async () => {
+    try {
+      const p = await requestNotificationPermission();
+      if (p) setNotifPerm(p);
+      await triggerTestNotification("message");
+      toast.success("💬 ચેટ નોટિફિકેશન, અવાજ અને વાઈબ્રેશન સફળતાપૂર્વક ચાલુ છે!");
+    } catch {
+      toast.error("નોટિફિકેશન શરૂ કરવામાં મુશ્કેલી આવી");
+    }
+  };
+
+  const handleEnablePermission = async () => {
+    const res = await requestNotificationPermission();
+    if (res) setNotifPerm(res);
+    if (res === "granted") {
+      toast.success("🔔 નોટિફિકેશન પરવાનગી મંજૂર થઈ ગઈ!");
+      triggerTestNotification("message");
+    } else {
+      toast.info("નોટિફિકેશન પરવાનગી આપવામાં આવી નથી");
+    }
+  };
 
   const loadConversations = () => {
     api
@@ -475,7 +505,7 @@ export default function Messages() {
             </div>
           )}
 
-          {/* Top Header: Title & Prominent "+ નવી ચેટ" button */}
+          {/* Top Header: Title & Action buttons */}
           <div className="flex items-center justify-between gap-2 px-1 w-full min-w-0">
             <div className="min-w-0 flex-1">
               <h2 className="font-heading font-extrabold text-slate-900 text-xl tracking-tight truncate">
@@ -483,15 +513,47 @@ export default function Messages() {
               </h2>
               <p className="text-[11px] text-slate-500 font-medium truncate">સમાજ સભ્યો સાથે સીધી વાતચીત</p>
             </div>
-            <button
-              data-testid="new-chat-btn"
-              onClick={() => setOpen(true)}
-              className="shrink-0 inline-flex items-center gap-1.5 bg-gradient-to-r from-purple-800 to-indigo-700 hover:from-purple-900 hover:to-indigo-800 text-white text-xs font-bold px-3.5 py-2 rounded-full shadow-md shadow-purple-900/20 active:scale-95 transition"
-            >
-              <Plus className="w-4 h-4 stroke-[2.5]" />
-              <span>નવી ચેટ</span>
-            </button>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                data-testid="test-chat-notif-btn"
+                onClick={handleTestChatAlert}
+                title="ચેટ નોટિફિકેશન ચેક કરો (Test Incoming Message Alert)"
+                className="inline-flex items-center gap-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200/80 text-xs font-bold px-2.5 py-2 rounded-full active:scale-95 transition shadow-2xs"
+              >
+                <Bell className="w-3.5 h-3.5 text-amber-600 animate-bounce" />
+                <span className="text-[11px]">ટેસ્ટ એલર્ટ</span>
+              </button>
+              <button
+                data-testid="new-chat-btn"
+                onClick={() => setOpen(true)}
+                className="inline-flex items-center gap-1 bg-gradient-to-r from-purple-800 to-indigo-700 hover:from-purple-900 hover:to-indigo-800 text-white text-xs font-bold px-3 py-2 rounded-full shadow-md shadow-purple-900/20 active:scale-95 transition"
+              >
+                <Plus className="w-4 h-4 stroke-[2.5]" />
+                <span>નવી ચેટ</span>
+              </button>
+            </div>
           </div>
+
+          {/* Notification Permission Banner if not granted yet */}
+          {(notifPerm === "default" || notifPerm === "prompt") && (
+            <div className="flex items-center justify-between gap-2 bg-gradient-to-r from-amber-500/15 via-purple-500/10 to-indigo-500/15 border border-amber-300/60 p-2.5 rounded-2xl">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-7 h-7 rounded-xl bg-amber-500 text-white grid place-items-center shrink-0 shadow-xs">
+                  <Bell className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-xs font-bold text-slate-800 truncate">ચેટ નોટિફિકેશન ચાલુ કરો</div>
+                  <div className="text-[10px] text-slate-600 truncate">મેસેજ આવે ત્યારે તરત અવાજ અને એલર્ટ મળશે</div>
+                </div>
+              </div>
+              <button
+                onClick={handleEnablePermission}
+                className="shrink-0 bg-amber-600 hover:bg-amber-700 active:scale-95 text-white font-bold text-xs px-3 py-1.5 rounded-xl shadow-xs transition"
+              >
+                મંજૂર કરો
+              </button>
+            </div>
+          )}
 
           {/* Search Bar */}
           <div className="flex items-center gap-2.5 bg-white border border-slate-200 rounded-2xl px-3.5 py-2 shadow-2xs w-full min-w-0">

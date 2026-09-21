@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Heart, MessageCircle, Share2, Bookmark, Volume2, VolumeX, Plus, Play, Pause, ChevronUp, ChevronDown, Music2, UserCheck, UserPlus, Sparkles, X, Edit3, Trash2, MoreVertical, Flame } from "lucide-react";
+import { Heart, MessageCircle, Share2, Bookmark, Volume2, VolumeX, Plus, Play, Pause, ChevronUp, ChevronDown, Music2, UserCheck, UserPlus, Sparkles, X, Edit3, Trash2, MoreVertical, Flame, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { useApp } from "@/context/AppContext";
@@ -258,9 +258,25 @@ function EditReelDialog({ open, onOpenChange, reel, onSaved }) {
 export default function Reels() {
   const { user, t, activeSamaj } = useApp();
   const nav = useNavigate();
-  const [reels, setReels] = useState([]);
+  const [reels, setReels] = useState(() => {
+    try {
+      const cached = localStorage.getItem("sc_remote_reels_cache");
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
   const [currentIdx, setCurrentIdx] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    try {
+      const cached = localStorage.getItem("sc_remote_reels_cache");
+      return !cached || JSON.parse(cached).length === 0;
+    } catch {
+      return true;
+    }
+  });
+  const [refreshing, setRefreshing] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [muted, setMuted] = useState(true);
   const [playing, setPlaying] = useState(true);
   const [showComments, setShowComments] = useState(false);
@@ -269,10 +285,21 @@ export default function Reels() {
   const [mediaError, setMediaError] = useState(false);
   const videoRef = useRef(null);
 
+  const triggerHaptic = (ms = 10) => {
+    try {
+      if (typeof navigator !== "undefined" && navigator.vibrate) {
+        navigator.vibrate(ms);
+      }
+    } catch {}
+  };
+
   const location = useLocation();
 
-  const loadReels = async () => {
-    setLoading(true);
+  const loadReels = async (isManual = false) => {
+    if (isManual) setRefreshing(true);
+    else if (reels.length === 0) setLoading(true);
+    setLoadError(false);
+
     try {
       // Clear any legacy unsaved local reel cache from previous sessions
       try {
@@ -296,6 +323,13 @@ export default function Reels() {
       const finalReels = relevantItems.length > 0 ? relevantItems : remoteItems;
 
       setReels(finalReels);
+      try {
+        localStorage.setItem("sc_remote_reels_cache", JSON.stringify(finalReels.slice(0, 30)));
+      } catch {}
+
+      if (isManual) {
+        toast.success("રીલ્સ તાજી થઈ ગઈ (Refreshed)");
+      }
 
       // Deep link to a specific reel or memorial entry if requested
       const params = new URLSearchParams(location.search);
@@ -313,10 +347,15 @@ export default function Reels() {
         const foundIdx = finalReels.findIndex((r) => r.id === targetId);
         if (foundIdx !== -1) setCurrentIdx(foundIdx);
       }
-    } catch {
-      toast.error("રીલ્સ લોડ કરવામાં ભૂલ આવી");
+    } catch (err) {
+      console.warn("loadReels network notice:", err?.message || err);
+      if (reels.length === 0) {
+        setLoadError(true);
+        toast.error("રીલ્સ લોડ કરવામાં ભૂલ આવી. સર્વર કનેક્શન તપાસો.");
+      }
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -506,6 +545,7 @@ export default function Reels() {
 
   const nextReel = () => {
     if (currentIdx < reels.length - 1) {
+      triggerHaptic(12);
       setCurrentIdx((prev) => prev + 1);
       setPlaying(true);
     }
@@ -513,6 +553,7 @@ export default function Reels() {
 
   const prevReel = () => {
     if (currentIdx > 0) {
+      triggerHaptic(12);
       setCurrentIdx((prev) => prev - 1);
       setPlaying(true);
     }
@@ -531,15 +572,20 @@ export default function Reels() {
 
   // Touch gesture support for mobile vertical swipe
   const touchStartY = useRef(0);
+  const touchStartX = useRef(0);
   const handleTouchStart = (e) => {
     touchStartY.current = e.touches[0].clientY;
+    touchStartX.current = e.touches[0].clientX;
   };
   const handleTouchEnd = (e) => {
-    const diff = touchStartY.current - e.changedTouches[0].clientY;
-    if (diff > 50) {
-      nextReel();
-    } else if (diff < -50) {
-      prevReel();
+    const diffY = touchStartY.current - e.changedTouches[0].clientY;
+    const diffX = touchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(diffY) > 45 && Math.abs(diffY) > Math.abs(diffX)) {
+      if (diffY > 0) {
+        nextReel();
+      } else {
+        prevReel();
+      }
     }
   };
 
@@ -574,20 +620,36 @@ export default function Reels() {
           <div className="text-slate-400 text-sm font-medium">{t("loading")}</div>
         </div>
       ) : reels.length === 0 ? (
-        <div className="w-full max-w-sm p-8 text-center bg-slate-900 text-white rounded-3xl border border-slate-800 shadow-2xl space-y-4 mx-4">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-purple-900/60 text-purple-300 grid place-items-center">
-            <Sparkles className="w-8 h-8" />
+        loadError ? (
+          <div className="w-full max-w-sm p-8 text-center bg-slate-900 text-white rounded-3xl border border-slate-800 shadow-2xl space-y-4 mx-4">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-rose-950/70 border border-rose-800/40 text-rose-400 grid place-items-center">
+              <RefreshCw className="w-8 h-8" />
+            </div>
+            <h3 className="font-heading font-bold text-white text-base">સર્વર કનેક્શન ક્ષતિ</h3>
+            <p className="text-xs text-slate-400">ઇન્ટરનેટ અથવા સર્વર સાથે સંપર્ક થઈ શક્યો નથી. ફરી પ્રયાસ કરો.</p>
+            <button
+              onClick={() => loadReels(true)}
+              className="mt-2 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-purple-700 hover:bg-purple-600 text-white text-xs font-bold transition shadow-lg cursor-pointer"
+            >
+              <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} /> ફરી પ્રયાસ કરો (Retry)
+            </button>
           </div>
-          <h3 className="font-heading font-bold text-white text-base">હજી કોઈ રીલ્સ નથી</h3>
-          <p className="text-xs text-slate-400">તમારા સમાજ સાથે પ્રથમ વિડિયો કે રીલ શેર કરનાર બનો!</p>
-          <button
-            data-testid="create-reel-btn"
-            onClick={() => setCreateOpen(true)}
-            className="mt-2 inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-purple-700 hover:bg-purple-600 text-white text-xs font-bold transition shadow-lg cursor-pointer"
-          >
-            <Plus className="w-4 h-4" /> પ્રથમ રીલ બનાવો
-          </button>
-        </div>
+        ) : (
+          <div className="w-full max-w-sm p-8 text-center bg-slate-900 text-white rounded-3xl border border-slate-800 shadow-2xl space-y-4 mx-4">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-purple-900/60 text-purple-300 grid place-items-center">
+              <Sparkles className="w-8 h-8" />
+            </div>
+            <h3 className="font-heading font-bold text-white text-base">હજી કોઈ રીલ્સ નથી</h3>
+            <p className="text-xs text-slate-400">તમારા સમાજ સાથે પ્રથમ વિડિયો કે રીલ શેર કરનાર બનો!</p>
+            <button
+              data-testid="create-reel-btn"
+              onClick={() => setCreateOpen(true)}
+              className="mt-2 inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-purple-700 hover:bg-purple-600 text-white text-xs font-bold transition shadow-lg cursor-pointer"
+            >
+              <Plus className="w-4 h-4" /> પ્રથમ રીલ બનાવો
+            </button>
+          </div>
+        )
       ) : (
         <div className="relative w-full h-full sm:max-w-[400px] sm:h-full sm:max-h-[820px] sm:aspect-[9/16] sm:rounded-3xl overflow-hidden bg-black shadow-2xl sm:border sm:border-slate-800 flex items-center justify-center select-none">
           {/* Main Video, Memorial Tribute, or Media Display */}
@@ -781,6 +843,19 @@ export default function Reels() {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
+                  triggerHaptic(10);
+                  loadReels(true);
+                }}
+                className="p-2 rounded-full bg-black/50 backdrop-blur-md text-white hover:bg-black/70 transition border border-white/10 cursor-pointer"
+                data-testid="reel-refresh-btn"
+                title="રીફ્રેશ કરો"
+              >
+                <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin text-purple-300" : ""}`} />
+              </button>
+
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
                   setMuted(!muted);
                 }}
                 className="p-2 rounded-full bg-black/50 backdrop-blur-md text-white hover:bg-black/70 transition border border-white/10 cursor-pointer"
@@ -796,7 +871,11 @@ export default function Reels() {
           <div className="absolute right-3 bottom-20 flex flex-col items-center gap-4 z-20">
             {/* Like / Diya */}
             <button
-              onClick={isMemorial ? () => handleMemorialTribute("diya") : handleLike}
+              onClick={() => {
+                triggerHaptic(15);
+                if (isMemorial) handleMemorialTribute("diya");
+                else handleLike();
+              }}
               data-testid="reel-like-btn"
               className="flex flex-col items-center gap-1 group cursor-pointer"
             >

@@ -15,7 +15,41 @@
   --sc-whatsapp: #25D366;
 }
 
-html, body, #root { height: 100%; }
+html, body, #root { 
+  height: 100%; 
+}
+
+/* Native Android WebView Feel Optimizations */
+* {
+  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
+}
+
+html, body {
+  touch-action: manipulation;
+  overscroll-behavior-y: contain;
+  -webkit-touch-callout: none;
+}
+
+/* Allow text selection inside inputs and readable content */
+input, textarea, [contenteditable="true"] {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
+/* Fast touch response for buttons and interactive controls */
+button, a, [role="button"], input[type="button"], input[type="submit"] {
+  touch-action: manipulation;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Active micro-scale on button press for crisp haptic feeling */
+button:active:not(:disabled), a:active:not(:disabled), [role="button"]:active {
+  transform: scale(0.98);
+  transition: transform 0.08s ease;
+}
 
 body {
   margin: 0;

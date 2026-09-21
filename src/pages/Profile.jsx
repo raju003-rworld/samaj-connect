@@ -29,6 +29,7 @@ import {
   Clock,
   XCircle,
   AlertCircle,
+  ArrowRight,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { useApp } from "@/context/AppContext";
@@ -70,6 +71,16 @@ export default function Profile() {
         bio: user?.bio || "",
         profilePhoto: user?.profilePhoto || "",
       });
+    }
+  }, [user]);
+
+  // Handle post-onboarding completion flow
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("complete") === "1") {
+      if (!user?.name || !user?.village || !user?.district) {
+        setEdit(true);
+      }
     }
   }, [user]);
 
@@ -349,6 +360,29 @@ export default function Profile() {
                 નવી વિનંતી
               </button>
             </div>
+          </div>
+        )}
+
+        {/* Onboarding Welcome & Profile Completion Banner */}
+        {new URLSearchParams(window.location.search).get("complete") === "1" && (
+          <div className="mt-4 p-4 rounded-2xl bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 text-purple-950 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+            <div>
+              <div className="font-bold text-sm text-purple-950 mb-0.5 flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-purple-600" />
+                <span>સમાજ અને વતનની નોંધણી સફળ થઈ!</span>
+              </div>
+              <p className="text-purple-800/90 leading-relaxed">
+                પગલું ૨: તમારી પ્રોફાઇલ વિગતો (નામ, ફોટો વગેરે) ભરીને સમાજ વેરિફિકેશન માટે સબમિટ કરો.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => nav("/reels")}
+              className="px-3.5 py-2 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs shrink-0 flex items-center justify-center gap-1.5 shadow-xs transition cursor-pointer"
+            >
+              <span>રીલ્સ જુઓ</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
         )}
 

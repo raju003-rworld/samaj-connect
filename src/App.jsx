@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import "@/App.css";
 import { AppProvider, useApp } from "@/context/AppContext";
 import AppShell from "@/components/AppShell";
@@ -32,26 +32,30 @@ import MaranNodh from "@/pages/MaranNodh";
 import GlobalCallReceiver from "@/components/chat/GlobalCallReceiver";
 import Onboarding from "@/pages/Onboarding";
 import AndroidCapacitorBridge from "@/components/AndroidCapacitorBridge";
+import ProfileEnforcementModal from "@/components/profile/ProfileEnforcementModal";
 
 const Protected = ({ children }) => {
   const { user, booting } = useApp();
   if (booting) return <div className="min-h-screen grid place-items-center text-slate-400 text-sm">Loading...</div>;
   if (!user) return <Navigate to="/login" replace />;
   const isAdmin = ["super_admin", "admin", "main_samaj_admin", "samaj_admin"].includes(user?.role) || Boolean(user?.adminRole);
-  if (!user.onboardingCompleted && !isAdmin) {
-    return <Navigate to="/onboarding" replace />;
+  if (!user.activeSamajId && !user.onboardingCompleted && !isAdmin) {
+    return <Navigate to="/login" replace />;
   }
-  return <AppShell>{children}</AppShell>;
+  return (
+    <>
+      <AppShell>{children}</AppShell>
+      <ProfileEnforcementModal />
+    </>
+  );
 };
 
 const OnboardingRoute = () => {
   const { user, booting } = useApp();
-  const location = useLocation();
   if (booting) return <div className="min-h-screen grid place-items-center text-slate-400 text-sm">Loading...</div>;
   if (!user) return <Navigate to="/login" replace />;
   const isAdmin = ["super_admin", "admin", "main_samaj_admin", "samaj_admin"].includes(user?.role) || Boolean(user?.adminRole);
-  const isChangeRequested = new URLSearchParams(location.search).get("change") === "1";
-  if (user.onboardingCompleted && !isAdmin && !isChangeRequested) {
+  if (user.onboardingCompleted && !isAdmin) {
     return <Navigate to="/reels" replace />;
   }
   return <Onboarding />;

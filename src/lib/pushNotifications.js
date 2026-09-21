@@ -1,6 +1,38 @@
+import { Capacitor } from "@capacitor/core";
+import { LocalNotifications } from "@capacitor/local-notifications";
+
 // Web Push, Sound, Vibration & Phone Home Screen Notifications for Samaj Connect
 
 let swReg = null;
+let channelCreated = false;
+
+// Setup native notification channels on Android
+export async function setupNativeChannels() {
+  if (typeof window === "undefined" || !Capacitor.isNativePlatform() || channelCreated) return;
+  try {
+    await LocalNotifications.createChannel({
+      id: "messages",
+      name: "ચેટ સંદેશા (Chat Messages)",
+      description: "સમાજ કનેક્ટ ચેટ અને સંદેશા નોટિફિકેશન",
+      importance: 5, // High priority heads-up banner on phone
+      visibility: 1,
+      vibration: true,
+      sound: undefined,
+    });
+    channelCreated = true;
+
+    // Listen to notification tap event on native
+    LocalNotifications.removeAllListeners().catch(() => {});
+    LocalNotifications.addListener("localNotificationActionPerformed", (action) => {
+      const link = action.notification?.extra?.url || action.notification?.extra?.link;
+      if (link && typeof window !== "undefined") {
+        window.location.href = link;
+      }
+    });
+  } catch (e) {
+    console.debug("setupNativeChannels notice:", e);
+  }
+}
 
 // Synthesize pleasant notification chime via Web Audio API
 export function playNotificationSound(type = "default") {
@@ -18,10 +50,10 @@ export function playNotificationSound(type = "default") {
     osc.connect(gain);
 
     if (type === "message") {
-      // Gentle double chime (E5 -> G5)
+      // Gentle sweet double chime (E5 -> G5)
       osc.frequency.setValueAtTime(659.25, now);
       osc.frequency.setValueAtTime(783.99, now + 0.12);
-      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.setValueAtTime(0.35, now);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
       osc.start(now);
       osc.stop(now + 0.36);
@@ -42,7 +74,7 @@ export function playNotificationSound(type = "default") {
       osc.stop(now + 0.26);
     }
   } catch (e) {
-    console.debug("AudioContext error or blocked before user gesture:", e);
+    console.debug("AudioContext notice:", e);
   }
 }
 
@@ -63,23 +95,44 @@ export async function registerServiceWorker() {
   try {
     const reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
     swReg = reg;
-    console.log("Service Worker registered successfully:", reg.scope);
     return reg;
   } catch (err) {
-    console.warn("Service Worker registration failed:", err);
+    console.warn("Service Worker registration notice:", err);
     return null;
   }
 }
 
 // Check notification permission state
-export function getNotificationPermission() {
-  if (typeof window === "undefined" || !("Notification" in window)) return "unsupported";
+export async function getNotificationPermission() {
+  if (typeof window === "undefined") return "unsupported";
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const perm = await LocalNotifications.checkPermissions();
+      return perm.display === "granted" ? "granted" : perm.display || "prompt";
+    } catch {
+      return "prompt";
+    }
+  }
+  if (!("Notification" in window)) return "unsupported";
   return Notification.permission;
 }
 
 // Request permission from user
 export async function requestNotificationPermission() {
-  if (typeof window === "undefined" || !("Notification" in window)) return "unsupported";
+  if (typeof window === "undefined") return "unsupported";
+
+  if (Capacitor.isNativePlatform()) {
+    try {
+      await setupNativeChannels();
+      const res = await LocalNotifications.requestPermissions();
+      return res.display === "granted" ? "granted" : "denied";
+    } catch (e) {
+      console.warn("Native LocalNotifications permission error:", e);
+      return "denied";
+    }
+  }
+
+  if (!("Notification" in window)) return "unsupported";
   try {
     const perm = await Notification.requestPermission();
     if (perm === "granted" && !swReg) {
@@ -94,21 +147,51 @@ export async function requestNotificationPermission() {
 
 // Trigger a native system notification on device/phone
 export async function showPhoneNotification({ title, body, icon, tag, link, type = "default" }) {
-  // 1. Play sound
+  // 1. Play chime sound
   playNotificationSound(type);
 
   // 2. Vibrate phone
   vibratePhone(type === "reel" ? [200, 100, 200, 100, 250] : [150, 80, 150]);
 
-  // 3. System Notification
+  // 3. Native Android notification banner in status bar via LocalNotifications
+  if (typeof window !== "undefined" && Capacitor.isNativePlatform()) {
+    try {
+      await setupNativeChannels();
+      const status = await LocalNotifications.checkPermissions();
+      if (status.display !== "granted") {
+        await LocalNotifications.requestPermissions();
+      }
+
+      await LocalNotifications.schedule({
+        notifications: [
+          {
+            title: title || "સમાજ કનેક્ટ",
+            body: body || "નવો સંદેશ મળ્યો છે",
+            id: Math.floor(Math.random() * 900000) + 100000,
+            channelId: "messages",
+            extra: {
+              url: link || "/messages",
+              link: link || "/messages",
+            },
+            smallIcon: "ic_launcher",
+          },
+        ],
+      });
+      return true;
+    } catch (e) {
+      console.warn("Capacitor LocalNotifications schedule error:", e);
+    }
+  }
+
+  // 4. Web / Browser System Notification
   if (typeof window === "undefined" || !("Notification" in window)) return false;
   if (Notification.permission !== "granted") return false;
 
   const notifOptions = {
-    body: body || "નવી અપડેટ આવી છે!",
+    body: body || "નવો સંદેશ મળ્યો છે!",
     icon: icon || "/icon.svg",
     badge: "/icon.svg",
-    tag: tag || `sc_${Date.now()}`,
+    tag: tag || `sc_msg_${Date.now()}`,
     vibrate: [200, 100, 200],
     renotify: true,
     data: { url: link || "/" },
@@ -120,7 +203,7 @@ export async function showPhoneNotification({ title, body, icon, tag, link, type
       return true;
     }
   } catch (e) {
-    console.warn("swReg showNotification failed, trying new Notification:", e);
+    console.warn("swReg showNotification notice:", e);
   }
 
   try {
@@ -135,7 +218,8 @@ export async function showPhoneNotification({ title, body, icon, tag, link, type
     };
     return true;
   } catch (e) {
-    console.warn("new Notification failed:", e);
+    console.warn("new Notification notice:", e);
     return false;
   }
 }
+

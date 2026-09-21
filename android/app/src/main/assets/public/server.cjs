@@ -29,12 +29,14 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // server.ts
 var server_exports = {};
 __export(server_exports, {
+  getUserProfileAccessStatus: () => getUserProfileAccessStatus,
   isUserOnboardingCompleted: () => isUserOnboardingCompleted,
   loadStore: () => loadStore,
   logAdminAction: () => logAdminAction,
   notificationsList: () => notificationsList,
   persistMasterData: () => persistMasterData,
   requireCompletedOnboarding: () => requireCompletedOnboarding,
+  requireProfileNotBlocked: () => requireProfileNotBlocked,
   syncAllMaranNodhToReels: () => syncAllMaranNodhToReels
 });
 module.exports = __toCommonJS(server_exports);
@@ -559,6 +561,292 @@ var initialMainSamaj = [
     code: "DARJI",
     aliases: ["DARJI", "CHAVDA", "\u0AA6\u0AB0\u0ACD\u0A9C\u0AC0", "\u0AA6\u0AB0\u0A9C\u0AC0"],
     description: "\u0AB8\u0AAE\u0AB8\u0ACD\u0AA4 \u0AA6\u0AB0\u0ACD\u0A9C\u0AC0 \u0A9C\u0ACD\u0A9E\u0ABE\u0AA4\u0ABF \u0AB8\u0AC7\u0AB5\u0ABE \u0A9F\u0ACD\u0AB0\u0AB8\u0ACD\u0A9F",
+    isActive: true,
+    createdAt: "2024-01-01T00:00:00.000Z"
+  },
+  {
+    id: "main_koli",
+    name: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0AB8\u0AAE\u0AB8\u0ACD\u0AA4 \u0A95\u0ACB\u0AB3\u0AC0 \u0AB8\u0AAE\u0ABE\u0A9C (Koli)",
+    nameGujarati: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0AB8\u0AAE\u0AB8\u0ACD\u0AA4 \u0A95\u0ACB\u0AB3\u0AC0 \u0AB8\u0AAE\u0ABE\u0A9C",
+    nameEn: "Shree Samast Koli Samaj (Koli)",
+    code: "KOLI",
+    aliases: ["KOLI", "TALPADA", "CHUNVALIYA", "\u0A95\u0ACB\u0AB3\u0AC0", "\u0AA4\u0AB3\u0AAA\u0AA6\u0ABE", "\u0A9A\u0AC1\u0AB5\u0ABE\u0AB3\u0ABF\u0AAF\u0ABE"],
+    description: "\u0AB8\u0AAE\u0AB8\u0ACD\u0AA4 \u0A97\u0AC1\u0A9C\u0AB0\u0ABE\u0AA4 \u0A95\u0ACB\u0AB3\u0AC0 \u0AB8\u0AAE\u0ABE\u0A9C \u0AB8\u0A82\u0A97\u0AA0\u0AA8",
+    isActive: true,
+    createdAt: "2024-01-01T00:00:00.000Z"
+  },
+  {
+    id: "main_bharwad",
+    name: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0A97\u0ACB\u0AAA\u0ABE\u0AB2\u0A95 \u0AAD\u0AB0\u0AB5\u0ABE\u0AA1 \u0AB8\u0AAE\u0ABE\u0A9C (Bharwad)",
+    nameGujarati: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0A97\u0ACB\u0AAA\u0ABE\u0AB2\u0A95 \u0AAD\u0AB0\u0AB5\u0ABE\u0AA1 \u0AB8\u0AAE\u0ABE\u0A9C",
+    nameEn: "Shree Gopalak Bharwad Samaj (Bharwad)",
+    code: "BHARWAD",
+    aliases: ["BHARWAD", "GOPALAK", "\u0AAD\u0AB0\u0AB5\u0ABE\u0AA1", "\u0A97\u0ACB\u0AAA\u0ABE\u0AB2\u0A95"],
+    description: "\u0AB8\u0AAE\u0AB8\u0ACD\u0AA4 \u0A97\u0AC1\u0A9C\u0AB0\u0ABE\u0AA4 \u0A97\u0ACB\u0AAA\u0ABE\u0AB2\u0A95 \u0AAD\u0AB0\u0AB5\u0ABE\u0AA1 \u0AAE\u0AB9\u0ABE\u0AB8\u0A82\u0A98",
+    isActive: true,
+    createdAt: "2024-01-01T00:00:00.000Z"
+  },
+  {
+    id: "main_rabari",
+    name: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0AAE\u0ABE\u0AB2\u0AA7\u0ABE\u0AB0\u0AC0 \u0AB0\u0AAC\u0ABE\u0AB0\u0AC0 \u0AB8\u0AAE\u0ABE\u0A9C (Rabari)",
+    nameGujarati: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0AAE\u0ABE\u0AB2\u0AA7\u0ABE\u0AB0\u0AC0 \u0AB0\u0AAC\u0ABE\u0AB0\u0AC0 \u0AB8\u0AAE\u0ABE\u0A9C",
+    nameEn: "Shree Maldhari Rabari Samaj (Rabari)",
+    code: "RABARI",
+    aliases: ["RABARI", "DESAI", "MALDHARI", "\u0AB0\u0AAC\u0ABE\u0AB0\u0AC0", "\u0AA6\u0AC7\u0AB8\u0ABE\u0A88", "\u0AAE\u0ABE\u0AB2\u0AA7\u0ABE\u0AB0\u0AC0"],
+    description: "\u0AB8\u0AAE\u0AB8\u0ACD\u0AA4 \u0AAE\u0ABE\u0AB2\u0AA7\u0ABE\u0AB0\u0AC0 \u0AB0\u0AAC\u0ABE\u0AB0\u0AC0 \u0AB5\u0ABF\u0A95\u0ABE\u0AB8 \u0AAE\u0A82\u0AA1\u0AB3",
+    isActive: true,
+    createdAt: "2024-01-01T00:00:00.000Z"
+  },
+  {
+    id: "main_ahir",
+    name: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0A86\u0AB9\u0AC0\u0AB0 \u0AB8\u0AAE\u0ABE\u0A9C (Ahir / Yadav)",
+    nameGujarati: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0A86\u0AB9\u0AC0\u0AB0 \u0AB8\u0AAE\u0ABE\u0A9C (\u0AAF\u0ABE\u0AA6\u0AB5)",
+    nameEn: "Shree Ahir Samaj (Yadav)",
+    code: "AHIR",
+    aliases: ["AHIR", "YADAV", "\u0A86\u0AB9\u0AC0\u0AB0", "\u0AAF\u0ABE\u0AA6\u0AB5"],
+    description: "\u0A85\u0A96\u0ABF\u0AB2 \u0A97\u0AC1\u0A9C\u0AB0\u0ABE\u0AA4 \u0A86\u0AB9\u0AC0\u0AB0 \u0AB8\u0AAE\u0ABE\u0A9C \u0AB8\u0AC7\u0AB5\u0ABE \u0A9F\u0ACD\u0AB0\u0AB8\u0ACD\u0A9F",
+    isActive: true,
+    createdAt: "2024-01-01T00:00:00.000Z"
+  },
+  {
+    id: "main_lohana",
+    name: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0AB0\u0A98\u0AC1\u0AB5\u0A82\u0AB6\u0AC0 \u0AB2\u0ACB\u0AB9\u0ABE\u0AA3\u0ABE \u0AAE\u0AB9\u0ABE\u0A9C\u0AA8 (Lohana)",
+    nameGujarati: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0AB0\u0A98\u0AC1\u0AB5\u0A82\u0AB6\u0AC0 \u0AB2\u0ACB\u0AB9\u0ABE\u0AA3\u0ABE \u0AAE\u0AB9\u0ABE\u0A9C\u0AA8",
+    nameEn: "Shree Raghuvanshi Lohana Mahajan (Lohana)",
+    code: "LOHANA",
+    aliases: ["LOHANA", "RAGHUVANSHI", "THAKKAR", "\u0AB2\u0ACB\u0AB9\u0ABE\u0AA3\u0ABE", "\u0AB0\u0A98\u0AC1\u0AB5\u0A82\u0AB6\u0AC0", "\u0AA0\u0A95\u0ACD\u0A95\u0AB0"],
+    description: "\u0AB8\u0AAE\u0AB8\u0ACD\u0AA4 \u0AB0\u0A98\u0AC1\u0AB5\u0A82\u0AB6\u0AC0 \u0AB2\u0ACB\u0AB9\u0ABE\u0AA3\u0ABE \u0AAE\u0AB9\u0ABE\u0AAA\u0AB0\u0ABF\u0AB7\u0AA6",
+    isActive: true,
+    createdAt: "2024-01-01T00:00:00.000Z"
+  },
+  {
+    id: "main_valand",
+    name: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0AB5\u0ABE\u0AA3\u0A82\u0AA6 / \u0AA8\u0ABE\u0AAF\u0AC0 \u0AB8\u0AAE\u0ABE\u0A9C (Valand)",
+    nameGujarati: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0AB5\u0ABE\u0AA3\u0A82\u0AA6 / \u0AA8\u0ABE\u0AAF\u0AC0 \u0AB8\u0AAE\u0ABE\u0A9C",
+    nameEn: "Shree Valand / Nayi Samaj (Valand)",
+    code: "VALAND",
+    aliases: ["VALAND", "NAYI", "LIMBACHIYA", "\u0AB5\u0ABE\u0AA3\u0A82\u0AA6", "\u0AA8\u0ABE\u0AAF\u0AC0", "\u0AB2\u0AC0\u0A82\u0AAC\u0A9A\u0AC0\u0AAF\u0ABE"],
+    description: "\u0AB8\u0AAE\u0AB8\u0ACD\u0AA4 \u0AB5\u0ABE\u0AA3\u0A82\u0AA6 \u0AB2\u0AC0\u0A82\u0AAC\u0A9A\u0AC0\u0AAF\u0ABE \u0A9C\u0ACD\u0A9E\u0ABE\u0AA4\u0ABF \u0AAE\u0A82\u0AA1\u0AB3",
+    isActive: true,
+    createdAt: "2024-01-01T00:00:00.000Z"
+  },
+  {
+    id: "main_mochi",
+    name: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0A97\u0AC1\u0AB0\u0ACD\u0A9C\u0AB0 \u0AAE\u0ACB\u0A9A\u0AC0 \u0AB8\u0AAE\u0ABE\u0A9C (Mochi)",
+    nameGujarati: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0A97\u0AC1\u0AB0\u0ACD\u0A9C\u0AB0 \u0AAE\u0ACB\u0A9A\u0AC0 \u0AB8\u0AAE\u0ABE\u0A9C",
+    nameEn: "Shree Gurjar Mochi Samaj (Mochi)",
+    code: "MOCHI",
+    aliases: ["MOCHI", "\u0AAE\u0ACB\u0A9A\u0AC0", "\u0A97\u0AC1\u0AB0\u0ACD\u0A9C\u0AB0 \u0AAE\u0ACB\u0A9A\u0AC0", "\u0A9A\u0ABE\u0AB5\u0AA1\u0ABE"],
+    description: "\u0AB8\u0AAE\u0AB8\u0ACD\u0AA4 \u0A97\u0AC1\u0AB0\u0ACD\u0A9C\u0AB0 \u0AAE\u0ACB\u0A9A\u0AC0 \u0A9C\u0ACD\u0A9E\u0ABE\u0AA4\u0ABF \u0AB8\u0AC7\u0AB5\u0ABE \u0A9F\u0ACD\u0AB0\u0AB8\u0ACD\u0A9F",
+    isActive: true,
+    createdAt: "2024-01-01T00:00:00.000Z"
+  },
+  {
+    id: "main_bhavsar",
+    name: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0AAD\u0ABE\u0AB5\u0AB8\u0ABE\u0AB0 \u0AB8\u0AAE\u0ABE\u0A9C (Bhavsar)",
+    nameGujarati: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0AAD\u0ABE\u0AB5\u0AB8\u0ABE\u0AB0 \u0AB8\u0AAE\u0ABE\u0A9C",
+    nameEn: "Shree Bhavsar Samaj (Bhavsar)",
+    code: "BHAVSAR",
+    aliases: ["BHAVSAR", "\u0AAD\u0ABE\u0AB5\u0AB8\u0ABE\u0AB0", "\u0AB9\u0ABF\u0A82\u0A97\u0AB3\u0ABE\u0A9C"],
+    description: "\u0A85\u0A96\u0ABF\u0AB2 \u0A97\u0AC1\u0A9C\u0AB0\u0ABE\u0AA4 \u0AAD\u0ABE\u0AB5\u0AB8\u0ABE\u0AB0 \u0A95\u0ACD\u0AB7\u0AA4\u0ACD\u0AB0\u0ABF\u0AAF \u0AB8\u0AAE\u0ABE\u0A9C",
+    isActive: true,
+    createdAt: "2024-01-01T00:00:00.000Z"
+  },
+  {
+    id: "main_khatri",
+    name: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0AB8\u0AAE\u0AB8\u0ACD\u0AA4 \u0A95\u0ACD\u0AB7\u0AA4\u0ACD\u0AB0\u0ABF\u0AAF \u0A96\u0AA4\u0ACD\u0AB0\u0AC0 \u0AB8\u0AAE\u0ABE\u0A9C (Khatri)",
+    nameGujarati: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0AB8\u0AAE\u0AB8\u0ACD\u0AA4 \u0A95\u0ACD\u0AB7\u0AA4\u0ACD\u0AB0\u0ABF\u0AAF \u0A96\u0AA4\u0ACD\u0AB0\u0AC0 \u0AB8\u0AAE\u0ABE\u0A9C",
+    nameEn: "Shree Samast Kshatriya Khatri Samaj (Khatri)",
+    code: "KHATRI",
+    aliases: ["KHATRI", "\u0A96\u0AA4\u0ACD\u0AB0\u0AC0", "\u0AAC\u0ACD\u0AB0\u0AB9\u0ACD\u0AAE\u0A95\u0ACD\u0AB7\u0AA4\u0ACD\u0AB0\u0ABF\u0AAF"],
+    description: "\u0AB8\u0AAE\u0AB8\u0ACD\u0AA4 \u0A97\u0AC1\u0A9C\u0AB0\u0ABE\u0AA4 \u0A95\u0ACD\u0AB7\u0AA4\u0ACD\u0AB0\u0ABF\u0AAF \u0A96\u0AA4\u0ACD\u0AB0\u0AC0 \u0AAE\u0AB9\u0ABE\u0AB8\u0AAD\u0ABE",
+    isActive: true,
+    createdAt: "2024-01-01T00:00:00.000Z"
+  },
+  {
+    id: "main_kansara",
+    name: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0A95\u0A82\u0AB8\u0ABE\u0AB0\u0ABE \u0AB8\u0AAE\u0ABE\u0A9C (Kansara)",
+    nameGujarati: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0A95\u0A82\u0AB8\u0ABE\u0AB0\u0ABE \u0AB8\u0AAE\u0ABE\u0A9C",
+    nameEn: "Shree Kansara Samaj (Kansara)",
+    code: "KANSARA",
+    aliases: ["KANSARA", "\u0A95\u0A82\u0AB8\u0ABE\u0AB0\u0ABE"],
+    description: "\u0AB8\u0AAE\u0AB8\u0ACD\u0AA4 \u0A95\u0A82\u0AB8\u0ABE\u0AB0\u0ABE \u0A9C\u0ACD\u0A9E\u0ABE\u0AA4\u0ABF \u0AB9\u0ABF\u0AA4\u0AB5\u0AB0\u0ACD\u0AA7\u0A95 \u0AAE\u0A82\u0AA1\u0AB3",
+    isActive: true,
+    createdAt: "2024-01-01T00:00:00.000Z"
+  },
+  {
+    id: "main_ghanchi",
+    name: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0AAE\u0ACB\u0AA2 \u0A98\u0ABE\u0A82\u0A9A\u0AC0 \u0AB8\u0AAE\u0ABE\u0A9C (Ghanchi)",
+    nameGujarati: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0AAE\u0ACB\u0AA2 \u0A98\u0ABE\u0A82\u0A9A\u0AC0 \u0AB8\u0AAE\u0ABE\u0A9C",
+    nameEn: "Shree Modh Ghanchi Samaj (Ghanchi)",
+    code: "GHANCHI",
+    aliases: ["GHANCHI", "MODH GHANCHI", "\u0A98\u0ABE\u0A82\u0A9A\u0AC0", "\u0AAE\u0ACB\u0AA2 \u0A98\u0ABE\u0A82\u0A9A\u0AC0"],
+    description: "\u0AB8\u0AAE\u0AB8\u0ACD\u0AA4 \u0AAE\u0ACB\u0AA2 \u0A98\u0ABE\u0A82\u0A9A\u0AC0 \u0AB8\u0AC7\u0AB5\u0ABE \u0AAE\u0A82\u0AA1\u0AB3",
+    isActive: true,
+    createdAt: "2024-01-01T00:00:00.000Z"
+  },
+  {
+    id: "main_sompura",
+    name: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0AB8\u0ACB\u0AAE\u0AAA\u0AC1\u0AB0\u0ABE \u0AB8\u0AB2\u0ABE\u0A9F / \u0AAC\u0ACD\u0AB0\u0ABE\u0AB9\u0ACD\u0AAE\u0AA3 \u0AB8\u0AAE\u0ABE\u0A9C (Sompura)",
+    nameGujarati: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0AB8\u0ACB\u0AAE\u0AAA\u0AC1\u0AB0\u0ABE \u0AB8\u0AB2\u0ABE\u0A9F / \u0AAC\u0ACD\u0AB0\u0ABE\u0AB9\u0ACD\u0AAE\u0AA3 \u0AB8\u0AAE\u0ABE\u0A9C",
+    nameEn: "Shree Sompura Salat / Brahmin Samaj (Sompura)",
+    code: "SOMPURA",
+    aliases: ["SOMPURA", "SALAT", "\u0AB8\u0ACB\u0AAE\u0AAA\u0AC1\u0AB0\u0ABE", "\u0AB8\u0AB2\u0ABE\u0A9F"],
+    description: "\u0AB8\u0AAE\u0AB8\u0ACD\u0AA4 \u0AB8\u0ACB\u0AAE\u0AAA\u0AC1\u0AB0\u0ABE \u0AB6\u0ABF\u0AB2\u0ACD\u0AAA\u0AC0 \u0AB8\u0AAE\u0ABE\u0A9C \u0A9F\u0ACD\u0AB0\u0AB8\u0ACD\u0A9F",
+    isActive: true,
+    createdAt: "2024-01-01T00:00:00.000Z"
+  },
+  {
+    id: "main_vankar",
+    name: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0AB5\u0AA3\u0A95\u0AB0 / \u0AAE\u0AC7\u0A98\u0AB5\u0ABE\u0AB2 \u0AB8\u0AAE\u0ABE\u0A9C (Vankar)",
+    nameGujarati: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0AB5\u0AA3\u0A95\u0AB0 / \u0AAE\u0AC7\u0A98\u0AB5\u0ABE\u0AB2 \u0AB8\u0AAE\u0ABE\u0A9C",
+    nameEn: "Shree Vankar / Meghwal Samaj (Vankar)",
+    code: "VANKAR",
+    aliases: ["VANKAR", "MEGHWAL", "\u0AB5\u0AA3\u0A95\u0AB0", "\u0AAE\u0AC7\u0A98\u0AB5\u0ABE\u0AB2", "\u0AAA\u0AB0\u0AAE\u0ABE\u0AB0", "\u0AB8\u0ACB\u0AB2\u0A82\u0A95\u0AC0"],
+    description: "\u0AB8\u0AAE\u0AB8\u0ACD\u0AA4 \u0A97\u0AC1\u0A9C\u0AB0\u0ABE\u0AA4 \u0AB5\u0AA3\u0A95\u0AB0 \u0AB8\u0AAE\u0ABE\u0A9C \u0A89\u0AA4\u0ACD\u0A95\u0AB0\u0ACD\u0AB7 \u0AB8\u0AAE\u0ABF\u0AA4\u0ABF",
+    isActive: true,
+    createdAt: "2024-01-01T00:00:00.000Z"
+  },
+  {
+    id: "main_rohit",
+    name: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0AB0\u0ACB\u0AB9\u0ABF\u0AA4 \u0AB8\u0AAE\u0ABE\u0A9C (Rohit)",
+    nameGujarati: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0AB0\u0ACB\u0AB9\u0ABF\u0AA4 \u0AB8\u0AAE\u0ABE\u0A9C",
+    nameEn: "Shree Rohit Samaj (Rohit)",
+    code: "ROHIT",
+    aliases: ["ROHIT", "\u0AB0\u0ACB\u0AB9\u0ABF\u0AA4", "\u0AB0\u0ACB\u0AB9\u0ABF\u0AA4 \u0AB8\u0AAE\u0ABE\u0A9C"],
+    description: "\u0AB8\u0AAE\u0AB8\u0ACD\u0AA4 \u0AB0\u0ACB\u0AB9\u0ABF\u0AA4 \u0A9C\u0ACD\u0A9E\u0ABE\u0AA4\u0ABF \u0AB8\u0AC7\u0AB5\u0ABE \u0AAE\u0A82\u0AA1\u0AB3",
+    isActive: true,
+    createdAt: "2024-01-01T00:00:00.000Z"
+  },
+  {
+    id: "main_chaudhari",
+    name: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0A9A\u0ACC\u0AA7\u0AB0\u0AC0 \u0AB8\u0AAE\u0ABE\u0A9C (Anjana Patidar)",
+    nameGujarati: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0A9A\u0ACC\u0AA7\u0AB0\u0AC0 \u0AB8\u0AAE\u0ABE\u0A9C (\u0A86\u0A82\u0A9C\u0AA3\u0ABE)",
+    nameEn: "Shree Chaudhari Samaj (Anjana Patidar)",
+    code: "CHAUDHARI",
+    aliases: ["CHAUDHARI", "ANJANA", "\u0A9A\u0ACC\u0AA7\u0AB0\u0AC0", "\u0A86\u0A82\u0A9C\u0AA3\u0ABE", "\u0A85\u0AB0\u0ACD\u0AAC\u0AC1\u0AA6\u0ABE"],
+    description: "\u0AB8\u0AAE\u0AB8\u0ACD\u0AA4 \u0A85\u0A96\u0ABF\u0AB2 \u0A86\u0A82\u0A9C\u0AA3\u0ABE \u0A95\u0AC7\u0AB3\u0AB5\u0AA3\u0AC0 \u0AAE\u0A82\u0AA1\u0AB3",
+    isActive: true,
+    createdAt: "2024-01-01T00:00:00.000Z"
+  },
+  {
+    id: "main_charan",
+    name: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0A9A\u0ABE\u0AB0\u0AA3 / \u0A97\u0AA2\u0AB5\u0AC0 \u0AB8\u0AAE\u0ABE\u0A9C (Charan Gadhvi)",
+    nameGujarati: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0A9A\u0ABE\u0AB0\u0AA3 / \u0A97\u0AA2\u0AB5\u0AC0 \u0AB8\u0AAE\u0ABE\u0A9C",
+    nameEn: "Shree Charan / Gadhvi Samaj (Charan Gadhvi)",
+    code: "CHARAN",
+    aliases: ["CHARAN", "GADHVI", "\u0A9A\u0ABE\u0AB0\u0AA3", "\u0A97\u0AA2\u0AB5\u0AC0", "\u0AB8\u0ACB\u0AA8\u0AB2"],
+    description: "\u0AB8\u0AAE\u0AB8\u0ACD\u0AA4 \u0A9A\u0ABE\u0AB0\u0AA3 \u0A97\u0AA2\u0AB5\u0AC0 \u0A95\u0AB2\u0ACD\u0AAF\u0ABE\u0AA3 \u0A9F\u0ACD\u0AB0\u0AB8\u0ACD\u0A9F",
+    isActive: true,
+    createdAt: "2024-01-01T00:00:00.000Z"
+  },
+  {
+    id: "main_sathwara",
+    name: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0AB8\u0ABE\u0AA5\u0AB5\u0ABE\u0AB0\u0ABE \u0A95\u0AA1\u0ABF\u0AAF\u0ABE \u0AB8\u0AAE\u0ABE\u0A9C (Sathwara)",
+    nameGujarati: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0AB8\u0ABE\u0AA5\u0AB5\u0ABE\u0AB0\u0ABE \u0A95\u0AA1\u0ABF\u0AAF\u0ABE \u0AB8\u0AAE\u0ABE\u0A9C",
+    nameEn: "Shree Sathwara Kadia Samaj (Sathwara)",
+    code: "SATHWARA",
+    aliases: ["SATHWARA", "KADIA", "\u0AB8\u0ABE\u0AA5\u0AB5\u0ABE\u0AB0\u0ABE", "\u0A95\u0AA1\u0ABF\u0AAF\u0ABE"],
+    description: "\u0AB8\u0AAE\u0AB8\u0ACD\u0AA4 \u0AB8\u0ABE\u0AA5\u0AB5\u0ABE\u0AB0\u0ABE \u0AAA\u0ACD\u0AB0\u0A97\u0AA4\u0ABF\u0AB6\u0AC0\u0AB2 \u0AAE\u0A82\u0AA1\u0AB3",
+    isActive: true,
+    createdAt: "2024-01-01T00:00:00.000Z"
+  },
+  {
+    id: "main_ravaldev",
+    name: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0AB0\u0ABE\u0AB5\u0AB3\u0AA6\u0AC7\u0AB5 / \u0AAF\u0ACB\u0A97\u0AC0 \u0AB8\u0AAE\u0ABE\u0A9C (Ravaldev)",
+    nameGujarati: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0AB0\u0ABE\u0AB5\u0AB3\u0AA6\u0AC7\u0AB5 / \u0AAF\u0ACB\u0A97\u0AC0 \u0AB8\u0AAE\u0ABE\u0A9C",
+    nameEn: "Shree Ravaldev / Yogi Samaj (Ravaldev)",
+    code: "RAVALDEV",
+    aliases: ["RAVALDEV", "YOGI", "\u0AB0\u0ABE\u0AB5\u0AB3\u0AA6\u0AC7\u0AB5", "\u0AAF\u0ACB\u0A97\u0AC0", "\u0AB0\u0ABE\u0AB5\u0AB3"],
+    description: "\u0AB8\u0AAE\u0AB8\u0ACD\u0AA4 \u0A97\u0AC1\u0A9C\u0AB0\u0ABE\u0AA4 \u0AB0\u0ABE\u0AB5\u0AB3\u0AA6\u0AC7\u0AB5 \u0A9C\u0ACD\u0A9E\u0ABE\u0AA4\u0ABF \u0AAE\u0A82\u0AA1\u0AB3",
+    isActive: true,
+    createdAt: "2024-01-01T00:00:00.000Z"
+  },
+  {
+    id: "main_bhoi",
+    name: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0AAD\u0ACB\u0A88 \u0AB8\u0AAE\u0ABE\u0A9C (Bhoi)",
+    nameGujarati: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0AAD\u0ACB\u0A88 \u0AB8\u0AAE\u0ABE\u0A9C",
+    nameEn: "Shree Bhoi Samaj (Bhoi)",
+    code: "BHOI",
+    aliases: ["BHOI", "\u0AAD\u0ACB\u0A88", "\u0AAD\u0ACB\u0A88 \u0AB8\u0AAE\u0ABE\u0A9C"],
+    description: "\u0AB8\u0AAE\u0AB8\u0ACD\u0AA4 \u0AAD\u0ACB\u0A88 \u0A9C\u0ACD\u0A9E\u0ABE\u0AA4\u0ABF \u0AB8\u0AC7\u0AB5\u0ABE \u0A9F\u0ACD\u0AB0\u0AB8\u0ACD\u0A9F",
+    isActive: true,
+    createdAt: "2024-01-01T00:00:00.000Z"
+  },
+  {
+    id: "main_vadi",
+    name: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0AB5\u0ABE\u0AA6\u0AC0 \u0AA8\u0ABE\u0AA5 \u0AB8\u0AAE\u0ABE\u0A9C (Vadi)",
+    nameGujarati: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0AB5\u0ABE\u0AA6\u0AC0 \u0AA8\u0ABE\u0AA5 \u0AB8\u0AAE\u0ABE\u0A9C",
+    nameEn: "Shree Vadi Nath Samaj (Vadi)",
+    code: "VADI",
+    aliases: ["VADI", "\u0AB5\u0ABE\u0AA6\u0AC0", "\u0AA8\u0ABE\u0AA5"],
+    description: "\u0AB8\u0AAE\u0AB8\u0ACD\u0AA4 \u0AB5\u0ABE\u0AA6\u0AC0 \u0AA8\u0ABE\u0AA5 \u0A9C\u0ACD\u0A9E\u0ABE\u0AA4\u0ABF \u0AB8\u0A82\u0A98",
+    isActive: true,
+    createdAt: "2024-01-01T00:00:00.000Z"
+  },
+  {
+    id: "main_goswami",
+    name: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0AA6\u0AB6\u0AA8\u0ABE\u0AAE \u0A97\u0ACB\u0AB8\u0ACD\u0AB5\u0ABE\u0AAE\u0AC0 \u0AB8\u0AAE\u0ABE\u0A9C (Goswami)",
+    nameGujarati: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0AA6\u0AB6\u0AA8\u0ABE\u0AAE \u0A97\u0ACB\u0AB8\u0ACD\u0AB5\u0ABE\u0AAE\u0AC0 \u0AB8\u0AAE\u0ABE\u0A9C",
+    nameEn: "Shree Dashnam Goswami Samaj (Goswami)",
+    code: "GOSWAMI",
+    aliases: ["GOSWAMI", "GOSAI", "BAPAJI", "\u0A97\u0ACB\u0AB8\u0ACD\u0AB5\u0ABE\u0AAE\u0AC0", "\u0A97\u0ACB\u0AB8\u0ABE\u0A88", "\u0AAC\u0ABE\u0AB5\u0ABE\u0A9C\u0AC0"],
+    description: "\u0AB8\u0AAE\u0AB8\u0ACD\u0AA4 \u0AA6\u0AB6\u0AA8\u0ABE\u0AAE \u0A97\u0ACB\u0AB8\u0ACD\u0AB5\u0ABE\u0AAE\u0AC0 \u0AAE\u0AB9\u0ABE\u0AB8\u0A82\u0A98",
+    isActive: true,
+    createdAt: "2024-01-01T00:00:00.000Z"
+  },
+  {
+    id: "main_bhatia",
+    name: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0AAD\u0ABE\u0A9F\u0ABF\u0AAF\u0ABE \u0AAE\u0AB9\u0ABE\u0A9C\u0AA8 (Bhatia)",
+    nameGujarati: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0AAD\u0ABE\u0A9F\u0ABF\u0AAF\u0ABE \u0AAE\u0AB9\u0ABE\u0A9C\u0AA8",
+    nameEn: "Shree Bhatia Mahajan (Bhatia)",
+    code: "BHATIA",
+    aliases: ["BHATIA", "\u0AAD\u0ABE\u0A9F\u0ABF\u0AAF\u0ABE", "\u0AAD\u0ABE\u0A9F\u0ABF\u0AAF\u0ABE \u0AAE\u0AB9\u0ABE\u0A9C\u0AA8"],
+    description: "\u0AB8\u0AAE\u0AB8\u0ACD\u0AA4 \u0AAD\u0ABE\u0A9F\u0ABF\u0AAF\u0ABE \u0A9C\u0ACD\u0A9E\u0ABE\u0AA4\u0ABF \u0A95\u0AC7\u0AA8\u0ACD\u0AA6\u0ACD\u0AB0\u0AC0\u0AAF \u0AAE\u0AB9\u0ABE\u0A9C\u0AA8",
+    isActive: true,
+    createdAt: "2024-01-01T00:00:00.000Z"
+  },
+  {
+    id: "main_chippa",
+    name: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0A9B\u0AC0\u0AAA\u0ABE \u0AB8\u0AAE\u0ABE\u0A9C (Chippa)",
+    nameGujarati: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0A9B\u0AC0\u0AAA\u0ABE \u0AB8\u0AAE\u0ABE\u0A9C",
+    nameEn: "Shree Chippa Samaj (Chippa)",
+    code: "CHIPPA",
+    aliases: ["CHIPPA", "\u0A9B\u0AC0\u0AAA\u0ABE", "\u0AB0\u0A82\u0A97\u0AB0\u0AC7\u0A9C"],
+    description: "\u0AB8\u0AAE\u0AB8\u0ACD\u0AA4 \u0A9B\u0AC0\u0AAA\u0ABE \u0A95\u0ACD\u0AB7\u0AA4\u0ACD\u0AB0\u0ABF\u0AAF \u0A9C\u0ACD\u0A9E\u0ABE\u0AA4\u0ABF \u0A9F\u0ACD\u0AB0\u0AB8\u0ACD\u0A9F",
+    isActive: true,
+    createdAt: "2024-01-01T00:00:00.000Z"
+  },
+  {
+    id: "main_kharva",
+    name: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0A96\u0ABE\u0AB0\u0AB5\u0ABE \u0AB8\u0AAE\u0ABE\u0A9C (Kharva)",
+    nameGujarati: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0A96\u0ABE\u0AB0\u0AB5\u0ABE \u0AB8\u0AAE\u0ABE\u0A9C (\u0AB8\u0ABE\u0A97\u0AB0\u0AAA\u0AC1\u0AA4\u0ACD\u0AB0)",
+    nameEn: "Shree Kharva Samaj (Kharva)",
+    code: "KHARVA",
+    aliases: ["KHARVA", "SAGARPUTRA", "\u0A96\u0ABE\u0AB0\u0AB5\u0ABE", "\u0AB8\u0ABE\u0A97\u0AB0\u0AAA\u0AC1\u0AA4\u0ACD\u0AB0"],
+    description: "\u0AB8\u0AAE\u0AB8\u0ACD\u0AA4 \u0A85\u0A96\u0ABF\u0AB2 \u0A97\u0AC1\u0A9C\u0AB0\u0ABE\u0AA4 \u0A96\u0ABE\u0AB0\u0AB5\u0ABE \u0AB8\u0AAE\u0ABE\u0A9C",
+    isActive: true,
+    createdAt: "2024-01-01T00:00:00.000Z"
+  },
+  {
+    id: "main_kandoi",
+    name: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0A95\u0A82\u0AA6\u0ACB\u0A88 / \u0AAE\u0ACB\u0AA7 \u0AB8\u0AAE\u0ABE\u0A9C (Kandoi)",
+    nameGujarati: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0A95\u0A82\u0AA6\u0ACB\u0A88 \u0AB8\u0AAE\u0ABE\u0A9C",
+    nameEn: "Shree Kandoi Samaj (Kandoi)",
+    code: "KANDOI",
+    aliases: ["KANDOI", "HALWAI", "\u0A95\u0A82\u0AA6\u0ACB\u0A88", "\u0AB9\u0AB2\u0AB5\u0ABE\u0A88"],
+    description: "\u0AB8\u0AAE\u0AB8\u0ACD\u0AA4 \u0A95\u0A82\u0AA6\u0ACB\u0A88 \u0A9C\u0ACD\u0A9E\u0ABE\u0AA4\u0ABF \u0AB9\u0ABF\u0AA4\u0AB5\u0AB0\u0ACD\u0AA7\u0A95 \u0AB8\u0AAD\u0ABE",
+    isActive: true,
+    createdAt: "2024-01-01T00:00:00.000Z"
+  },
+  {
+    id: "main_machhi",
+    name: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0AAE\u0ABE\u0A9B\u0AC0 \u0AB8\u0AAE\u0ABE\u0A9C (Machhi)",
+    nameGujarati: "\u0AB6\u0ACD\u0AB0\u0AC0 \u0AAE\u0ABE\u0A9B\u0AC0 \u0AB8\u0AAE\u0ABE\u0A9C",
+    nameEn: "Shree Machhi Samaj (Machhi)",
+    code: "MACHHI",
+    aliases: ["MACHHI", "TANDEL", "\u0AAE\u0ABE\u0A9B\u0AC0", "\u0AA4\u0ABE\u0A82\u0AA1\u0AC7\u0AB2"],
+    description: "\u0AB8\u0AAE\u0AB8\u0ACD\u0AA4 \u0AAE\u0ABE\u0A9B\u0AC0 \u0AAE\u0AB9\u0ABE\u0A9C\u0AA8 \u0AB8\u0A82\u0A97\u0AA0\u0AA8",
     isActive: true,
     createdAt: "2024-01-01T00:00:00.000Z"
   }
@@ -1791,7 +2079,17 @@ var REQUIRED_PROFILE_FIELDS = [
   { key: "district", label: "District" }
 ];
 function checkProfileComplete(u) {
-  const missing = REQUIRED_PROFILE_FIELDS.filter((f) => !(u[f.key] && String(u[f.key]).trim())).map((f) => f.label);
+  if (u.profileCompleted) {
+    return { complete: true, missing: [] };
+  }
+  const missing = REQUIRED_PROFILE_FIELDS.filter((f) => {
+    const val = u[f.key];
+    if (!val || !String(val).trim()) return true;
+    if (f.key === "name" && (String(val).startsWith("Member ") || String(val).startsWith("\u0AB8\u0AAD\u0ACD\u0AAF ("))) {
+      return true;
+    }
+    return false;
+  }).map((f) => f.label);
   return { complete: missing.length === 0, missing };
 }
 function getVerificationState(u) {
@@ -1801,11 +2099,12 @@ function getVerificationState(u) {
   if (s === "verified") state = "VERIFIED";
   else if (s === "pending") state = "VERIFICATION_PENDING";
   else if (s === "rejected") state = "REJECTED";
+  else if (complete || u.profileCompleted) state = "PROFILE_COMPLETE";
   else state = "PROFILE_INCOMPLETE";
-  const canSubmit = complete && (state === "PROFILE_INCOMPLETE" || state === "REJECTED");
+  const canSubmit = (complete || u.profileCompleted) && (state === "PROFILE_COMPLETE" || state === "REJECTED");
   return {
     verificationState: state,
-    profileComplete: complete,
+    profileComplete: Boolean(complete || u.profileCompleted),
     missingFields: missing,
     rejectionReason: u.rejectionReason || null,
     canSubmit,
@@ -1946,15 +2245,88 @@ function isUserOnboardingCompleted(u) {
   if (!u) return false;
   const isAdmin = ["SUPER_ADMIN", "MAIN_SAMAJ_ADMIN", "SAMAJ_ADMIN"].includes((u.adminRole || "").toUpperCase()) || ["super_admin", "admin", "main_samaj_admin", "samaj_admin"].includes(u.role);
   if (isAdmin) return true;
-  if (u.onboardingCompleted === false) return false;
-  const hasMain = Boolean(u.mainSamajId && mainSamajList.some((m) => m.id === u.mainSamajId && m.isActive));
-  const hasDist = Boolean(u.districtId && districtList.some((d) => d.id === u.districtId && d.isActive));
-  const hasTal = Boolean(u.talukaId && talukaList.some((t) => t.id === u.talukaId && t.isActive));
-  const vId = u.villageId || u.gamId;
-  const hasVil = Boolean(vId && villageList.some((v) => v.id === vId && v.isActive));
-  const sId = u.activeSamajId || u.samajId;
-  const hasSamaj = Boolean(sId && samajList.some((s) => s.id === sId && s.isActive));
-  return Boolean(u.onboardingCompleted === true && hasMain && hasDist && hasTal && hasVil && hasSamaj);
+  if (!u.mainSamajId && u.activeSamajId) {
+    const s = samajList.find((x) => x.id === u.activeSamajId);
+    u.mainSamajId = s?.mainSamajId || "main_patidar";
+  } else if (!u.mainSamajId) {
+    u.mainSamajId = "main_patidar";
+  }
+  if (!u.activeSamajId) {
+    const active = samajList.find((s) => s.mainSamajId === u.mainSamajId && s.isActive);
+    u.activeSamajId = active ? active.id : DEFAULT_SAMAJ_ID;
+    u.samajId = u.activeSamajId;
+    if (!u.samajIds || u.samajIds.length === 0) {
+      u.samajIds = [u.activeSamajId];
+    }
+  }
+  u.onboardingCompleted = true;
+  return true;
+}
+function getUserProfileAccessStatus(u) {
+  if (!u) {
+    return {
+      isProfileComplete: false,
+      needsProfileReminder: false,
+      isProfileMandatory: false,
+      profileReminderLaterUsed: false,
+      accountAgeDays: 0,
+      missingFields: []
+    };
+  }
+  const isAdmin = ["SUPER_ADMIN", "MAIN_SAMAJ_ADMIN", "SAMAJ_ADMIN"].includes((u.adminRole || "").toUpperCase()) || ["super_admin", "admin", "main_samaj_admin", "samaj_admin"].includes(u.role);
+  if (isAdmin) {
+    return {
+      isProfileComplete: true,
+      needsProfileReminder: false,
+      isProfileMandatory: false,
+      profileReminderLaterUsed: false,
+      accountAgeDays: 999,
+      missingFields: []
+    };
+  }
+  const { complete, missing } = checkProfileComplete(u);
+  const isComplete = Boolean(u.profileCompleted || complete && u.name && !u.name.startsWith("Member ") && !u.name.startsWith("\u0AB8\u0AAD\u0ACD\u0AAF ("));
+  if (isComplete) {
+    return {
+      isProfileComplete: true,
+      needsProfileReminder: false,
+      isProfileMandatory: false,
+      profileReminderLaterUsed: Boolean(u.profileReminderLaterUsed),
+      accountAgeDays: 0,
+      missingFields: []
+    };
+  }
+  const createdAtMs = u.createdAt ? new Date(u.createdAt).getTime() : Date.now();
+  const nowMs = Date.now();
+  const ageMs = Math.max(0, nowMs - createdAtMs);
+  const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1e3;
+  const ageDays = Number((ageMs / (24 * 60 * 60 * 1e3)).toFixed(1));
+  const isPastGracePeriod = ageMs > TWO_DAYS_MS;
+  const laterUsed = Boolean(u.profileReminderLaterUsed);
+  const isMandatory = isPastGracePeriod && laterUsed;
+  const needsReminder = isPastGracePeriod && !laterUsed;
+  return {
+    isProfileComplete: false,
+    needsProfileReminder: needsReminder,
+    isProfileMandatory: isMandatory,
+    profileReminderLaterUsed: laterUsed,
+    accountAgeDays: ageDays,
+    missingFields: missing
+  };
+}
+function requireProfileNotBlocked(req, res, next) {
+  const user = getAuthUser(req);
+  if (!user) return res.status(401).json({ error: "Unauthorized" });
+  const status = getUserProfileAccessStatus(user);
+  if (status.isProfileMandatory && !status.isProfileComplete) {
+    return res.status(403).json({
+      error: "PROFILE_COMPLETION_REQUIRED",
+      detail: "\u0AB8\u0AAE\u0ABE\u0A9C \u0A95\u0AA8\u0AC7\u0A95\u0ACD\u0A9F\u0AA8\u0ABE \u0AB8\u0ACB\u0AB6\u0ABF\u0AAF\u0AB2 \u0A85\u0AA8\u0AC7 \u0A9A\u0AC7\u0A9F \u0AAE\u0ACB\u0AA1\u0ACD\u0AAF\u0AC1\u0AB2 \u0AB5\u0ABE\u0AAA\u0AB0\u0AB5\u0ABE \u0AAE\u0ABE\u0A9F\u0AC7 \u0AAA\u0ACD\u0AB0\u0ACB\u0AAB\u0ABE\u0A87\u0AB2 \u0AAA\u0AC2\u0AB0\u0ACD\u0AA3 \u0A95\u0AB0\u0AB5\u0AC0 \u0AAB\u0AB0\u0A9C\u0ABF\u0AAF\u0ABE\u0AA4 \u0A9B\u0AC7.",
+      needsProfileCompletion: true,
+      missingFields: status.missingFields
+    });
+  }
+  next();
 }
 function buildNewUser(uid, phone, name) {
   return {
@@ -1985,7 +2357,10 @@ function buildNewUser(uid, phone, name) {
     gamId: "",
     gam: "",
     samajId: "",
-    onboardingCompleted: false
+    onboardingCompleted: false,
+    createdAt: (/* @__PURE__ */ new Date()).toISOString(),
+    profileCompleted: false,
+    profileReminderLaterUsed: false
   };
 }
 function resolveMockUser(token) {
@@ -2126,7 +2501,7 @@ app.post("/api/auth/dev-login", (req, res) => {
   if (!DEV_AUTH_ENABLED) {
     return res.status(403).json({ error: "Forbidden", message: "Dev login disabled in production." });
   }
-  const { phone, name } = req.body;
+  const { phone, name, mainSamajId } = req.body;
   const targetPhone = phone || currentUser.phone;
   const phoneDigits = targetPhone.replace(/\D/g, "").slice(-10);
   const uid = `user_${phoneDigits || "demo"}`;
@@ -2157,10 +2532,45 @@ app.post("/api/auth/dev-login", (req, res) => {
       gamId: isSpecialAdmin ? "gam_unjha" : "",
       gam: isSpecialAdmin ? "\u0A8A\u0A82\u0A9D\u0ABE" : "",
       samajId: isSpecialAdmin ? DEFAULT_SAMAJ_ID : "",
-      onboardingCompleted: isSpecialAdmin ? true : false
+      onboardingCompleted: isSpecialAdmin ? true : false,
+      createdAt: (/* @__PURE__ */ new Date()).toISOString(),
+      profileCompleted: false,
+      profileReminderLaterUsed: false
     };
   } else if (name) {
     usersMap[uid].name = name;
+  }
+  if (mainSamajId) {
+    const mainSamaj = mainSamajList.find((m) => m.id === mainSamajId && m.isActive);
+    if (mainSamaj) {
+      let activeSamaj = samajList.find((s) => s.mainSamajId === mainSamaj.id && s.isActive);
+      if (!activeSamaj) {
+        const slug = mainSamaj.code ? mainSamaj.code.toLowerCase() : mainSamaj.id.replace("main_", "");
+        activeSamaj = {
+          id: `samaj_${slug}_central`,
+          mainSamajId: mainSamaj.id,
+          districtId: "dist_ahmedabad",
+          talukaId: "tal_ahm_city",
+          villageId: "vil_ahm_city",
+          name: mainSamaj.name,
+          nameGujarati: mainSamaj.nameGujarati,
+          nameEn: mainSamaj.nameEn || mainSamaj.name,
+          code: `${mainSamaj.code || "SMJ"}01`,
+          district: "\u0A85\u0AAE\u0AA6\u0ABE\u0AB5\u0ABE\u0AA6",
+          isActive: true,
+          requirePostApproval: false,
+          createdAt: (/* @__PURE__ */ new Date()).toISOString()
+        };
+        samajList.push(activeSamaj);
+        persistMasterData();
+      }
+      usersMap[uid].mainSamajId = mainSamaj.id;
+      usersMap[uid].activeSamajId = activeSamaj.id;
+      usersMap[uid].samajId = activeSamaj.id;
+      usersMap[uid].samajIds = [activeSamaj.id];
+      usersMap[uid].samajRoles = { [activeSamaj.id]: usersMap[uid].role || "member" };
+      usersMap[uid].onboardingCompleted = true;
+    }
   }
   res.json({
     customToken: `mock-token-${phoneDigits}`
@@ -2213,7 +2623,116 @@ app.get("/api/auth/me", (req, res) => {
     return res.status(401).json({ error: "Unauthorized" });
   }
   user.onboardingCompleted = isUserOnboardingCompleted(user);
-  res.json(user);
+  const profileStatus = getUserProfileAccessStatus(user);
+  res.json({
+    ...user,
+    profileStatus
+  });
+});
+app.post("/api/auth/initial-samaj", (req, res) => {
+  const user = getAuthUser(req);
+  if (!user) {
+    return res.status(401).json({ error: "Unauthorized", detail: "\u0A95\u0AC3\u0AAA\u0ABE \u0A95\u0AB0\u0AC0\u0AA8\u0AC7 \u0AAA\u0AB9\u0AC7\u0AB2\u0ABE \u0AB2\u0AC9\u0A97\u0ABF\u0AA8 \u0A95\u0AB0\u0ACB." });
+  }
+  const { mainSamajId } = req.body;
+  if (!mainSamajId) {
+    return res.status(400).json({ error: "BAD_REQUEST", detail: "\u0A95\u0AC3\u0AAA\u0ABE \u0A95\u0AB0\u0AC0\u0AA8\u0AC7 \u0AA4\u0AAE\u0ABE\u0AB0\u0ACB \u0AB8\u0AAE\u0ABE\u0A9C \u0AAA\u0AB8\u0A82\u0AA6 \u0A95\u0AB0\u0ACB." });
+  }
+  const mainSamaj = mainSamajList.find((m) => m.id === mainSamajId && m.isActive);
+  if (!mainSamaj) {
+    return res.status(400).json({ error: "NOT_FOUND", detail: "\u0AAA\u0AB8\u0A82\u0AA6 \u0A95\u0AB0\u0AC7\u0AB2 \u0AB8\u0AAE\u0ABE\u0A9C \u0AAE\u0AB3\u0ACD\u0AAF\u0ACB \u0AA8\u0AA5\u0AC0." });
+  }
+  let activeSamaj = samajList.find((s) => s.mainSamajId === mainSamaj.id && s.isActive);
+  if (!activeSamaj) {
+    const slug = mainSamaj.code ? mainSamaj.code.toLowerCase() : mainSamaj.id.replace("main_", "");
+    activeSamaj = {
+      id: `samaj_${slug}_central`,
+      mainSamajId: mainSamaj.id,
+      districtId: "dist_ahmedabad",
+      talukaId: "tal_ahm_city",
+      villageId: "vil_ahm_city",
+      name: mainSamaj.name,
+      nameGujarati: mainSamaj.nameGujarati,
+      nameEn: mainSamaj.nameEn || mainSamaj.name,
+      code: `${mainSamaj.code || "SMJ"}01`,
+      district: "\u0A85\u0AAE\u0AA6\u0ABE\u0AB5\u0ABE\u0AA6",
+      isActive: true,
+      requirePostApproval: false,
+      createdAt: (/* @__PURE__ */ new Date()).toISOString()
+    };
+    samajList.push(activeSamaj);
+    persistMasterData();
+  }
+  user.mainSamajId = mainSamaj.id;
+  user.activeSamajId = activeSamaj.id;
+  user.samajId = activeSamaj.id;
+  user.samajIds = [activeSamaj.id];
+  user.samajRoles = { [activeSamaj.id]: user.role || "member" };
+  user.onboardingCompleted = true;
+  if (!user.createdAt) user.createdAt = (/* @__PURE__ */ new Date()).toISOString();
+  if (user.profileCompleted === void 0) user.profileCompleted = false;
+  if (user.profileReminderLaterUsed === void 0) user.profileReminderLaterUsed = false;
+  const profileStatus = getUserProfileAccessStatus(user);
+  res.json({
+    ok: true,
+    user: {
+      ...user,
+      profileStatus
+    },
+    profileStatus
+  });
+});
+app.post("/api/profile/reminder-later", (req, res) => {
+  const user = getAuthUser(req);
+  if (!user) return res.status(401).json({ error: "Unauthorized" });
+  if (user.profileReminderLaterUsed) {
+    return res.status(400).json({
+      error: "LATER_ALREADY_USED",
+      detail: "'\u0AAA\u0A9B\u0AC0\u0AA5\u0AC0' \u0AB5\u0ABF\u0A95\u0AB2\u0ACD\u0AAA \u0AAE\u0ABE\u0AA4\u0ACD\u0AB0 \u0A8F\u0A95 \u0A9C \u0AB5\u0ABE\u0AB0 \u0AB5\u0ABE\u0AAA\u0AB0\u0AC0 \u0AB6\u0A95\u0ABE\u0AAF \u0A9B\u0AC7. \u0AB9\u0AB5\u0AC7 \u0AAA\u0ACD\u0AB0\u0ACB\u0AAB\u0ABE\u0A87\u0AB2 \u0AAA\u0AC2\u0AB0\u0ACD\u0AA3 \u0A95\u0AB0\u0AB5\u0AC0 \u0AAB\u0AB0\u0A9C\u0ABF\u0AAF\u0ABE\u0AA4 \u0A9B\u0AC7."
+    });
+  }
+  user.profileReminderLaterUsed = true;
+  user.profileReminderLaterUsedAt = (/* @__PURE__ */ new Date()).toISOString();
+  const profileStatus = getUserProfileAccessStatus(user);
+  res.json({
+    ok: true,
+    message: "\u0AB0\u0ABF\u0AAE\u0ABE\u0A87\u0AA8\u0ACD\u0AA1\u0AB0 \u0AAE\u0AC1\u0AB2\u0AA4\u0AB5\u0AC0 \u0AB0\u0ABE\u0A96\u0AB5\u0ABE\u0AAE\u0ABE\u0A82 \u0A86\u0AB5\u0ACD\u0AAF\u0AC1\u0A82 \u0A9B\u0AC7.",
+    profileStatus
+  });
+});
+app.post("/api/profile/complete", (req, res) => {
+  const user = getAuthUser(req);
+  if (!user) return res.status(401).json({ error: "Unauthorized" });
+  const { name, village, district, talukaId, villageId, gamId, gam, bio, profilePhoto } = req.body;
+  if (!name || !name.trim()) {
+    return res.status(400).json({ error: "VALIDATION_ERROR", detail: "\u0A95\u0AC3\u0AAA\u0ABE \u0A95\u0AB0\u0AC0\u0AA8\u0AC7 \u0AAA\u0AC2\u0AB0\u0AC1\u0A82 \u0AA8\u0ABE\u0AAE \u0AA6\u0ABE\u0A96\u0AB2 \u0A95\u0AB0\u0ACB." });
+  }
+  if (!village || !village.trim()) {
+    return res.status(400).json({ error: "VALIDATION_ERROR", detail: "\u0A95\u0AC3\u0AAA\u0ABE \u0A95\u0AB0\u0AC0\u0AA8\u0AC7 \u0A97\u0ABE\u0AAE / \u0AA8\u0A97\u0AB0 \u0AAA\u0AB8\u0A82\u0AA6 \u0A95\u0AB0\u0ACB." });
+  }
+  if (!district || !district.trim()) {
+    return res.status(400).json({ error: "VALIDATION_ERROR", detail: "\u0A95\u0AC3\u0AAA\u0ABE \u0A95\u0AB0\u0AC0\u0AA8\u0AC7 \u0A9C\u0ABF\u0AB2\u0ACD\u0AB2\u0ACB \u0AAA\u0AB8\u0A82\u0AA6 \u0A95\u0AB0\u0ACB." });
+  }
+  user.name = name.trim();
+  user.village = village.trim();
+  user.district = district.trim();
+  if (gam) user.gam = gam.trim();
+  if (talukaId) user.talukaId = talukaId;
+  if (villageId) user.villageId = villageId;
+  if (gamId) user.gamId = gamId;
+  if (bio !== void 0) user.bio = bio;
+  if (profilePhoto) user.profilePhoto = profilePhoto;
+  user.profileCompleted = true;
+  user.profileCompletedAt = (/* @__PURE__ */ new Date()).toISOString();
+  const profileStatus = getUserProfileAccessStatus(user);
+  res.json({
+    ok: true,
+    user: {
+      ...user,
+      profileStatus
+    },
+    profileStatus
+  });
 });
 app.get("/api/main-samaj", (_req, res) => {
   res.json({
@@ -2483,18 +3002,11 @@ function requireCompletedOnboarding(req, res, next) {
     return res.status(401).json({ error: "Unauthorized", detail: "\u0A95\u0AC3\u0AAA\u0ABE \u0A95\u0AB0\u0AC0\u0AA8\u0AC7 \u0AAA\u0AB9\u0AC7\u0AB2\u0ABE \u0AB2\u0ACB\u0A97\u0ABF\u0AA8 \u0A95\u0AB0\u0ACB." });
   }
   if (!isUserOnboardingCompleted(user)) {
-    const vId = user.villageId || user.gamId;
-    let missingStep = "main_samaj";
-    if (!user.mainSamajId) missingStep = "main_samaj";
-    else if (!user.districtId) missingStep = "district";
-    else if (!user.talukaId) missingStep = "taluka";
-    else if (!vId) missingStep = "gam";
-    else missingStep = "samaj";
     return res.status(403).json({
-      error: "ONBOARDING_REQUIRED",
-      detail: "\u0AB8\u0AAE\u0ABE\u0A9C \u0A95\u0AA8\u0AC7\u0A95\u0ACD\u0A9F\u0AA8\u0ABE \u0AAE\u0ACB\u0AA1\u0ACD\u0AAF\u0AC1\u0AB2 \u0AB5\u0ABE\u0AAA\u0AB0\u0AB5\u0ABE \u0AAE\u0ABE\u0A9F\u0AC7 \u0A95\u0AC3\u0AAA\u0ABE \u0A95\u0AB0\u0AC0\u0AA8\u0AC7 \u0AAA\u0AB9\u0AC7\u0AB2\u0ABE \u0AA4\u0AAE\u0ABE\u0AB0\u0ACB \u0AAE\u0AC1\u0A96\u0ACD\u0AAF \u0AB8\u0AAE\u0ABE\u0A9C, \u0A9C\u0ABF\u0AB2\u0ACD\u0AB2\u0ACB, \u0AA4\u0ABE\u0AB2\u0AC1\u0A95\u0ACB, \u0A97\u0ABE\u0AAE \u0A85\u0AA8\u0AC7 \u0AB8\u0AAE\u0ABE\u0A9C \u0AAA\u0AB8\u0A82\u0AA6 \u0A95\u0AB0\u0ACB.",
+      error: "SAMAJ_SELECTION_REQUIRED",
+      detail: "\u0AB8\u0AAE\u0ABE\u0A9C \u0A95\u0AA8\u0AC7\u0A95\u0ACD\u0A9F\u0AA8\u0ABE \u0AAE\u0ACB\u0AA1\u0ACD\u0AAF\u0AC1\u0AB2 \u0AB5\u0ABE\u0AAA\u0AB0\u0AB5\u0ABE \u0AAE\u0ABE\u0A9F\u0AC7 \u0A95\u0AC3\u0AAA\u0ABE \u0A95\u0AB0\u0AC0\u0AA8\u0AC7 \u0AAA\u0AB9\u0AC7\u0AB2\u0ABE \u0AA4\u0AAE\u0ABE\u0AB0\u0ACB \u0AB8\u0AAE\u0ABE\u0A9C \u0AAA\u0AB8\u0A82\u0AA6 \u0A95\u0AB0\u0ACB.",
       onboardingCompleted: false,
-      missingStep
+      missingStep: "main_samaj"
     });
   }
   next();
@@ -2504,13 +3016,21 @@ app.patch("/api/auth/me", (req, res) => {
   if (!user) {
     return res.status(401).json({ error: "Unauthorized" });
   }
-  const allowed = ["name", "profilePhoto", "village", "district", "bio"];
+  const allowed = ["name", "profilePhoto", "village", "district", "bio", "gam", "gamId", "villageId", "talukaId", "districtId"];
   for (const k of allowed) {
     if (req.body[k] !== void 0) {
       user[k] = req.body[k];
     }
   }
-  res.json(user);
+  if (user.name && !user.name.startsWith("Member ") && !user.name.startsWith("\u0AB8\u0AAD\u0ACD\u0AAF (") && user.village && user.district) {
+    user.profileCompleted = true;
+    if (!user.profileCompletedAt) user.profileCompletedAt = (/* @__PURE__ */ new Date()).toISOString();
+  }
+  const profileStatus = getUserProfileAccessStatus(user);
+  res.json({
+    ...user,
+    profileStatus
+  });
 });
 app.get("/api/verification/status", (req, res) => {
   const user = getAuthUser(req);
@@ -3056,7 +3576,7 @@ app.get("/api/conversations", requireCompletedOnboarding, (req, res) => {
   });
   res.json({ items: list });
 });
-app.post("/api/conversations/direct", (req, res) => {
+app.post("/api/conversations/direct", requireProfileNotBlocked, (req, res) => {
   const user = getAuthUser(req);
   if (!user) {
     return res.status(401).json({ detail: "Authentication required" });
@@ -3157,7 +3677,7 @@ app.post("/api/conversations/direct", (req, res) => {
   saveStore();
   res.json(conversationsMap[key]);
 });
-app.post("/api/conversations/group", (req, res) => {
+app.post("/api/conversations/group", requireProfileNotBlocked, (req, res) => {
   const user = getAuthUser(req);
   const { name, memberIds = [], photo = "" } = req.body;
   const uniqueIds = Array.from(/* @__PURE__ */ new Set([user.id, ...memberIds])).filter((id) => usersMap[id]);
@@ -3307,7 +3827,7 @@ app.get("/api/conversations/:cid/messages", (req, res) => {
     res.status(status).json({ detail });
   }
 });
-app.post("/api/conversations/:cid/messages", (req, res) => {
+app.post("/api/conversations/:cid/messages", requireProfileNotBlocked, (req, res) => {
   const user = getAuthUser(req);
   if (!user) {
     return res.status(401).json({ detail: "Authentication required" });
@@ -3364,7 +3884,8 @@ app.post("/api/conversations/:cid/messages", (req, res) => {
     messagesMap[conv.id].push(newMsg);
     if (conv.type === "direct") {
       const otherId = conv.memberIds.find((id) => id !== user.id);
-      if (otherId === "user_9825123456" || otherId === "other") {
+      const isSimulated = otherId === "user_9825123456" || otherId === "other" || otherId?.startsWith("sim_") || otherId && usersMap[otherId]?.phone === "9825123456" || otherId && !usersMap[otherId]?.phone;
+      if (isSimulated && otherId) {
         setTimeout(() => {
           if (newMsg && !newMsg.readAt) {
             const readTime = (/* @__PURE__ */ new Date()).toISOString();
@@ -3376,7 +3897,64 @@ app.post("/api/conversations/:cid/messages", (req, res) => {
               newMsg.readAt = readTime;
             }
           }
-        }, 1200);
+        }, 1e3);
+        setTimeout(() => {
+          const otherUser = usersMap[otherId];
+          const senderName = otherUser?.name || "\u0AAA\u0ACD\u0AB0\u0ABF\u0AAF\u0A82\u0A95\u0ABE \u0AAA\u0A9F\u0AC7\u0AB2";
+          const replies = [
+            "\u0A9C\u0AAF \u0AB6\u0ACD\u0AB0\u0AC0 \u0A95\u0AC3\u0AB7\u0ACD\u0AA3! \u0AA4\u0AAE\u0ABE\u0AB0\u0ACB \u0AAE\u0AC7\u0AB8\u0AC7\u0A9C \u0AAE\u0AB3\u0ACD\u0AAF\u0ACB. \u0AAC\u0AA7\u0AC1\u0A82 \u0A95\u0AC1\u0AB6\u0AB3 \u0AAE\u0A82\u0A97\u0AB2 \u0A9B\u0AC7 \u0AA8\u0AC7?",
+            "\u0AA8\u0AAE\u0AB8\u0ACD\u0AA4\u0AC7! \u0AB8\u0AAE\u0ABE\u0A9C\u0AA8\u0ABE \u0AB8\u0ACD\u0AA8\u0AC7\u0AB9\u0AAE\u0ABF\u0AB2\u0AA8 \u0A95\u0ABE\u0AB0\u0ACD\u0AAF\u0A95\u0ACD\u0AB0\u0AAE \u0A85\u0A82\u0A97\u0AC7 \u0AB5\u0ABE\u0AA4 \u0A95\u0AB0\u0AB5\u0ABE \u0AAC\u0AA6\u0AB2 \u0A86\u0AAD\u0ABE\u0AB0.",
+            "\u0A9C\u0AAF \u0AB8\u0ACD\u0AB5\u0ABE\u0AAE\u0ABF\u0AA8\u0ABE\u0AB0\u0ABE\u0AAF\u0AA3! \u0AB9\u0AC1\u0A82 \u0AA5\u0ACB\u0AA1\u0AC0\u0AB5\u0ABE\u0AB0\u0AAE\u0ABE\u0A82 \u0A9C\u0ACB\u0A88\u0AA8\u0AC7 \u0AB5\u0ABF\u0A97\u0AA4\u0AB5\u0ABE\u0AB0 \u0A9C\u0AB5\u0ABE\u0AAC \u0A86\u0AAA\u0AC1\u0A82 \u0A9B\u0AC1\u0A82.",
+            "\u0AB9\u0ABE \u0A9A\u0ACB\u0A95\u0ACD\u0A95\u0AB8, \u0A86\u0AAA\u0AA3\u0AC7 \u0A86\u0A97\u0ABE\u0AAE\u0AC0 \u0AAE\u0ABF\u0A9F\u0ABF\u0A82\u0A97\u0AAE\u0ABE\u0A82 \u0A86 \u0AB5\u0ABF\u0AB7\u0AAF\u0AC7 \u0A9A\u0AB0\u0ACD\u0A9A\u0ABE \u0A95\u0AB0\u0AC0\u0AB6\u0AC1\u0A82."
+          ];
+          const replyText = replies[Math.floor(Math.random() * replies.length)];
+          const replyTime = (/* @__PURE__ */ new Date()).toISOString();
+          const replyMsg = {
+            id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+            conversationId: conv.id,
+            senderId: otherId,
+            senderName,
+            type: "text",
+            text: replyText,
+            mediaUrl: "",
+            fileName: "",
+            replyTo: null,
+            status: "delivered",
+            deliveredTo: [user.id],
+            readBy: [otherId],
+            deletedFor: [],
+            deleted: false,
+            disappearingDuration: conv.disappearingDuration || "off",
+            createdAt: replyTime
+          };
+          if (!messagesMap[conv.id]) messagesMap[conv.id] = [];
+          messagesMap[conv.id].push(replyMsg);
+          conv.lastMessage = {
+            id: replyMsg.id,
+            text: replyText,
+            senderId: otherId,
+            senderName,
+            type: "text",
+            createdAt: replyTime
+          };
+          conv.updatedAt = replyTime;
+          conv.unread[user.id] = (conv.unread[user.id] || 0) + 1;
+          notificationsList.unshift({
+            id: `notif_msg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+            type: "message",
+            title: `\u{1F4AC} \u0AA8\u0AB5\u0ACB \u0AAE\u0AC7\u0AB8\u0AC7\u0A9C: ${senderName}`,
+            body: replyText,
+            link: `/messages/${conv.id}`,
+            read: false,
+            createdAt: replyTime,
+            userId: user.id,
+            authorId: otherId,
+            authorName: senderName,
+            authorPhoto: otherUser?.profilePhoto || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+            conversationId: conv.id
+          });
+          saveStore();
+        }, 2500);
       }
     }
     const preview = type === "text" ? text.slice(0, 60) : type === "image" ? "\u{1F4F7} \u0AAB\u0ACB\u0A9F\u0ACB" : type === "video" ? "\u{1F3A5} \u0AB5\u0ABF\u0AA1\u0ABF\u0A93" : type === "voice" ? "\u{1F3A4} \u0A85\u0AB5\u0ABE\u0A9C" : "\u{1F4C4} \u0AA1\u0ACB\u0A95\u0ACD\u0AAF\u0AC1\u0AAE\u0AC7\u0AA8\u0ACD\u0A9F";
@@ -3607,8 +4185,9 @@ app.post("/api/conversations/:cid/call/start", (req, res) => {
       }
       if (!otherId) otherId = "user_other";
     }
+    const callId = `call_${Date.now()}`;
     conv.activeCall = {
-      callId: `call_${Date.now()}`,
+      callId,
       callType: callType === "video" ? "video" : "voice",
       callerId: user.id,
       callerName: user.name,
@@ -3617,9 +4196,51 @@ app.post("/api/conversations/:cid/call/start", (req, res) => {
       startedAt: (/* @__PURE__ */ new Date()).toISOString(),
       signals: []
     };
+    setTimeout(() => {
+      if (conv.activeCall && conv.activeCall.callId === callId && (conv.activeCall.status === "calling" || conv.activeCall.status === "ringing")) {
+        conv.activeCall.status = "active";
+        conv.activeCall.answeredAt = (/* @__PURE__ */ new Date()).toISOString();
+        conv.activeCall.isSimulatedCall = true;
+        if (!conv.activeCall.signals) conv.activeCall.signals = [];
+        conv.activeCall.signals.push({
+          id: `sig_auto_${Date.now()}`,
+          from: otherId,
+          to: user.id,
+          signal: { type: "answer", isSimulated: true },
+          type: "answer",
+          createdAt: (/* @__PURE__ */ new Date()).toISOString(),
+          timestamp: Date.now()
+        });
+      }
+    }, 2500);
     res.json({ ok: true, call: conv.activeCall });
   } catch (err) {
     res.status(400).json({ detail: err?.message || "\u0A95\u0AC9\u0AB2 \u0AB6\u0AB0\u0AC2 \u0AA5\u0A88 \u0AB6\u0A95\u0ACD\u0AAF\u0ACB \u0AA8\u0AB9\u0AC0\u0A82" });
+  }
+});
+app.post("/api/conversations/:cid/call/simulate-answer", (req, res) => {
+  const user = getAuthUser(req) || currentUser;
+  try {
+    const conv = requireConvMember(req.params.cid, user);
+    if (!conv.activeCall) {
+      return res.status(404).json({ detail: "No active call" });
+    }
+    conv.activeCall.status = "active";
+    conv.activeCall.answeredAt = (/* @__PURE__ */ new Date()).toISOString();
+    conv.activeCall.isSimulatedCall = true;
+    if (!conv.activeCall.signals) conv.activeCall.signals = [];
+    conv.activeCall.signals.push({
+      id: `sig_auto_${Date.now()}`,
+      from: conv.activeCall.receiverId,
+      to: conv.activeCall.callerId,
+      signal: { type: "answer", isSimulated: true },
+      type: "answer",
+      createdAt: (/* @__PURE__ */ new Date()).toISOString(),
+      timestamp: Date.now()
+    });
+    res.json({ ok: true, call: conv.activeCall });
+  } catch (err) {
+    res.status(400).json({ detail: err?.message || "Could not answer" });
   }
 });
 app.get("/api/conversations/:cid/call", (req, res) => {
@@ -3797,16 +4418,13 @@ app.get("/api/conversations/:cid/call/signals", (req, res) => {
     }
     const since = req.query.since ? Number(req.query.since) : 0;
     const userPhone = user.phone ? user.phone.replace(/\D/g, "").slice(-10) : "";
-    const isForMe = (s) => {
-      if (!s.to) return true;
-      if (s.to === user.id) return true;
-      if (userPhone && (s.to === `user_${userPhone}` || s.to.includes(userPhone))) return true;
-      if (conv.activeCall?.callerId === user.id && s.to === "caller") return true;
-      if (conv.activeCall?.receiverId === user.id && s.to === "receiver") return true;
+    const isFromMe = (s) => {
+      if (s.from === user.id) return true;
+      if (userPhone && s.from && (s.from === `user_${userPhone}` || s.from.includes(userPhone))) return true;
       return false;
     };
     const mySignals = conv.activeCall.signals.filter(
-      (s) => isForMe(s) && (!since || s.timestamp && s.timestamp > since)
+      (s) => !isFromMe(s) && (!since || s.timestamp && s.timestamp > since)
     );
     res.json({ signals: mySignals });
   } catch {
@@ -3828,19 +4446,24 @@ app.get("/api/calls/my-active-call", (req, res) => {
   for (const conv of Object.values(conversationsMap)) {
     if (conv.activeCall) {
       const call = conv.activeCall;
-      if ((isUserMatch(call.receiverId) || isUserMatch(call.callerId)) && call.status !== "ended" && call.status !== "rejected") {
-        const otherId = isUserMatch(call.callerId) ? call.receiverId : call.callerId;
-        const otherUser = otherId ? usersMap[otherId] : null;
-        return res.json({
-          call,
-          conversationId: conv.id,
-          otherUser: otherUser ? {
-            id: otherUser.id,
-            name: otherUser.name,
-            photo: otherUser.profilePhoto || otherUser.avatar,
-            phone: otherUser.phone
-          } : { id: otherId, name: call.callerName || "\u0AB8\u0AAD\u0ACD\u0AAF" }
-        });
+      if (call.status !== "ended" && call.status !== "rejected") {
+        const amIReceiver = isUserMatch(call.receiverId);
+        const amICaller = isUserMatch(call.callerId);
+        if (amIReceiver || amICaller && call.status === "active") {
+          const otherId = amICaller ? call.receiverId : call.callerId;
+          const otherUser = otherId ? usersMap[otherId] : null;
+          return res.json({
+            call,
+            conversationId: conv.id,
+            isIncoming: amIReceiver && (call.status === "calling" || call.status === "ringing"),
+            otherUser: otherUser ? {
+              id: otherUser.id,
+              name: otherUser.name,
+              photo: otherUser.profilePhoto || otherUser.avatar,
+              phone: otherUser.phone
+            } : { id: otherId, name: call.callerName || "\u0AB8\u0AAD\u0ACD\u0AAF" }
+          });
+        }
       }
     }
   }
@@ -4534,7 +5157,7 @@ app.get("/api/posts/:pid/media", (req, res) => {
     authorId: post.authorId
   });
 });
-app.post("/api/posts", (req, res) => {
+app.post("/api/posts", requireProfileNotBlocked, (req, res) => {
   const authUser = getAuthUser(req);
   if (!authUser) return res.status(401).json({ detail: "Authentication required" });
   if (platformSettings.requireVerificationForPosting && authUser.verificationStatus !== "verified") {
@@ -6270,13 +6893,18 @@ app.get("/api/notifications", (req, res) => {
   const authUser = getAuthUser(req);
   const currentUid = authUser?.id || "u1";
   const userSamajId = authUser?.activeSamajId || DEFAULT_SAMAJ_ID;
+  const phoneDigits = authUser?.phone ? authUser.phone.replace(/\D/g, "").slice(-10) : "";
   const items = notificationsList.filter((n) => {
-    if (n.authorId && n.authorId === currentUid) return false;
+    if (n.authorId && (n.authorId === currentUid || phoneDigits && n.authorId === `user_${phoneDigits}`)) return false;
     if (n.userId === "all") {
       if (n.samajId && n.samajId !== userSamajId) return false;
       return true;
     }
-    return n.userId === currentUid;
+    if (n.userId === currentUid) return true;
+    if (phoneDigits && (n.userId === `user_${phoneDigits}` || n.userId === phoneDigits || n.userId === `+91${phoneDigits}`)) {
+      return true;
+    }
+    return false;
   });
   const since = req.query.since;
   let filtered = items;
@@ -6524,6 +7152,9 @@ function syncAllMaranNodhToReels() {
 async function startServer() {
   loadStore();
   app.use(import_express.default.static(import_path.default.join(process.cwd(), "public"), { index: false }));
+  app.get("/api/health", (_req, res) => {
+    res.json({ status: "ok", timestamp: (/* @__PURE__ */ new Date()).toISOString() });
+  });
   if (process.env.NODE_ENV !== "production") {
     const vite = await (0, import_vite.createServer)({
       server: { middlewareMode: true },
@@ -6534,6 +7165,9 @@ async function startServer() {
     const distPath = import_path.default.join(process.cwd(), "dist");
     app.use(import_express.default.static(distPath));
     app.get("*", (req, res) => {
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      res.setHeader("Pragma", "no-cache");
+      res.setHeader("Expires", "0");
       res.sendFile(import_path.default.join(distPath, "index.html"));
     });
   }
@@ -6546,12 +7180,14 @@ startServer().catch((err) => {
 });
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
+  getUserProfileAccessStatus,
   isUserOnboardingCompleted,
   loadStore,
   logAdminAction,
   notificationsList,
   persistMasterData,
   requireCompletedOnboarding,
+  requireProfileNotBlocked,
   syncAllMaranNodhToReels
 });
 //# sourceMappingURL=server.cjs.map

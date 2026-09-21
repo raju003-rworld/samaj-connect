@@ -15,8 +15,8 @@ export default function Splash() {
         nav("/login", { replace: true });
       } else {
         const isAdmin = ["super_admin", "admin", "main_samaj_admin", "samaj_admin"].includes(user?.role) || Boolean(user?.adminRole);
-        if (!user.onboardingCompleted && !isAdmin) {
-          nav("/onboarding", { replace: true });
+        if (!user.activeSamajId && !user.onboardingCompleted && !isAdmin) {
+          nav("/login", { replace: true });
         } else {
           nav("/reels", { replace: true });
         }

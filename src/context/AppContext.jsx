@@ -9,6 +9,7 @@ import {
   registerServiceWorker,
   playNotificationSound,
   vibratePhone,
+  setupNativeChannels,
 } from "@/lib/pushNotifications";
 
 const AppContext = createContext(null);
@@ -146,6 +147,7 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     if (!user?.id) return;
 
+    setupNativeChannels().catch(() => {});
     api.get("/samaj").then(({ data }) => setSamajList(data.items)).catch(() => {});
     api.post("/presence", { online: true }).catch(() => {});
 
@@ -178,10 +180,10 @@ export const AppProvider = ({ children }) => {
 
     fetchNotifications(true);
 
-    // Polling interval every 3.5 seconds to catch live Reels or Messages promptly
+    // Polling interval every 2 seconds to catch live Messages promptly
     const pollTimer = setInterval(() => {
       fetchNotifications(false);
-    }, 3500);
+    }, 2000);
 
     const unsub = listenNotifications(user.id, (items) => {
       setUnread(items.filter((n) => !n.read).length);

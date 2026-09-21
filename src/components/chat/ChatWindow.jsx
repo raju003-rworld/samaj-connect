@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Send,
   Reply,
@@ -41,6 +41,7 @@ import { ThemePickerModal, CHAT_THEMES } from "@/components/chat/ThemePickerModa
 import { DisappearingModal } from "@/components/chat/DisappearingModal";
 import { DeleteMessageModal } from "@/components/chat/DeleteMessageModal";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { playNotificationSound, vibratePhone, showPhoneNotification } from "@/lib/pushNotifications";
 
 const fmtTime = (iso) =>
   new Date(iso).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
@@ -382,8 +383,15 @@ export function ChatWindow({ cid, onBack }) {
   const [editText, setEditText] = useState("");
   const [isBlockedByMe, setIsBlockedByMe] = useState(false);
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const autoCallHandledRef = useRef(false);
+  const activeCallRef = useRef(null);
+  activeCallRef.current = activeCall;
+
   const bottom = useRef(null);
   const typingT = useRef(null);
+  const knownMsgIdsRef = useRef(new Set());
+  const isFirstLoadRef = useRef(true);
 
   const otherId = conv?.type === "direct" ? conv.memberIds.find((i) => i !== user.id) : null;
   const otherUser = otherId ? conv?.members?.[otherId] : null;
@@ -410,7 +418,7 @@ export function ChatWindow({ cid, onBack }) {
           setConv(merged);
           if (data.activeCall) {
             setActiveCall(data.activeCall);
-          } else {
+          } else if (activeCallRef.current && (activeCallRef.current.status === "ended" || activeCallRef.current.status === "rejected")) {
             setActiveCall(null);
           }
         }
@@ -439,6 +447,31 @@ export function ChatWindow({ cid, onBack }) {
               }
               return m;
             });
+
+          // Check if any brand new incoming message arrived from other participant
+          const newIncoming = visible.filter(
+            (m) => m.senderId !== user?.id && !knownMsgIdsRef.current.has(m.id)
+          );
+
+          if (!isFirstLoadRef.current && newIncoming.length > 0) {
+            // Play sweet message chime & phone vibration
+            playNotificationSound("message");
+            vibratePhone([120, 60, 120]);
+
+            // If user has minimized or switched tab, fire system notification
+            if (typeof document !== "undefined" && document.hidden) {
+              const latestMsg = newIncoming[newIncoming.length - 1];
+              showPhoneNotification({
+                title: `💬 નવો મેસેજ: ${latestMsg.senderName || otherUser?.name || "સભ્ય"}`,
+                body: latestMsg.text || "નવો સંદેશ મળ્યો છે",
+                link: `/messages/${cid}`,
+                type: "message",
+              });
+            }
+          }
+
+          visible.forEach((m) => knownMsgIdsRef.current.add(m.id));
+          isFirstLoadRef.current = false;
           setMsgs(dedupeMsgs(visible));
         }
       })
@@ -469,8 +502,8 @@ export function ChatWindow({ cid, onBack }) {
     api.post(`/conversations/${cid}/delivered`).catch(() => {});
     api.post(`/conversations/${cid}/read`).catch(() => {});
 
-    // Polling backup to guarantee real-time calling and message updates in development
-    const interval = setInterval(refreshConvAndMsgs, 2500);
+    // Polling backup to guarantee real-time message and call updates
+    const interval = setInterval(refreshConvAndMsgs, 1600);
 
     return () => {
       if (typeof u1 === "function") u1();
@@ -670,6 +703,20 @@ export function ChatWindow({ cid, onBack }) {
       toast.error(e?.response?.data?.detail || "કૉલ શરૂ થઈ શક્યો નહીં");
     }
   };
+
+  // Trigger autoCall if navigated with ?autoCall=video or ?autoCall=voice
+  useEffect(() => {
+    const autoCall = searchParams.get("autoCall");
+    if (autoCall && conv?.id && !autoCallHandledRef.current) {
+      autoCallHandledRef.current = true;
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("autoCall");
+        return next;
+      }, { replace: true });
+      handleStartCall(autoCall === "video" ? "video" : "voice");
+    }
+  }, [conv?.id, searchParams]);
 
   // Block / Unblock
   const handleToggleBlock = async () => {

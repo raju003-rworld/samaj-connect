@@ -425,9 +425,11 @@
       "village": "",
       "district": "",
       "bio": "સમાજ સભ્ય",
-      "samajIds": [],
+      "samajIds": [
+        "default"
+      ],
       "samajRoles": {},
-      "activeSamajId": "",
+      "activeSamajId": "default",
       "followersCount": 0,
       "followingCount": 0,
       "isSuspended": false,
@@ -436,14 +438,14 @@
       "following": [],
       "verificationStatus": "none",
       "rejectionReason": null,
-      "mainSamajId": "",
+      "mainSamajId": "main_patidar",
       "districtId": "",
       "talukaId": "",
       "villageId": "",
       "gamId": "",
       "gam": "",
-      "samajId": "",
-      "onboardingCompleted": false
+      "samajId": "default",
+      "onboardingCompleted": true
     },
     "user_9925514713": {
       "id": "user_9925514713",
@@ -455,9 +457,11 @@
       "village": "Gadhsisa",
       "district": "Kutch",
       "bio": "સમાજ સભ્ય",
-      "samajIds": [],
+      "samajIds": [
+        "default"
+      ],
       "samajRoles": {},
-      "activeSamajId": "",
+      "activeSamajId": "default",
       "followersCount": 0,
       "followingCount": 2,
       "isSuspended": false,
@@ -469,10 +473,10 @@
       ],
       "verificationStatus": "pending",
       "rejectionReason": null,
-      "mainSamajId": "",
+      "mainSamajId": "main_patidar",
       "gamId": "",
       "gam": "",
-      "samajId": "",
+      "samajId": "default",
       "onboardingCompleted": true,
       "verificationSubmittedAt": "2026-09-14T16:56:48.727Z"
     },
@@ -483,16 +487,16 @@
       "role": "member",
       "adminRole": null,
       "profilePhoto": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
-      "village": "gadhsisa",
+      "village": "vbcvb",
       "district": "મહેસાણા",
       "bio": "સમાજ સભ્ય",
       "samajIds": [
-        "samaj_patidar_mehsana"
+        "default"
       ],
       "samajRoles": {
-        "samaj_patidar_mehsana": "member"
+        "default": "member"
       },
-      "activeSamajId": "samaj_patidar_mehsana",
+      "activeSamajId": "default",
       "followersCount": 0,
       "followingCount": 0,
       "isSuspended": false,
@@ -502,13 +506,103 @@
       "verificationStatus": "none",
       "rejectionReason": null,
       "mainSamajId": "main_patidar",
-      "gamId": "vil_custom_1789479347624",
-      "gam": "gadhsisa",
-      "samajId": "samaj_patidar_mehsana",
+      "gamId": "vil_custom_1789908081439",
+      "gam": "vbcvb",
+      "samajId": "default",
       "onboardingCompleted": true,
       "districtId": "dist_mehsana",
       "talukaId": "tal_mehsana_becharaji",
-      "villageId": "vil_custom_1789479347624"
+      "villageId": "vil_custom_1789908081439",
+      "createdAt": "2026-09-21T04:28:00.002Z",
+      "profileCompleted": false,
+      "profileReminderLaterUsed": false
+    },
+    "hpxRKK7Fy1hwrib3FARlkTl95JR2": {
+      "id": "hpxRKK7Fy1hwrib3FARlkTl95JR2",
+      "phone": "+918200050867",
+      "name": "સભ્ય (0867)",
+      "role": "member",
+      "adminRole": null,
+      "profilePhoto": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+      "village": "asdas",
+      "district": "કચ્છ",
+      "bio": "સમાજ સભ્ય",
+      "samajIds": [
+        "default"
+      ],
+      "samajRoles": {
+        "default": "member"
+      },
+      "activeSamajId": "default",
+      "followersCount": 0,
+      "followingCount": 0,
+      "isSuspended": false,
+      "blocked": [],
+      "followers": [],
+      "following": [],
+      "verificationStatus": "none",
+      "rejectionReason": null,
+      "mainSamajId": "main_patidar",
+      "districtId": "dist_kachchh",
+      "talukaId": "tal_kch_bhachau",
+      "villageId": "vil_custom_1789914388537",
+      "gamId": "vil_custom_1789914388537",
+      "gam": "asdas",
+      "samajId": "default",
+      "onboardingCompleted": true,
+      "createdAt": "2026-09-20T15:24:57.228Z",
+      "profileCompleted": false,
+      "profileReminderLaterUsed": false
+    },
+    "user_9999988888": {
+      "id": "user_9999988888",
+      "phone": "+919999988888",
+      "name": "સભ્ય (8888)",
+      "role": "member",
+      "adminRole": null,
+      "profilePhoto": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+      "village": "",
+      "district": "",
+      "bio": "સમાજ સભ્ય",
+      "samajIds": [
+        "default"
+      ],
+      "samajRoles": {
+        "default": "member"
+      },
+      "activeSamajId": "default",
+      "followersCount": 0,
+      "followingCount": 0,
+      "isSuspended": false,
+      "blocked": [],
+      "followers": [],
+      "following": [],
+      "verificationStatus": "none",
+      "rejectionReason": null,
+      "mainSamajId": "main_patidar",
+      "gamId": "",
+      "gam": "",
+      "samajId": "default",
+      "onboardingCompleted": true,
+      "createdAt": "2026-09-21T04:17:10.764Z",
+      "profileCompleted": false,
+      "profileReminderLaterUsed": false
+    },
+    "user_9910250597": {
+      "id": "user_9910250597",
+      "name": "+91 9910250597",
+      "phone": "9910250597",
+      "role": "member",
+      "profilePhoto": "",
+      "samajId": "default",
+      "activeSamajId": "default",
+      "createdAt": "2026-09-21T04:30:35.300Z",
+      "blocked": [],
+      "onboardingCompleted": true,
+      "mainSamajId": "main_patidar",
+      "samajIds": [
+        "default"
+      ]
     }
   },
   "adminRolesMap": {
@@ -553,7 +647,7 @@
       "approved": true,
       "status": "active",
       "createdAt": "2026-09-15T05:57:05.121Z",
-      "viewsCount": 1
+      "viewsCount": 10
     },
     {
       "id": "post_memorial_mn_1",
@@ -603,7 +697,8 @@
       "commentsCount": 2,
       "approved": true,
       "status": "active",
-      "createdAt": "2026-09-10T14:00:00.000Z"
+      "createdAt": "2026-09-10T14:00:00.000Z",
+      "viewsCount": 6
     },
     {
       "id": "reel_mandir_aarti",
@@ -634,7 +729,8 @@
       "commentsCount": 34,
       "approved": true,
       "status": "active",
-      "createdAt": "2026-09-15T02:57:05.121Z"
+      "createdAt": "2026-09-15T02:57:05.121Z",
+      "viewsCount": 3
     },
     {
       "id": "post_memorial_mn_2",
@@ -684,7 +780,8 @@
       "commentsCount": 1,
       "approved": true,
       "status": "active",
-      "createdAt": "2026-09-08T16:00:00.000Z"
+      "createdAt": "2026-09-08T16:00:00.000Z",
+      "viewsCount": 3
     },
     {
       "id": "reel_youth_cricket",
@@ -718,7 +815,8 @@
       "commentsCount": 27,
       "approved": true,
       "status": "active",
-      "createdAt": "2026-09-14T21:57:05.121Z"
+      "createdAt": "2026-09-14T21:57:05.121Z",
+      "viewsCount": 1
     },
     {
       "id": "post_memorial_mn_3",
@@ -768,7 +866,8 @@
       "commentsCount": 1,
       "approved": true,
       "status": "active",
-      "createdAt": "2026-09-12T11:00:00.000Z"
+      "createdAt": "2026-09-12T11:00:00.000Z",
+      "viewsCount": 1
     },
     {
       "id": "reel_business_summit",
@@ -798,7 +897,8 @@
       "commentsCount": 14,
       "approved": true,
       "status": "active",
-      "createdAt": "2026-09-14T15:57:05.121Z"
+      "createdAt": "2026-09-14T15:57:05.121Z",
+      "viewsCount": 1
     },
     {
       "id": "post_memorial_mn_4",
@@ -848,7 +948,8 @@
       "commentsCount": 1,
       "approved": true,
       "status": "active",
-      "createdAt": "2026-09-11T15:20:00.000Z"
+      "createdAt": "2026-09-11T15:20:00.000Z",
+      "viewsCount": 1
     },
     {
       "id": "reel_community_seva",
@@ -879,7 +980,8 @@
       "commentsCount": 21,
       "approved": true,
       "status": "active",
-      "createdAt": "2026-09-14T07:57:05.121Z"
+      "createdAt": "2026-09-14T07:57:05.121Z",
+      "viewsCount": 1
     },
     {
       "id": "post_memorial_mn_5",
@@ -929,7 +1031,8 @@
       "commentsCount": 0,
       "approved": true,
       "status": "active",
-      "createdAt": "2026-09-13T17:00:00.000Z"
+      "createdAt": "2026-09-13T17:00:00.000Z",
+      "viewsCount": 1
     },
     {
       "id": "post_memorial_mn_6",
@@ -4575,14 +4678,14 @@
       "samajId": "default",
       "createdBy": "user_demo_admin",
       "createdAt": "2025-01-01T10:00:00.000Z",
-      "updatedAt": "2026-09-14T18:24:10.686Z",
+      "updatedAt": "2026-09-20T13:00:36.990Z",
       "lastMessage": {
-        "id": "msg_1789410250686_7w9w",
-        "text": "નમસ્તે ભાઈ, જય શ્રી કૃષ્ણ!",
-        "senderId": "user_9825123456",
-        "senderName": "પ્રિયંકાબેન અમિતભાઈ પટેલ",
-        "type": "text",
-        "createdAt": "2026-09-14T18:24:10.686Z"
+        "id": "call_1789909236990",
+        "text": "📹 વિડિઓ કૉલ પૂર્ણ થયો (0:12)",
+        "senderId": "user_demo_admin",
+        "senderName": "રાજેશભાઈ પટેલ (Admin)",
+        "type": "call",
+        "createdAt": "2026-09-20T13:00:36.990Z"
       },
       "unread": {
         "user_9825123456": 0,
@@ -4601,7 +4704,8 @@
       "type": "direct",
       "memberIds": [
         "PcombNu6oNR4fVc3D3Y7dmmxaaV2",
-        "user_demo_admin"
+        "user_demo_admin",
+        "user_9574050600"
       ],
       "members": {
         "PcombNu6oNR4fVc3D3Y7dmmxaaV2": {
@@ -4620,11 +4724,19 @@
       "samajId": "samaj_patidar_kutch_gadhsisa",
       "createdBy": "PcombNu6oNR4fVc3D3Y7dmmxaaV2",
       "createdAt": "2026-09-14T12:42:17.497Z",
-      "updatedAt": "2026-09-14T12:42:17.497Z",
-      "lastMessage": null,
+      "updatedAt": "2026-09-20T13:02:18.177Z",
+      "lastMessage": {
+        "id": "call_1789909338177",
+        "text": "📞 મિસ્ડ વૉઇસ કૉલ",
+        "senderId": "user_9574050600",
+        "senderName": "સભ્ય (0600)",
+        "type": "call",
+        "createdAt": "2026-09-20T13:02:18.177Z"
+      },
       "unread": {
         "PcombNu6oNR4fVc3D3Y7dmmxaaV2": 0,
-        "user_demo_admin": 0
+        "user_demo_admin": 0,
+        "user_9574050600": 0
       },
       "muted": [],
       "typing": {},
@@ -4720,6 +4832,42 @@
       },
       "theme": "default",
       "disappearingDuration": "5m",
+      "activeCall": null
+    },
+    "d_user_9574050600_user_9910250597": {
+      "id": "d_user_9574050600_user_9910250597",
+      "type": "direct",
+      "memberIds": [
+        "user_9574050600",
+        "user_9910250597"
+      ],
+      "members": {
+        "user_9574050600": {
+          "id": "user_9574050600",
+          "name": "સભ્ય (0600)",
+          "photo": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+          "phone": "+919574050600"
+        },
+        "user_9910250597": {
+          "id": "user_9910250597",
+          "name": "+91 9910250597",
+          "photo": "",
+          "phone": "9910250597"
+        }
+      },
+      "samajId": "default",
+      "createdBy": "user_9574050600",
+      "createdAt": "2026-09-21T04:30:35.300Z",
+      "updatedAt": "2026-09-21T04:30:35.300Z",
+      "lastMessage": null,
+      "unread": {
+        "user_9574050600": 0,
+        "user_9910250597": 0
+      },
+      "muted": [],
+      "typing": {},
+      "theme": "default",
+      "disappearingDuration": "off",
       "activeCall": null
     }
   },
@@ -4985,9 +5133,62 @@
         "deleted": false,
         "disappearingDuration": "5m",
         "createdAt": "2026-09-14T18:24:10.686Z"
+      },
+      {
+        "id": "call_1789909236990",
+        "conversationId": "d_user_9825123456_user_demo_admin",
+        "senderId": "user_demo_admin",
+        "senderName": "રાજેશભાઈ પટેલ (Admin)",
+        "type": "call",
+        "text": "📹 વિડિઓ કૉલ પૂર્ણ થયો (0:12)",
+        "status": "read",
+        "deliveredTo": [
+          "user_9825123456",
+          "user_demo_admin"
+        ],
+        "readBy": [
+          "user_9825123456",
+          "user_demo_admin"
+        ],
+        "deletedFor": [],
+        "deleted": false,
+        "callInfo": {
+          "callType": "video",
+          "status": "ended",
+          "durationSec": 12
+        },
+        "createdAt": "2026-09-20T13:00:36.990Z"
       }
     ],
-    "d_PcombNu6oNR4fVc3D3Y7dmmxaaV2_user_demo_admin": [],
+    "d_PcombNu6oNR4fVc3D3Y7dmmxaaV2_user_demo_admin": [
+      {
+        "id": "call_1789909338177",
+        "conversationId": "d_PcombNu6oNR4fVc3D3Y7dmmxaaV2_user_demo_admin",
+        "senderId": "user_9574050600",
+        "senderName": "સભ્ય (0600)",
+        "type": "call",
+        "text": "📞 મિસ્ડ વૉઇસ કૉલ",
+        "status": "read",
+        "deliveredTo": [
+          "PcombNu6oNR4fVc3D3Y7dmmxaaV2",
+          "user_demo_admin",
+          "user_9574050600"
+        ],
+        "readBy": [
+          "PcombNu6oNR4fVc3D3Y7dmmxaaV2",
+          "user_demo_admin",
+          "user_9574050600"
+        ],
+        "deletedFor": [],
+        "deleted": false,
+        "callInfo": {
+          "callType": "voice",
+          "status": "missed",
+          "durationSec": 0
+        },
+        "createdAt": "2026-09-20T13:02:18.177Z"
+      }
+    ],
     "undefined": [
       {
         "id": "msg_1789407073428_cu8l",
@@ -5048,6 +5249,29 @@
         "deleted": false,
         "disappearingDuration": "off",
         "createdAt": "2026-09-14T18:24:04.987Z"
+      },
+      {
+        "id": "call_1789909210251",
+        "conversationId": "undefined",
+        "senderId": "user_9925514713",
+        "senderName": "સભ્ય (4713)",
+        "type": "call",
+        "text": "📹 મિસ્ડ વિડિઓ કૉલ",
+        "status": "read",
+        "deliveredTo": [
+          "user_9925514713"
+        ],
+        "readBy": [
+          "user_9925514713"
+        ],
+        "deletedFor": [],
+        "deleted": false,
+        "callInfo": {
+          "callType": "video",
+          "status": "missed",
+          "durationSec": 0
+        },
+        "createdAt": "2026-09-20T13:00:10.251Z"
       }
     ],
     "d_user_9825000002_user_9825123456": [
@@ -5169,33 +5393,14 @@
         "deleted": false,
         "disappearingDuration": "off",
         "createdAt": "2026-09-15T13:40:37.040Z"
-      },
-      {
-        "id": "sys_1789479645104",
-        "conversationId": "d_mem_2_user_9574050600",
-        "senderId": "system",
-        "senderName": "સિસ્ટમ",
-        "type": "text",
-        "text": "⏱️ સભ્ય (0600) એ અદ્રશ્ય થતા સંદેશા બદલ્યા: 5 મિનિટ (5 Minutes)",
-        "status": "read",
-        "deliveredTo": [
-          "user_9574050600",
-          "mem_2"
-        ],
-        "readBy": [
-          "user_9574050600",
-          "mem_2"
-        ],
-        "deletedFor": [],
-        "deleted": false,
-        "createdAt": "2026-09-15T13:40:45.104Z"
       }
-    ]
+    ],
+    "d_user_9574050600_user_9910250597": []
   },
   "platformSettings": {
     "publicAccessEnabled": true,
     "requireVerificationForPosting": false,
     "maintenanceMode": false
   },
-  "savedAt": "2026-09-15T13:40:45.404Z"
+  "savedAt": "2026-09-21T06:02:15.095Z"
 }

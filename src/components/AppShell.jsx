@@ -31,7 +31,9 @@ import {
   Users,
   Grid,
   TrendingUp,
+  Smartphone,
 } from "lucide-react";
+import AndroidDiagnosticsModal from "@/components/AndroidDiagnosticsModal";
 import { useApp } from "@/context/AppContext";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Toaster } from "@/components/ui/sonner";
@@ -81,6 +83,7 @@ const MobileNavItem = ({ to, icon: Icon, label, testId, activePrefix, badge, isD
 const MoreMenuSheet = ({ open, onOpenChange }) => {
   const { user, t, toggleLang, logout, lang, isMod, activeSamaj, unread } = useApp();
   const nav = useNavigate();
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
   const initial = (user?.name || "?").trim().charAt(0).toUpperCase();
 
   const sections = [
@@ -111,6 +114,13 @@ const MoreMenuSheet = ({ open, onOpenChange }) => {
       title: "સેટિંગ્સ & સહાય (Settings & Support)",
       items: [
         { to: "/profile", icon: Settings, label: "સેટિંગ્સ & પ્રોફાઇલ (Settings)", badge: "" },
+        {
+          to: "#diagnostics",
+          isDiagnostics: true,
+          icon: Smartphone,
+          label: "Android સર્વર સ્ટેટસ & સ્પીડ (Server Status)",
+          badge: "ટેસ્ટ",
+        },
         { to: "/coming-soon?m=help", icon: HelpCircle, label: "હેલ્પ & સપોર્ટ (Help & Support)", badge: "સહાય" },
       ],
     },
@@ -278,10 +288,14 @@ const MoreMenuSheet = ({ open, onOpenChange }) => {
                     key={it.to + it.label}
                     data-testid={`more-nav-${it.to.replace(/[^a-zA-Z0-9]/g, "-")}`}
                     onClick={() => {
+                      if (it.isDiagnostics) {
+                        setShowDiagnostics(true);
+                        return;
+                      }
                       nav(it.to);
                       onOpenChange(false);
                     }}
-                    className="w-full flex items-center justify-between p-2.5 rounded-2xl hover:bg-purple-50 transition text-left group"
+                    className="w-full flex items-center justify-between p-2.5 rounded-2xl hover:bg-purple-50 transition text-left group cursor-pointer"
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-900 grid place-items-center group-hover:bg-purple-900 group-hover:text-white transition-colors">
@@ -329,6 +343,7 @@ const MoreMenuSheet = ({ open, onOpenChange }) => {
           </div>
         </div>
       </SheetContent>
+      <AndroidDiagnosticsModal open={showDiagnostics} onOpenChange={setShowDiagnostics} />
     </Sheet>
   );
 };
