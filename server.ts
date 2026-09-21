@@ -848,8 +848,9 @@ function formatEvent(e: any, user: SamajUser) {
 
 // ----------------- API ROUTES -----------------
 
-// Flag for controlling development/demo OTP flow (enabled for smooth testing and onboarding fallback)
-const DEV_AUTH_ENABLED = true;
+// Flag for controlling development/demo OTP flow (enabled for smooth testing and onboarding fallback).
+// Off by default in production; set DEV_AUTH_ENABLED=true explicitly to keep demo/mock login working there.
+const DEV_AUTH_ENABLED = process.env.DEV_AUTH_ENABLED === "true" || process.env.NODE_ENV !== "production";
 
 // ---- Real Firebase ID-token verification (Google public keys; no service account needed) ----
 const FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID || "samaj-connect-6ad91";
@@ -1609,7 +1610,10 @@ async function resolveAuthUser(req: Request): Promise<SamajUser | null> {
   }
   if (!token) return null;
 
-  if (token.startsWith("mock-token-") || token === "demo-token" || token === "admin-token" || token.startsWith("+91") || /^\d{10}$/.test(token)) {
+  if (
+    DEV_AUTH_ENABLED &&
+    (token.startsWith("mock-token-") || token === "demo-token" || token === "admin-token" || token.startsWith("+91") || /^\d{10}$/.test(token))
+  ) {
     return applyAdminRole(resolveMockUser(token));
   }
 
